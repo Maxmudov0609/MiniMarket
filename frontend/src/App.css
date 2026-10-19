@@ -1,0 +1,279 @@
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f6fa;
+  color: #222;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 6%;
+  background: white;
+  box-shadow: 0 2px 10px #00000010;
+}
+
+.navbar h2 {
+  color: #6c3df4;
+}
+
+.navbar input {
+  width: 40%;
+  padding: 13px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+.nav-actions {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  padding: 12px 18px;
+  border: none;
+  border-radius: 9px;
+  background: #6c3df4;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #5428d0;
+}
+
+.hero {
+  text-align: center;
+  padding: 75px 20px;
+  background: linear-gradient(120deg, #6c3df4, #a178ff);
+  color: white;
+}
+
+.hero h1 {
+  font-size: 38px;
+}
+
+.hero button {
+  background: white;
+  color: #6c3df4;
+  margin-top: 15px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.products {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+  margin-top: 25px;
+}
+
+.product-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px #00000010;
+}
+
+.product-card img {
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+}
+
+.product-info {
+  padding: 18px;
+}
+
+.product-info span {
+  color: #888;
+  font-size: 13px;
+}
+
+.price {
+  color: #6c3df4;
+}
+
+.product-info button {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .products {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    flex-wrap: wrap;
+  }
+
+  .navbar input {
+    width: 100%;
+    order: 3;
+  }
+
+  .products {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+}
+
+.filters {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin: 25px 0;
+}
+
+.filters input,
+.filters select {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  flex: 1;
+  min-width: 170px;
+  font-size: 14px;
+}
+
+.filters input:focus,
+.filters select:focus {
+  outline: 2px solid #6c3df4;
+}
+
+
+.cart-box {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  margin-top: 30px;
+  box-shadow: 0 4px 15px #00000015;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 15px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.cart-box h3 {
+  color: #6c3df4;
+  text-align: right;
+}
+/* Buyurtma formasi */
+
+.order-form {
+  margin-top: 25px;
+  padding: 25px;
+  background: #f8f9ff;
+  border-radius: 12px;
+}
+
+.order-form h2 {
+  margin-bottom: 20px;
+  color: #222;
+}
+
+.order-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.order-form input,
+.order-form textarea {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.order-form button {
+  padding: 14px;
+  background: #6c3bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.order-form button:hover {
+  background: #5425db;
+}
+/* Ro'yxatdan o'tish va kirish oynasi */
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.auth-box {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.auth-box h2 {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #222;
+}
+
+.auth-box form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-box input,
+.auth-box select {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.auth-box button {
+  padding: 13px;
+  border: none;
+  border-radius: 8px;
+  background: #6c3bff;
+  color: white;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.auth-box button:hover {
+  background: #5425df;
+}
