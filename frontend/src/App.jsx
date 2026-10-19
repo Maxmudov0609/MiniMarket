@@ -38,7 +38,7 @@ function App() {
   const [editingProduct, setEditingProduct] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/products")
+    fetch("https://minimarket-backend-r4co.onrender.com/api/products")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Mahsulotlarni olishda xatolik");
@@ -117,7 +117,7 @@ async function loadSellerOrders() {
 
   try {
     const response = await fetch(
-      "http://localhost:4000/api/seller/orders",
+      "https://minimarket-backend-r4co.onrender.com/api/seller/orders",
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -167,7 +167,7 @@ async function handlePlaceOrder(e) {
   };
 
   try {
-    const response = await fetch("http://localhost:4000/api/orders", {
+    const response = await fetch("https://minimarket-backend-r4co.onrender.com/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -187,7 +187,7 @@ async function handlePlaceOrder(e) {
     setShowOrderForm(false);
 
     const productsResponse = await fetch(
-      "http://localhost:4000/api/products"
+      "https://minimarket-backend-r4co.onrender.com/api/products"
     );
 
     if (productsResponse.ok) {
@@ -243,7 +243,7 @@ async function handlePlaceOrder(e) {
       }
 
       const response = await fetch(
-        `http://localhost:4000/api/auth/${endpoint}`,
+        `https://minimarket-backend-r4co.onrender.com/api/auth/${endpoint}`,
         {
           method: "POST",
           headers: {
@@ -288,7 +288,7 @@ const handleAddProduct = async (e) => {
 
   try {
     const response = await fetch(
-      "http://localhost:4000/api/products",
+      "https://minimarket-backend-r4co.onrender.com/api/products",
       {
         method: "POST",
         headers: {
@@ -307,7 +307,7 @@ const handleAddProduct = async (e) => {
 
     alert("Mahsulot bazaga muvaffaqiyatli qo'shildi!");
     const productsResponse = await fetch(
-      "http://localhost:4000/api/products"
+      "https://minimarket-backend-r4co.onrender.com/api/products"
     );
 
     if (!productsResponse.ok) {
@@ -333,7 +333,7 @@ const handleDeleteProduct = async (productId) => {
 
   try {
     const response = await fetch(
-      `http://localhost:4000/api/products/${productId}`,
+      `https://minimarket-backend-r4co.onrender.com/api/products/${productId}`,
       {
         method: "DELETE",
         headers: {
@@ -376,7 +376,7 @@ const handleUpdateProduct = async (e) => {
 
   try {
     const response = await fetch(
-      `http://localhost:4000/api/products/${editingProduct.id}`,
+      `https://minimarket-backend-r4co.onrender.com/api/products/${editingProduct.id}`,
       {
         method: "PUT",
         headers: {
