@@ -708,7 +708,7 @@ const handleUpdateProduct = async (e) => {
       )}  
       {showSellerPanel && user?.role === "seller" && (
         <div className="auth-overlay">
-          <div className="auth-box">
+          <div className="auth-box seller-modal-scroll">
             <h2>🏪 Sotuvchi kabineti</h2>
             <p>Xush kelibsiz, {user.name}!</p>
             <button

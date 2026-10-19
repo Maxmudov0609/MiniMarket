@@ -18,7 +18,12 @@ CREATE INDEX IF NOT EXISTS idx_products_seller ON products(seller_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_seller ON order_items(seller_id);
 `);
 const app=express();
-app.use(cors({origin:process.env.CLIENT_ORIGIN||'http://localhost:5173'}));
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://minimarket-uz.vercel.app"
+  ]
+}));
 app.use(express.json({limit:'100kb'}));
 const wrap=fn=>(req,res,next)=>{try{fn(req,res,next)}catch(e){next(e)}};
 const tokenFor=u=>jwt.sign({id:u.id,role:u.role},process.env.JWT_SECRET,{expiresIn:'7d'});
