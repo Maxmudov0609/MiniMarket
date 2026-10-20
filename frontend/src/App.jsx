@@ -447,6 +447,18 @@ const handleUpdateProduct = async (e) => {
           ) : (
             <>
               <span>👤 {user.name}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setUser(null);
+                  setToken("");
+                  setShowSellerPanel(false);
+                  setShowCart(false);
+                  setShowOrderForm(false);
+                }}
+              >
+                🚪 Akkauntdan chiqish
+              </button>
 
               {user.role === "seller" && (
                 <button
