@@ -522,7 +522,14 @@ const handleUpdateProduct = async (e) => {
         <div className="products">
           {filteredProducts.map((product) => (
             <div className="product-card" key={product.id}>
-              <img src={product.image_url} alt={product.name} />
+              <img
+                src={product.image_url || "/no-image.svg"}
+                alt={product.name}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/no-image.svg";
+                }}
+              />
               <div className="product-info">
                 <span>{product.category}</span>
                 <h3>{product.name}</h3>
