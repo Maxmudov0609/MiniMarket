@@ -399,7 +399,7 @@ app.get('/api/seller/orders', auth('seller'), wrap(async (req, res) => {
        oi.product_name,
        oi.quantity,
        oi.unit_price,
-       oi.status,
+       o.status,
        o.customer_name,
        o.phone,
        o.address,
