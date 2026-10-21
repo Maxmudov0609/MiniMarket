@@ -341,12 +341,12 @@ const checkout = async (buyer, b) => {
         [quantity, p.id]
       );
 
-      await client.query(
-        `INSERT INTO order_items
-         (order_id, product_id, seller_id, product_name, quantity, unit_price)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [orderId, p.id, p.seller_id, p.name, quantity, p.price]
-      );
+    await client.query(
+      `INSERT INTO order_items
+      (order_id, product_id, seller_id, product_name, quantity, price, unit_price)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [orderId, p.id, p.seller_id, p.name, quantity, p.price, p.price]
+    );
     }
 
     await client.query('COMMIT');
