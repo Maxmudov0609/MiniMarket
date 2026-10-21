@@ -133,7 +133,7 @@ app.get('/api/products', wrap(async (req, res) => {
     SELECT p.*, u.name AS seller_name
     FROM products p
     JOIN users u ON u.id = p.seller_id
-    WHERE 1=1
+    WHERE p.is_active = TRUE
   `;
 
   const args = [];
