@@ -8,6 +8,26 @@ import { db } from './db.js';
 if (!process.env.JWT_SECRET) throw new Error('Set JWT_SECRET in server/.env');
 
 const app=express();
+app.get('/api/db-check', async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT current_database() AS database_name,
+             current_schema() AS schema_name,
+             current_user AS database_user,
+             EXISTS (
+               SELECT 1
+               FROM information_schema.columns
+               WHERE table_schema = 'public'
+                 AND table_name = 'orders'
+                 AND column_name = 'customer_name'
+             ) AS has_customer_name
+    `);
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: 'Database tekshiruvida xatolik' });
+  }
+});
 app.use(cors({
   origin: [
     "http://localhost:5173",
