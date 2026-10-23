@@ -2,6 +2,55 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
+const translations = {
+  uz: {
+    minPrice: "Minimal narx",
+    maxPrice: "Maksimal narx",
+    newest: "Eng yangi",
+    allCategories: "Barcha kategoriyalar",
+    search: "Mahsulot qidirish...",
+    login: "Kirish",
+    register: "Ro'yxatdan o'tish",
+    cart: "Savatcha",
+    welcome: "MiniMarketga xush kelibsiz!",
+    subtitle: "Eng yaxshi mahsulotlar — qulay narxlarda",
+    shop: "Mahsulotlarni ko'rish",
+    popular: "Mashhur mahsulotlar"
+    
+  },
+
+  ru: {
+    minPrice: "Минимальная цена",
+    maxPrice: "Максимальная цена",
+    newest: "Сначала новые",
+        allCategories: "Все категории",
+    search: "Поиск товаров...",
+    login: "Войти",
+    register: "Регистрация",
+    cart: "Корзина",
+    welcome: "Добро пожаловать в MiniMarket!",
+    subtitle: "Лучшие товары по доступным ценам",
+    shop: "Смотреть товары",
+    popular: "Популярные товары"
+  },
+
+  en: {
+    minPrice: "Minimum price",
+    maxPrice: "Maximum price",
+    newest: "Newest first",
+    allCategories: "All categories",
+    search: "Search products...",
+    login: "Sign in",
+    register: "Sign up",
+    cart: "Cart",
+    welcome: "Welcome to MiniMarket!",
+    subtitle: "The best products at affordable prices",
+    shop: "Shop now",
+    popular: "Popular products"
+  }
+};
+
+
 const products = [
   {
     id: 1,
@@ -34,6 +83,35 @@ const products = [
 ];
 
 function App() {
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("minimarket_favorites")) || [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem("minimarket_favorites", JSON.stringify(favorites));
+  }, [favorites]);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const toggleFavorite = (productId) => {
+    setFavorites((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+  const [language, setLanguage] = useState(() => {
+    return localStorage.getItem("minimarket_language") || "uz";
+  });
+
+  const t = translations[language] || translations.uz;
+
+  useEffect(() => {
+    localStorage.setItem("minimarket_language", language);
+  }, [language]);
+
   const [dbProducts, setDbProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
 
@@ -59,7 +137,16 @@ function App() {
   const [maxPrice, setMaxPrice] = useState("");
   const [sort, setSort] = useState("newest");
   
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("minimarket_cart")) || [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    localStorage.setItem("minimarket_cart", JSON.stringify(cart));
+  }, [cart]);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState("");
   const [showLogin, setShowLogin] = useState(false);
@@ -73,6 +160,7 @@ function App() {
   const [authName, setAuthName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [authRole, setAuthRole] = useState("buyer");
     
   const [showCart, setShowCart] = useState(false);
@@ -419,7 +507,7 @@ const handleUpdateProduct = async (e) => {
         <h2>🛍️ MiniMarket</h2>
   <input
     type="text"
-    placeholder="Mahsulot qidirish..."
+    placeholder={t.search}
     value={search}
     onChange={(e) => setSearch(e.target.value)}
   />
@@ -432,7 +520,7 @@ const handleUpdateProduct = async (e) => {
                   setShowLogin(true);
                 }}
               >
-                Kirish
+                {t.login}
               </button>
 
               <button
@@ -441,7 +529,7 @@ const handleUpdateProduct = async (e) => {
                   setShowLogin(true);
                 }}
               >
-                Ro'yxatdan o'tish
+                {t.register}
               </button>
             </>
           ) : (
@@ -469,37 +557,89 @@ const handleUpdateProduct = async (e) => {
               )}
             </>
           )}
+          
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            aria-label="Tilni tanlash"
+            style={{
+              padding: "10px",
+              borderRadius: "10px",
+              border: "1px solid #ddd",
+              cursor: "pointer"
+            }}
+          >
+            <option value="uz">🇺🇿 UZ</option>
+            <option value="ru">🇷🇺 RU</option>
+            <option value="en">🇬🇧 EN</option>
+          </select>
+
 
           <button onClick={() => setShowCart(!showCart)}>
-            🛒 Savatcha ({cart.reduce((total, item) => total + item.quantity, 0)})
+            🛒 {t.cart} ({cart.reduce((total, item) => total + item.quantity, 0)})
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowFavorites(!showFavorites)}
+          >
+            ❤️ Sevimlilar ({favorites.length})
           </button>
           
           </div>
           </header>
 
+
       <section className="hero">
-        <h1>MiniMarketga xush kelibsiz!</h1>
-        <p>Eng yaxshi mahsulotlar — qulay narxlarda</p>
-        <button>Mahsulotlarni ko'rish</button>
+        <div className="hero-content">
+          <h1>{t.welcome}</h1>
+          <p>{t.subtitle}</p>
+
+          <button
+            onClick={() => {
+              document.getElementById("products").scrollIntoView({
+                behavior: "smooth",
+              });
+            }}
+          >
+            {t.shop}
+          </button>
+        </div>
+
+        <img
+          className="hero-image"
+          src="/grocery-basket.png"
+          alt="MiniMarket mahsulotlari"
+        />
       </section>
 
-      <main className="container">
-        <h2>🔥 Mashhur mahsulotlar</h2>
+
+      <main id="products" className="container">
+        <h2>🔥 {t.popular}</h2>
         
 <div className="filters">
   <select value={category} onChange={(e) => setCategory(e.target.value)}>
-    <option value="Barchasi">Barcha kategoriyalar</option>
-    <option value="Elektronika">Elektronika</option>
-    <option value="Kiyim-kechak">Kiyim-kechak</option>
-    <option value="Uy jihozlari">Uy jihozlari</option>
-    <option value="Sport">Sport</option>
-    <option value="Boshqalar">Boshqalar</option>
+    <option value="Barchasi">{t.allCategories}</option>
+    <option value="Elektronika">
+      {language === "ru" ? "Электроника" : language === "en" ? "Electronics" : "Elektronika"}
+    </option>
+    <option value="Kiyim-kechak">
+      {language === "ru" ? "Одежда" : language === "en" ? "Clothing" : "Kiyim-kechak"}
+    </option>
+    <option value="Uy jihozlari">
+      {language === "ru" ? "Товары для дома" : language === "en" ? "Home goods" : "Uy jihozlari"}
+    </option>
+    <option value="Sport">
+      {language === "ru" ? "Спорт" : "Sport"}
+    </option>
+    <option value="Boshqalar">
+      {language === "ru" ? "Другие" : language === "en" ? "Others" : "Boshqalar"}
+    </option>
   </select>
 
   <input
     type="number"
     min="0"
-    placeholder="Minimal narx"
+    placeholder={t.minPrice}
     value={minPrice}
     onChange={(e) => setMinPrice(e.target.value)}
   />
@@ -507,21 +647,28 @@ const handleUpdateProduct = async (e) => {
   <input
     type="number"
     min="0"
-    placeholder="Maksimal narx"
+    placeholder={t.maxPrice}
     value={maxPrice}
     onChange={(e) => setMaxPrice(e.target.value)}
   />
 
   <select value={sort} onChange={(e) => setSort(e.target.value)}>
-    <option value="newest">Eng yangi</option>
+    <option value="newest">{t.newest}</option>
     <option value="cheap">Arzonidan qimmatiga</option>
     <option value="expensive">Qimmatidan arzoniga</option>
   </select>
 </div>
 
         <div className="products">
-          {filteredProducts.map((product) => (
-            <div className="product-card" key={product.id}>
+          {filteredProducts
+            .filter((product) => !showFavorites || favorites.includes(product.id))
+            .map((product) => (
+            <div
+              className="product-card"
+              key={product.id}
+              onClick={() => setSelectedProduct(product)}
+              style={{ cursor: "pointer" }}
+            >
               <img
                 src={product.image_url || "/no-image.svg"}
                 alt={product.name}
@@ -531,13 +678,54 @@ const handleUpdateProduct = async (e) => {
                 }}
               />
               <div className="product-info">
-                <span>{product.category}</span>
-                <h3>{product.name}</h3>
+                <span>
+                  {language === "ru"
+                    ? {
+                        Elektronika: "Электроника",
+                        "Kiyim-kechak": "Одежда",
+                        "Uy jihozlari": "Товары для дома",
+                        Sport: "Спорт",
+                        Boshqalar: "Другие"
+                      }[product.category] || product.category
+                    : language === "en"
+                    ? {
+                        Elektronika: "Electronics",
+                        "Kiyim-kechak": "Clothing",
+                        "Uy jihozlari": "Home goods",
+                        Sport: "Sport",
+                        Boshqalar: "Others"
+                      }[product.category] || product.category
+                    : product.category}
+                </span>
+                
+                <h3
+                  onClick={() => setSelectedProduct(product)}
+                  style={{ cursor: "pointer" }}
+                >
+                  {product.name}
+                </h3>
+                <button
+                  type="button"
+                  className="favorite-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(product.id);
+                  }}
+                >
+                  {favorites.includes(product.id) ? "❤️" : "🤍"}
+                </button>
                 <h3 className="price">
-                  {product.price.toLocaleString("uz-UZ")} so'm  
+                  {Number(product.price).toLocaleString("ru-RU", {
+                    maximumFractionDigits: 0
+                  })} so‘m 
                 </h3>
                 
-                <button onClick={() => addToCart(product)}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addToCart(product);
+                  }}
+                >
                   Savatchaga qo'shish
                 </button>
 
@@ -545,6 +733,55 @@ const handleUpdateProduct = async (e) => {
             </div>
           ))}
         </div>
+        {selectedProduct && (
+          <div
+            className="auth-overlay"
+            onClick={() => setSelectedProduct(null)}
+          >
+            <div
+              className="auth-box"
+              onClick={(e) => e.stopPropagation()}
+              style={{ textAlign: "center" }}
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedProduct(null)}
+              >
+                ✕ Yopish
+              </button>
+
+              <img
+                src={selectedProduct.image_url || "/no-image.svg"}
+                alt={selectedProduct.name}
+                style={{
+                  width: "100%",
+                  maxWidth: "250px",
+                  height: "220px",
+                  objectFit: "contain",
+                  marginTop: "15px"
+                }}
+              />
+
+              <h2>{selectedProduct.name}</h2>
+
+              <p>{selectedProduct.category}</p>
+
+              <h3 style={{ color: "#6938ef" }}>
+                {Number(selectedProduct.price).toLocaleString("ru-RU")} so‘m
+              </h3>
+
+              <button
+                type="button"
+                onClick={() => {
+                  addToCart(selectedProduct);
+                  setSelectedProduct(null);
+                }}
+              >
+                🛒 Savatchaga qo‘shish
+              </button>
+            </div>
+          </div>
+        )}
         
       {showCart && (
         <div className="cart-box">
@@ -622,7 +859,28 @@ const handleUpdateProduct = async (e) => {
               </button>
               {showOrderForm && (
                 <div className="order-form">
-                  <h2>📦 Buyurtma ma'lumotlari</h2>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                  }}>
+                    <h2>📦 Buyurtma ma'lumotlari</h2>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowOrderForm(false)}
+                      style={{
+                        background: "#ef4444",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "8px 12px",
+                        cursor: "pointer"
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
 
                   <form onSubmit={handlePlaceOrder}>
 
@@ -692,14 +950,38 @@ const handleUpdateProduct = async (e) => {
                 required
               />
 
-              <input
-                type="password"
-                placeholder="Parolingiz"
-                value={authPassword}
-                onChange={(e) => setAuthPassword(e.target.value)}
-                minLength={8}
-                required
-              />
+              
+                <div style={{ position: "relative", width: "100%" }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Parolingiz"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    style={{
+                      width: "100%",
+                      paddingRight: "50px",
+                      boxSizing: "border-box"
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: "absolute",
+                      right: "12px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: "22px",
+                      padding: "5px"
+                    }}
+                  >
+                    {showPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
 
               {isRegister && (
                 <select
