@@ -80,10 +80,31 @@ const products = [
     category: "Boshqalar",
     image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"
   }
+  
+];
+const marketCategories = [
+  { icon: "🥤", name: "Ichimliklar" },
+  { icon: "🍎", name: "Oziq-ovqat mahsulotlari" },
+  { icon: "🍬", name: "Shirinliklar" },
+  { icon: "🧴", name: "Maishiy kimyo" },
+  { icon: "🧻", name: "Gigiyena vositalari" },
+  { icon: "🧸", name: "Bolalar uchun" },
+  { icon: "🏠", name: "Uy-ro‘zg‘or" },
+  { icon: "📱", name: "Elektronika" }
 ];
 
 function App() {
+  const [showProducts, setShowProducts] = useState(() => {
+    return localStorage.getItem("minimarket_showProducts") === "true";
+  });
+  useEffect(() => {
+    localStorage.setItem(
+      "minimarket_showProducts",
+      String(showProducts)
+    );
+  }, [showProducts]);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [productQuantity, setProductQuantity] = useState(1);
   const [favorites, setFavorites] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("minimarket_favorites")) || [];
@@ -147,11 +168,31 @@ function App() {
   useEffect(() => {
     localStorage.setItem("minimarket_cart", JSON.stringify(cart));
   }, [cart]);
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState("");
+  const [user, setUser] = useState(() => {
+  try {
+    return JSON.parse(localStorage.getItem("minimarket_user")) || null;
+  } catch {
+    return null;
+  }
+});
+
+const [token, setToken] = useState(
+  () => localStorage.getItem("minimarket_token") || ""
+);
+useEffect(() => {
+  if (user && token) {
+    localStorage.setItem("minimarket_user", JSON.stringify(user));
+    localStorage.setItem("minimarket_token", token);
+  } else {
+    localStorage.removeItem("minimarket_user");
+    localStorage.removeItem("minimarket_token");
+  }
+}, [user, token]);
+
   const [showLogin, setShowLogin] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [showSellerPanel, setShowSellerPanel] = useState(false);
+  const [showBuyerPanel, setShowBuyerPanel] = useState(false);
     
   const [sellerOrders, setSellerOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -224,6 +265,34 @@ async function loadSellerOrders() {
     alert(error.message);
   } finally {
     setOrdersLoading(false);
+  }
+}
+async function updateOrderStatus(itemId, status) {
+  if (!token) return;
+
+  try {
+    const response = await fetch(
+      `https://minimarket-backend-r4co.onrender.com/api/seller/orders/${itemId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Buyurtma holatini o‘zgartirib bo‘lmadi");
+    }
+
+    await loadSellerOrders();
+    alert("✅ Buyurtma holati yangilandi!");
+  } catch (error) {
+    alert(error.message);
   }
 }
 
@@ -503,6 +572,7 @@ const handleUpdateProduct = async (e) => {
   return (
     
     <div>
+
       <header className="navbar">
         <h2>🛍️ MiniMarket</h2>
   <input
@@ -555,6 +625,14 @@ const handleUpdateProduct = async (e) => {
                   🏪 Sotuvchi kabineti
                 </button>
               )}
+              {user.role === "buyer" && (
+                <button
+                  type="button"
+                  onClick={() => setShowBuyerPanel(true)}
+                >
+                  🛍️ Xaridor kabineti
+                </button>
+              )}
             </>
           )}
           
@@ -587,33 +665,171 @@ const handleUpdateProduct = async (e) => {
           
           </div>
           </header>
+          <div className="market-layout">
+            <aside className="market-sidebar">
+              <h3>☷ Barcha kategoriyalar</h3>
+
+              {marketCategories.map((category) => (
+                <button
+                  key={category.name}
+                  type="button"
+                  onClick={() => {
+                    setCategory(category.name);
+                    document.getElementById("products")?.scrollIntoView({
+                      behavior: "smooth",
+                    });
+                  }}
+                >
+                  <span>{category.icon}</span>
+                  <span>{category.name}</span>
+                  <span>›</span>
+                </button>
+              ))}
+            </aside>
 
 
-      <section className="hero">
-        <div className="hero-content">
-          <h1>{t.welcome}</h1>
-          <p>{t.subtitle}</p>
+<section className="hero">
+  <div className="hero-content">
 
+    <div className="hero-badge">
+      👑 Siz uchun eng yaxshi tanlovlar
+    </div>
+
+    <h1>
+      MiniMarketga
+      <br />
+      <span>xush kelibsiz!</span>
+    </h1>
+
+    <p>
+      Eng yaxshi mahsulotlar — qulay narxlarda.
+      <br />
+      Sizning kundalik xaridlaringiz uchun ishonchli tanlov!
+    </p>
+
+    <button
+      className="hero-shop-btn"
+      onClick={() => {
+        setShowProducts((prev) => !prev);
+        setTimeout(() => {
+          document.getElementById("products")?.scrollIntoView({
+            behavior: "smooth",
+          });
+        }, 100);
+      }}
+    >
+      🛒 Mahsulotlarni ko‘rish
+      <span>➜</span>
+    </button>
+
+    <div className="hero-features">
+      <div>🚚 Tez yetkazib berish</div>
+      <div>🛡️ Ishonchli xaridlar</div>
+      <div>💎 Qulay narxlar</div>
+    </div>
+
+  </div>
+
+  <div className="hero-visual">
+    <div className="hero-discount">🔥 -30%</div>
+
+    <div className="hero-new">
+      ⭐ Yangi
+    </div>
+
+    <img
+      src="/grocery-basket.png"
+      alt="MiniMarket mahsulotlari"
+      className="hero-image"
+    />
+
+    <div className="hero-floating hero-floating-one">✨</div>
+    <div className="hero-floating hero-floating-two">💜</div>
+  </div>
+</section>
+      <div className="promo-cards">
+        <div className="promo-card promo-sale">
+          <span className="promo-icon">🎁</span>
+          <h3>Aksiyalar va chegirmalar</h3>
+          <p>Eng yaxshi takliflar shu yerda!</p>
           <button
+            onClick={() =>
+              document.getElementById("products")?.scrollIntoView({
+                behavior: "smooth",
+              })
+            }
+          >
+            Ko‘rish →
+          </button>
+        </div>
+
+        <div className="promo-card promo-delivery">
+          <span className="promo-icon">🚚</span>
+          <h3>Tez yetkazib berish</h3>
+          <p>Toshkent bo‘ylab tez va ishonchli yetkazib berish</p>
+          <button
+            onClick={() =>
+              alert("Yetkazib berish xizmati haqida ma'lumot tez orada!")
+            }
+          >
+            Batafsil →
+          </button>
+        </div>
+      </div>
+      </div>
+      <div className="category-strip">
+        {[
+          { name: "Ichimliklar", image: "/categories/drinks.jpg" },
+          { name: "Oziq-ovqat mahsulotlari", image: "/categories/food.jpg" },
+          { name: "Shirinliklar", image: "/categories/sweets.jpg" },
+          { name: "Maishiy kimyo", image: "/categories/cleaning.jpg" },
+          { name: "Gigiyena vositalari", image: "/categories/hygiene.jpg" },
+          { name: "Bolalar uchun", image: "/categories/bolalar.jpg" },
+          { name: "Uy-ro‘zg‘or", image: "/categories/home.jpg" },
+          { name: "Elektronika", image: "/categories/electronics.jpg" },
+        ].map((item) => (
+          <button
+            key={item.name}
+            type="button"
+            className="category-strip-item"
             onClick={() => {
-              document.getElementById("products").scrollIntoView({
+              setCategory(item.name);
+              document.getElementById("products")?.scrollIntoView({
                 behavior: "smooth",
               });
             }}
           >
-            {t.shop}
+            <span className="category-strip-icon">
+              <img src={item.image} alt={item.name} />
+            </span>
+            <span>{item.name}</span>
           </button>
-        </div>
-
-        <img
-          className="hero-image"
-          src="/grocery-basket.png"
-          alt="MiniMarket mahsulotlari"
-        />
-      </section>
+        ))}
+      </div>
 
 
-      <main id="products" className="container">
+<main
+  id="products"
+  className="container products-page"
+  style={{ display: showProducts ? "block" : "none" }}
+>
+  <div className="products-page-header">
+    <button
+      type="button"
+      className="back-home-btn"
+      onClick={() => {
+        setShowProducts(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }}
+    >
+      ⬅ Bosh sahifaga qaytish
+    </button>
+
+    <div className="products-page-title">
+      <h1>🛍️ Barcha mahsulotlar</h1>
+      <p>Eng yaxshi mahsulotlarni qulay narxlarda xarid qiling!</p>
+    </div>
+  </div>
         <h2>🔥 {t.popular}</h2>
         
 <div className="filters">
@@ -660,15 +876,15 @@ const handleUpdateProduct = async (e) => {
 </div>
 
         <div className="products">
-          {filteredProducts
-            .filter((product) => !showFavorites || favorites.includes(product.id))
-            .map((product) => (
+        {filteredProducts
+          .map((product) => (
             <div
               className="product-card"
               key={product.id}
               onClick={() => setSelectedProduct(product)}
               style={{ cursor: "pointer" }}
             >
+              <span className="product-new-badge">✨ Tavsiya etiladi</span>
               <img
                 src={product.image_url || "/no-image.svg"}
                 alt={product.name}
@@ -735,105 +951,210 @@ const handleUpdateProduct = async (e) => {
         </div>
         {selectedProduct && (
           <div
-            className="auth-overlay"
+            className="auth-overlay product-modal-overlay"
             onClick={() => setSelectedProduct(null)}
           >
             <div
-              className="auth-box"
+              className="product-modal"
               onClick={(e) => e.stopPropagation()}
-              style={{ textAlign: "center" }}
             >
               <button
                 type="button"
+                className="product-modal-close"
                 onClick={() => setSelectedProduct(null)}
+                aria-label="Yopish"
               >
-                ✕ Yopish
+                ✕
               </button>
 
-              <img
-                src={selectedProduct.image_url || "/no-image.svg"}
-                alt={selectedProduct.name}
-                style={{
-                  width: "100%",
-                  maxWidth: "250px",
-                  height: "220px",
-                  objectFit: "contain",
-                  marginTop: "15px"
-                }}
-              />
+              <div className="product-modal-image">
+                <img
+                  src={selectedProduct.image_url || "/no-image.svg"}
+                  alt={selectedProduct.name}
+                />
+              </div>
 
-              <h2>{selectedProduct.name}</h2>
+              <div className="product-modal-info">
+                <span className="product-modal-category">
+                  {selectedProduct.category}
+                </span>
 
-              <p>{selectedProduct.category}</p>
+                <h2>{selectedProduct.name}</h2>
+                <div className="product-extra-info">
+                  <div className="product-rating">
+                    <span>⭐⭐⭐⭐⭐</span>
+                    <span>Yuqori baholangan mahsulot</span>
+                  </div>
 
-              <h3 style={{ color: "#6938ef" }}>
-                {Number(selectedProduct.price).toLocaleString("ru-RU")} so‘m
-              </h3>
+                  <div className="product-stock">
+                    🟢 Sotuvda mavjud
+                  </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  addToCart(selectedProduct);
-                  setSelectedProduct(null);
-                }}
-              >
-                🛒 Savatchaga qo‘shish
-              </button>
+                  <button
+                    type="button"
+                    className="product-favorite-btn"
+                    onClick={() => toggleFavorite(selectedProduct.id)}
+                  >
+                    {favorites.includes(selectedProduct.id)
+                      ? "❤️ Sevimlilardan olib tashlash"
+                      : "🤍 Sevimlilarga qo‘shish"}
+                  </button>
+                </div>
+
+                <p className="product-modal-description">
+                  Mahsulot haqida batafsil ma'lumot.
+                  Sifatli mahsulotlarni MiniMarket orqali
+                  qulay narxlarda xarid qiling.
+                </p>
+
+                <h3 className="product-modal-price">
+                  {Number(selectedProduct.price).toLocaleString("uz-UZ")} so‘m
+                </h3>
+                <div className="product-total-price">
+                  <span>💰 Umumiy narx:</span>
+
+                  <strong>
+                    {(Number(selectedProduct.price) * productQuantity)
+                      .toLocaleString("uz-UZ")} so‘m
+                  </strong>
+                </div>
+
+                <p className="product-modal-delivery">
+                  🚚 Toshkent bo‘ylab yetkazib berish
+                </p>
+                <div className="product-quantity">
+                  <span>Miqdori:</span>
+
+                  <div className="quantity-selector">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setProductQuantity((prev) => Math.max(1, prev - 1))
+                      }
+                    >
+                      −
+                    </button>
+
+                    <strong>{productQuantity}</strong>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setProductQuantity((prev) => prev + 1)
+                      }
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                
+
+                <button
+                  type="button"
+                  className="product-modal-cart"
+                  onClick={() => {
+                    for (let i = 0; i < productQuantity; i++) {
+                      addToCart(selectedProduct);
+                    }
+
+                    setProductQuantity(1);
+                    setSelectedProduct(null);
+                  }}
+                >
+                  🛒 Savatchaga qo‘shish
+                </button>
+              </div>
             </div>
           </div>
         )}
         
-      {showCart && (
-        <div className="cart-box">
-          <h2>🛒 Mening savatcham</h2>
+        {showCart && (
+          <div
+            className="cart-overlay"
+            onClick={() => setShowCart(false)}
+          >
+            <div
+              className="cart-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="cart-close"
+                onClick={() => setShowCart(false)}
+              >
+                ✕
+              </button>
+
+              <div className="cart-box">
+                <div className="cart-header">
+                  <div className="cart-header-icon">🛒</div>
+
+                  <div>
+                    <h2>Mening savatcham</h2>
+                    <p>Siz tanlagan mahsulotlar ro‘yxati</p>
+                  </div>
+
+                  <span className="cart-count">
+                    {cart.reduce((total, item) => total + item.quantity, 0)}
+                  </span>
+                </div>
+
 
           {cart.length === 0 ? (
             <p>Savatcha bo'sh</p>
           ) : (
             <>
               {cart.map((item) => (
-                <div className="cart-item" key={item.id}>
-                  <span>{item.name} — {item.quantity} dona</span>
-                  <div className="quantity-controls">
-                    <button
-                      onClick={() => changeQuantity(item.id, -1)}
-                    >
-                      ➖
-                    </button>
+              <div className="cart-item" key={item.id}>
+                <div className="cart-product">
+                  <img
+                    src={item.image_url || item.image || "/no-image.svg"}
+                    alt={item.name}
+                    className="cart-product-image"
+                  />
 
-                    <span>{item.quantity} dona</span>
-
-                    <button
-                      onClick={() => changeQuantity(item.id, 1)}
-                    >
-                      ➕
-                    </button>
+                  <div className="cart-product-details">
+                    <strong>{item.name}</strong>
+                    <span>{item.category}</span>
                   </div>
-                  <strong>
-                    {(item.price * item.quantity).toLocaleString("uz-UZ")} so'm
-                  </strong>
+                </div>
+
+                <div className="cart-unit-price">
+                  {Number(item.price).toLocaleString("uz-UZ")} so‘m
+                </div>
+
+                <div className="cart-quantity">
                   <button
                     type="button"
-                    onClick={() =>
-                      setCart((prev) =>
-                        prev.filter((p) => p.id !== item.id)
-                      )
-                    }
-                    style={{
-                      backgroundColor: "red",
-                      color: "white",
-                      padding: "10px",
-                      marginLeft: "10px",
-                      display: "inline-block",
-                      cursor: "pointer"
-                    }}
+                    onClick={() => changeQuantity(item.id, -1)}
                   >
-                    ❌ O'chirish
+                    −
                   </button>
 
+                  <span>{item.quantity}</span>
 
-
+                  <button
+                    type="button"
+                    onClick={() => changeQuantity(item.id, 1)}
+                  >
+                    +
+                  </button>
                 </div>
+
+                <strong className="cart-item-total">
+                  {(Number(item.price) * item.quantity).toLocaleString("uz-UZ")} so‘m
+                </strong>
+
+                <button
+                  type="button"
+                  className="cart-remove"
+                  onClick={() =>
+                    setCart((prev) => prev.filter((p) => p.id !== item.id))
+                  }
+                >
+                  🗑️
+                </button>
+              </div>
               ))}
 
               <h3>
@@ -882,134 +1203,245 @@ const handleUpdateProduct = async (e) => {
                     </button>
                   </div>
 
-                  <form onSubmit={handlePlaceOrder}>
+                  <form onSubmit={handlePlaceOrder} className="checkout-form">
 
-                    <input
-                      type="text"
-                      name="customer_name"
-                      placeholder="Ismingiz"
-                      required
-                    />
+                    <div className="checkout-section-title">
+                      👤 Shaxsiy ma'lumotlar
+                    </div>
 
-                    <input
-                      type="tel"
-                      name="phone"
-                      placeholder="Telefon raqamingiz"
-                      required
-                    />
+                    <div className="checkout-field">
+                      <label>Ismingiz</label>
+                      <input
+                        type="text"
+                        name="customer_name"
+                        placeholder="Ismingizni kiriting"
+                        required
+                      />
+                    </div>
 
-                    <input
-                      type="text"
-                      name="address"
-                      placeholder="Yetkazib berish manzili"
-                      required
-                    />
+                    <div className="checkout-field">
+                      <label>Telefon raqamingiz</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        placeholder="+998 90 123 45 67"
+                        required
+                      />
+                    </div>
 
-                    <textarea
-                      placeholder="Buyurtma izohi (ixtiyoriy)"
-                    />
+                    <div className="checkout-section-title">
+                      🚚 Yetkazib berish
+                    </div>
 
-                    <button type="submit">
-                      Buyurtmani tasdiqlash
-                    </button>
+                    <div className="checkout-field">
+                      <label>Yetkazib berish manzili</label>
+                      <input
+                        type="text"
+                        name="address"
+                        placeholder="Tuman, ko'cha, uy raqami"
+                        required
+                      />
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setShowOrderForm(false)}
-                    >
-                      Bekor qilish
-                    </button>
+                    <div className="checkout-field">
+                      <label>Buyurtmaga izoh (ixtiyoriy)</label>
+                      <textarea
+                        name="comment"
+                        placeholder="Masalan: 3-qavat, 12-xonadon"
+                        rows="3"
+                      />
+                    </div>
+                    <div className="checkout-field">
+                      <label htmlFor="payment-method">💳 To‘lov usuli</label>
+
+<select
+  id="payment-method"
+  name="payment_method"
+  defaultValue="cash"
+  required
+>
+  <option value="cash">
+    💵 Naqd pul (yetkazib berilganda)
+  </option>
+
+  <option value="card">
+    💳 Karta orqali (yetkazib berilganda)
+  </option>
+
+  <option value="click">
+    📱 Click orqali onlayn to‘lov
+  </option>
+
+  <option value="payme">
+    💳 Payme orqali onlayn to‘lov
+  </option>
+</select>
+                    </div>
+
+                    <div className="checkout-summary">
+                      <span>💰 Jami to'lov:</span>
+
+                      <strong>
+                        {cart.reduce(
+                          (total, item) => total + Number(item.price) * item.quantity,
+                          0
+                        ).toLocaleString("uz-UZ")} so'm
+                      </strong>
+                    </div>
+
+                    <div className="checkout-actions">
+                      <button type="submit" className="checkout-submit">
+                        ✅ Buyurtmani tasdiqlash
+                      </button>
+
+                      <button
+                        type="button"
+                        className="checkout-cancel"
+                        onClick={() => setShowOrderForm(false)}
+                      >
+                        Bekor qilish
+                      </button>
+                    </div>
+
                   </form>
                 </div>
               )}
             </>
           )}
         </div>
+            </div>
+  </div>
       )}
-      {showLogin && (
-        <div className="auth-overlay">
-          <div className="auth-box">
-            <h2>{isRegister ? "Ro‘yxatdan o‘tish" : "Tizimga kirish"}</h2>
+{showLogin && (
+  <div className="auth-overlay" onClick={() => setShowLogin(false)}>
+    <div
+      className="auth-box login-modern"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="login-close"
+        onClick={() => setShowLogin(false)}
+      >
+        ✕
+      </button>
 
-            <form onSubmit={handleAuth}>
-              {isRegister && (
-                <input
-                  type="text"
-                  placeholder="Ismingiz"
-                  value={authName}
-                  onChange={(e) => setAuthName(e.target.value)}
-                  required
-                />
-              )}
+      <div className="login-icon">🔐</div>
 
-              <input
-                type="email"
-                placeholder="Email manzilingiz"
-                value={authEmail}
-                onChange={(e) => setAuthEmail(e.target.value)}
-                required
-              />
+      <h2>
+        {isRegister ? "Ro‘yxatdan o‘tish" : "Tizimga kirish"}
+      </h2>
 
-              
-                <div style={{ position: "relative", width: "100%" }}>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Parolingiz"
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    style={{
-                      width: "100%",
-                      paddingRight: "50px",
-                      boxSizing: "border-box"
-                    }}
-                  />
+      <p className="login-subtitle">
+        {isRegister
+          ? "MiniMarket oilasiga qo‘shiling"
+          : "MiniMarket hisobingizga xush kelibsiz!"}
+      </p>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: "absolute",
-                      right: "12px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      fontSize: "22px",
-                      padding: "5px"
-                    }}
-                  >
-                    {showPassword ? "🙈" : "👁️"}
-                  </button>
-                </div>
+      <form onSubmit={handleAuth} className="login-form">
+        {isRegister && (
+          <div className="login-field">
+            <label>Ismingiz</label>
+            <input
+              type="text"
+              placeholder="Ismingizni kiriting"
+              value={authName}
+              onChange={(e) => setAuthName(e.target.value)}
+              required
+            />
+          </div>
+        )}
 
-              {isRegister && (
-                <select
-                  value={authRole}
-                  onChange={(e) => setAuthRole(e.target.value)}
-                >
-                  <option value="buyer">Xaridor</option>
-                  <option value="seller">Sotuvchi</option>
-                </select>
-              )}
+        <div className="login-field">
+          <label>Email manzilingiz</label>
+          <input
+            type="email"
+            placeholder="example@gmail.com"
+            value={authEmail}
+            onChange={(e) => setAuthEmail(e.target.value)}
+            required
+          />
+        </div>
 
-              <button type="submit">
-                {isRegister ? "Ro‘yxatdan o‘tish" : "Kirish"}
-              </button>
-            </form>
+        <div className="login-field">
+          <label>Parolingiz</label>
+
+          <div className="login-password">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Parolingizni kiriting"
+              value={authPassword}
+              onChange={(e) => setAuthPassword(e.target.value)}
+              required
+            />
 
             <button
               type="button"
-              onClick={() => setShowLogin(false)}
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={
+                showPassword ? "Parolni yashirish" : "Parolni ko‘rsatish"
+              }
             >
-              Yopish
+              {showPassword ? "🙈" : "👁️"}
             </button>
           </div>
         </div>
-      )}  
+
+{isRegister && (
+  <div className="login-field">
+    <label>Hisob turini tanlang</label>
+
+    <div className="role-selection">
+      <button
+        type="button"
+        className={`role-card ${authRole === "buyer" ? "active" : ""}`}
+        onClick={() => setAuthRole("buyer")}
+      >
+        <span className="role-icon">🛍️</span>
+        <strong>Xaridor</strong>
+        <small>Mahsulot xarid qilish</small>
+      </button>
+
+      <button
+        type="button"
+        className={`role-card ${authRole === "seller" ? "active" : ""}`}
+        onClick={() => setAuthRole("seller")}
+      >
+        <span className="role-icon">🏪</span>
+        <strong>Sotuvchi</strong>
+        <small>Mahsulot sotish</small>
+      </button>
+    </div>
+  </div>
+)}
+
+        <button type="submit" className="login-submit">
+          {isRegister ? "✨ Ro‘yxatdan o‘tish" : "🔐 Kirish"}
+        </button>
+      </form>
+
+      <button
+        type="button"
+        className="login-cancel"
+        onClick={() => setShowLogin(false)}
+      >
+        Yopish
+      </button>
+    </div>
+  </div>
+)}
       {showSellerPanel && user?.role === "seller" && (
         <div className="auth-overlay">
           <div className="auth-box seller-modal-scroll">
+
+            <button
+              type="button"
+              className="seller-close-x"
+              onClick={() => setShowSellerPanel(false)}
+              aria-label="Sotuvchi kabinetini yopish"
+            >
+              ✕
+            </button>
             <h2>🏪 Sotuvchi kabineti</h2>
             <p>Xush kelibsiz, {user.name}!</p>
             <button
@@ -1054,6 +1486,39 @@ const handleUpdateProduct = async (e) => {
                     <p>🔢 Soni: {order.quantity}</p>
                     <p>💰 Narxi: {Number(order.unit_price).toLocaleString()} so'm</p>
                     <p>📋 Holati: {order.status}</p>
+                    <div style={{ marginTop: "12px", display: "flex", gap: "10px" }}>
+                      <button
+                        type="button"
+                        onClick={() => updateOrderStatus(order.item_id, "Jarayonda")}
+                        disabled={order.status === "Jarayonda" || order.status === "Yetkazilgan"}
+                        style={{
+                          background: "#2563eb",
+                          color: "white",
+                          padding: "10px",
+                          border: "none",
+                          borderRadius: "8px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        🔵 Jarayonda
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => updateOrderStatus(order.item_id, "Yetkazilgan")}
+                        disabled={order.status === "Yetkazilgan"}
+                        style={{
+                          background: "#16a34a",
+                          color: "white",
+                          padding: "10px",
+                          border: "none",
+                          borderRadius: "8px",
+                          cursor: "pointer"
+                        }}
+                      >
+                        🟢 Yetkazilgan
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1084,9 +1549,19 @@ const handleUpdateProduct = async (e) => {
 
               <select name="category" required>
                 <option value="">Kategoriyani tanlang</option>
-                <option value="Elektronika">Elektronika</option>
-                <option value="Kiyim-kechak">Kiyim-kechak</option>
-                <option value="Boshqalar">Boshqalar</option>
+
+                <option value="Oziq-ovqat">🍎 Oziq-ovqat</option>
+                <option value="Ichimliklar">🥤 Ichimliklar</option>
+                <option value="Elektronika">📱 Elektronika</option>
+                <option value="Kiyim-kechak">👕 Kiyim-kechak</option>
+                <option value="Uy-ro'zg'or">🏠 Uy-ro‘zg‘or</option>
+                <option value="Shirinliklar">🍫 Shirinliklar</option>
+                <option value="Maishiy kimyo">🧼 Maishiy kimyo</option>
+                <option value="Gigiyena vositalari">🧴 Gigiyena vositalari</option>
+                <option value="Bolalar uchun">🧸 Bolalar uchun</option>
+                <option value="Sport">⚽ Sport</option>
+                <option value="Go'zallik">💄 Go‘zallik</option>
+                <option value="Boshqalar">📦 Boshqalar</option>
               </select>
 
               <input
@@ -1130,9 +1605,18 @@ const handleUpdateProduct = async (e) => {
                     defaultValue={editingProduct.category}
                     required
                   >
-                    <option value="Elektronika">Elektronika</option>
-                    <option value="Kiyim-kechak">Kiyim-kechak</option>
-                    <option value="Boshqalar">Boshqalar</option>
+                    <option value="Oziq-ovqat">🍎 Oziq-ovqat</option>
+                    <option value="Ichimliklar">🥤 Ichimliklar</option>
+                    <option value="Elektronika">📱 Elektronika</option>
+                    <option value="Kiyim-kechak">👕 Kiyim-kechak</option>
+                    <option value="Uy-ro'zg'or">🏠 Uy-ro‘zg‘or</option>
+                    <option value="Shirinliklar">🍫 Shirinliklar</option>
+                    <option value="Maishiy kimyo">🧼 Maishiy kimyo</option>
+                    <option value="Gigiyena vositalari">🧴 Gigiyena vositalari</option>
+                    <option value="Bolalar uchun">🧸 Bolalar uchun</option>
+                    <option value="Sport">⚽ Sport</option>
+                    <option value="Go'zallik">💄 Go‘zallik</option>
+                    <option value="Boshqalar">📦 Boshqalar</option>
                   </select>
 
                   <input
@@ -1185,21 +1669,75 @@ const handleUpdateProduct = async (e) => {
               ))}
 
 
-            <button
-              type="button"
-              onClick={() => setShowSellerPanel(false)}
-            >
-              Yopish
-            </button>
+
           </div>
         </div>
       )}
+      {showBuyerPanel && user?.role === "buyer" && (
+  <div
+    className="auth-overlay"
+    onClick={() => setShowBuyerPanel(false)}
+  >
+    <div
+      className="auth-box"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2>🛍️ Xaridor kabineti</h2>
 
+      <p>Xush kelibsiz, {user.name}!</p>
 
+      <p>👤 Hisob turi: Xaridor</p>
+
+      <button
+        type="button"
+        onClick={() => {
+          setShowBuyerPanel(false);
+          setShowCart(true);
+        }}
+      >
+        🛒 Mening savatcham
+      </button>
+
+      <button
+        type="button"
+        disabled={cart.length === 0}
+        onClick={() => {
+          setShowBuyerPanel(false);
+          setShowOrderForm(true);
+        }}
+      >
+        📦 Buyurtma berish
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          setUser(null);
+          setToken("");
+          setShowBuyerPanel(false);
+          setShowCart(false);
+          setShowOrderForm(false);
+        }}
+      >
+        🚪 Akkauntdan chiqish
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setShowBuyerPanel(false)}
+      >
+        Yopish
+      </button>
+    </div>
+  </div>
+)}
+      
       </main>
     </div>
   );
 }
 
 export default App;
+
+
 
