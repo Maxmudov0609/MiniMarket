@@ -49,7 +49,20 @@ const auth=(role)=>wrap(async (req,res,next)=>{
  if(role&&user.role!==role)return res.status(403).json({error:'Ruxsat yo‘q'});
  req.user=user;next();
 });
-const categories=['Elektronika','Kiyim-kechak','Uy jihozlari','Sport','Boshqalar'];
+const categories = [
+  "Ichimliklar",
+  "Oziq-ovqat mahsulotlari",
+  "Shirinliklar",
+  "Maishiy kimyo",
+  "Gigiyena vositalari",
+  "Bolalar uchun",
+  "Uy-ro‘zg‘or",
+  "Elektronika",
+  "Kiyim-kechak",
+  "Uy jihozlari",
+  "Sport",
+  "Boshqalar"
+];
 const validProduct=b=>typeof b.name==='string'&&b.name.trim().length>0&&typeof b.description==='string'&&Number.isSafeInteger(b.price)&&b.price>0&&categories.includes(b.category)&&Number.isSafeInteger(b.stock)&&b.stock>=0&&(!b.image_url||typeof b.image_url==='string');
 app.post('/api/auth/register', wrap(async (req, res) => {
   const { name, email, password, role } = req.body;
