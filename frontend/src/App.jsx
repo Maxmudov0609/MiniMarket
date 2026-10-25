@@ -454,7 +454,29 @@ async function handlePlaceOrder(e) {
       console.log("Foydalanuvchi:", data.user);
       console.log("Foydalanuvchi roli:", data.user?.role);
 
-      alert("Muvaffaqiyatli tizimga kirdingiz!");
+      const notification = document.createElement("div");
+
+notification.textContent = isRegister
+  ? "✅ Ro‘yxatdan muvaffaqiyatli o‘tdingiz!"
+  : "✅ Tizimga muvaffaqiyatli kirdingiz!";
+
+Object.assign(notification.style, {
+  position: "fixed",
+  top: "25px",
+  right: "25px",
+  background: "#16a34a",
+  color: "white",
+  padding: "18px 25px",
+  borderRadius: "12px",
+  fontSize: "16px",
+  fontWeight: "bold",
+  boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
+  zIndex: "99999"
+});
+
+document.body.appendChild(notification);
+
+setTimeout(() => notification.remove(), 3000);
     } catch (error) {
       alert(error.message);
     }
