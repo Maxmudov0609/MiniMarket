@@ -515,7 +515,27 @@ const handleAddProduct = async (e) => {
       throw new Error(data.error || "Xatolik yuz berdi");
     }
 
-    alert("Mahsulot bazaga muvaffaqiyatli qo'shildi!");
+    const notification = document.createElement("div");
+
+notification.textContent = "✅ Mahsulot muvaffaqiyatli qo‘shildi!";
+
+Object.assign(notification.style, {
+  position: "fixed",
+  top: "25px",
+  right: "25px",
+  background: "#16a34a",
+  color: "white",
+  padding: "18px 25px",
+  borderRadius: "12px",
+  fontSize: "16px",
+  fontWeight: "bold",
+  boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
+  zIndex: "99999"
+});
+
+document.body.appendChild(notification);
+
+setTimeout(() => notification.remove(), 3000);
     const productsResponse = await fetch(
       "https://minimarket-backend-r4co.onrender.com/api/products"
     );
