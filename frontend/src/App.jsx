@@ -322,6 +322,12 @@ async function handlePlaceOrder(e) {
       quantity: item.quantity,
     })),
   };
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "⏳ Buyurtmangiz yuborilmoqda...";
+  }
 
   try {
     const response = await fetch("https://minimarket-backend-r4co.onrender.com/api/orders", {
@@ -339,7 +345,27 @@ async function handlePlaceOrder(e) {
       throw new Error(data.error || "Buyurtma berishda xatolik");
     }
 
-    alert("Buyurtmangiz muvaffaqiyatli qabul qilindi!");
+    const notification = document.createElement("div");
+
+    notification.textContent = "✅ Buyurtmangiz muvaffaqiyatli qabul qilindi!";
+
+    Object.assign(notification.style, {
+      position: "fixed",
+      top: "25px",
+      right: "25px",
+      background: "#16a34a",
+      color: "white",
+      padding: "18px 25px",
+      borderRadius: "12px",
+      fontSize: "16px",
+      fontWeight: "bold",
+      boxShadow: "0 8px 25px rgba(0,0,0,0.2)",
+      zIndex: "99999"
+    });
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.remove(), 3000);
     setCart([]);
     setShowOrderForm(false);
 
@@ -350,9 +376,14 @@ async function handlePlaceOrder(e) {
     if (productsResponse.ok) {
       setDbProducts(await productsResponse.json());
     }
-  } catch (error) {
-    alert(error.message);
+} catch (error) {
+  alert(error.message);
+} finally {
+  if (submitButton) {
+    submitButton.disabled = false;
+    submitButton.textContent = "✅ Buyurtmani tasdiqlash";
   }
+}
 }
 
 
