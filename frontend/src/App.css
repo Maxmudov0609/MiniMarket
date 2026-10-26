@@ -1122,18 +1122,22 @@ select:focus {
 
 .product-modal-image {
   width: 100%;
-  height: 220px;
+  height: 320px;
   min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
+  background: #f8f7ff;
   border-radius: 16px;
 }
 
 .product-modal-image img {
   width: 100%;
   height: 100%;
-  max-width: none;
-  max-height: none;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
   object-position: center;
   display: block;
   border-radius: 16px;
@@ -4614,90 +4618,181 @@ body {
     min-height: 350px;
   }
 }
-/* ===== MINIMARKET MODAL DIZAYN TUZATISH ===== */
 
+/* ===== MiniMarket: mahsulot oynasi uchun yagona yakuniy qoidalar ===== */
 .product-modal-overlay {
-  padding: 24px !important;
-  overflow-y: auto !important;
-}
-
-.product-modal {
-  width: 100% !important;
-  max-width: 1100px !important;
-  max-height: 90vh !important;
-  padding: 28px !important;
-  grid-template-columns: 1fr 1fr !important;
-  align-items: start !important;
-  gap: 32px !important;
-  overflow-y: auto !important;
-  border-radius: 24px !important;
-}
-
-/* Rasm joylashgan maydon */
-.product-modal .product-modal-image {
-  width: 100% !important;
-  height: 520px !important;
-  min-height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: #f5f3ff !important;
-  border-radius: 18px !important;
-  overflow: hidden !important;
+  padding: 20px !important;
+  background: rgba(15, 23, 42, .68) !important;
+  backdrop-filter: blur(6px);
+  box-sizing: border-box;
 }
 
-/* Mahsulot rasmi */
-.product-modal .product-modal-image img {
+.product-modal-overlay > .product-modal {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 45%) minmax(0, 55%) !important;
+  grid-template-rows: auto !important;
+  align-items: start !important;
+  gap: 0 !important;
+  width: min(1100px, 96vw) !important;
+  max-width: 1100px !important;
+  height: auto !important;
+  max-height: 88vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: #fff !important;
+  border-radius: 24px !important;
+  box-shadow: 0 25px 75px rgba(0,0,0,.25) !important;
+  box-sizing: border-box !important;
+}
+
+.product-modal-overlay > .product-modal > .product-modal-close {
+  position: absolute !important;
+  top: 14px !important;
+  right: 14px !important;
+  z-index: 50 !important;
+  margin: 0 !important;
+  width: 44px !important;
+  height: 44px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  background: white !important;
+  color: #6938ff !important;
+}
+
+.product-modal-overlay > .product-modal > .product-modal-image {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 520px !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  padding: 22px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  background: #f8f7ff !important;
+  border-radius: 24px 0 0 24px !important;
+  box-sizing: border-box !important;
+}
+
+.product-modal-overlay > .product-modal > .product-modal-image > img {
+  display: block !important;
   width: 100% !important;
   height: 100% !important;
   min-width: 0 !important;
   min-height: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   padding: 0 !important;
-  display: block !important;
-  object-fit: cover !important;
+  margin: 0 !important;
+  object-fit: contain !important;
   object-position: center !important;
-  border-radius: 18px !important;
+  transform: none !important;
 }
 
-/* Mahsulot ma'lumotlari */
-.product-modal .product-modal-info {
+.product-modal-overlay > .product-modal > .product-modal-info {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
   justify-content: flex-start !important;
-  gap: 18px !important;
+  gap: 16px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 58px 34px 34px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
 }
 
-/* Telefon ekranlari */
+.product-modal-overlay > .product-modal > .product-modal-info h2 {
+  font-size: clamp(23px, 2.3vw, 32px) !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
+}
+
 @media (max-width: 700px) {
-  .product-modal {
-    grid-template-columns: 1fr !important;
-    padding: 16px !important;
-    gap: 20px !important;
+  .product-modal-overlay { padding: 10px !important; }
+  .product-modal-overlay > .product-modal {
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100% !important;
+    max-height: 92vh !important;
   }
-
-  .product-modal .product-modal-image {
-    height: 320px !important;
+  .product-modal-overlay > .product-modal > .product-modal-image {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    height: 280px !important;
+    padding: 14px !important;
+    border-radius: 20px 20px 0 0 !important;
+  }
+  .product-modal-overlay > .product-modal > .product-modal-info {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    padding: 22px !important;
+    gap: 12px !important;
   }
 }
-/* MiniMarket — mahsulot rasmi */
+/* MINIMARKET — MAHSULOT OYNASINI TUZATISH */
 
 @media (min-width: 701px) {
-  .product-modal .product-modal-image {
-    width: 100% !important;
-    height: 500px !important;
-    min-height: 0 !important;
+  .product-modal-overlay .product-modal {
+    display: grid !important;
+    grid-template-columns: 42% 58% !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+
+    width: 1050px !important;
+    max-width: 95vw !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
     padding: 0 !important;
-    overflow: hidden !important;
   }
 
-  .product-modal .product-modal-image img {
+  .product-modal-overlay .product-modal .product-modal-image {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+
     width: 100% !important;
-    height: 100% !important;
+    height: auto !important;
+    min-height: 400px !important;
     max-height: none !important;
-    object-fit: cover !important;
-    object-position: center !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 25px !important;
+    background: #f8f7ff !important;
+    box-sizing: border-box !important;
+  }
+
+  .product-modal-overlay .product-modal .product-modal-image img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 400px !important;
+    object-fit: contain !important;
+  }
+
+  .product-modal-overlay .product-modal .product-modal-info {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+
+    width: 100% !important;
+    padding: 35px !important;
+    box-sizing: border-box !important;
   }
 }
