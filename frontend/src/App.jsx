@@ -92,6 +92,17 @@ const marketCategories = [
   { icon: "🏠", name: "Uy-ro‘zg‘or" },
   { icon: "📱", name: "Elektronika" }
 ];
+const productImages = {
+  "Bluetooth karnay": "/images/bluetooth-karnay.jpg",
+  "Hydrolife suv 1 L": "/images/hydrolife.png",
+  "Fanta 1.5 L": "/images/fanta.png",
+  "Fuse Tea 1 L": "/images/fuse-tea.png",
+  "Sprite 1.5 L": "/images/sprite.png",
+  "Coca-Cola 1.5 L": "/images/coca-cola.png",
+  "Pepsi 1.5 L": "/images/pepsi.png",
+  "Nestle suv 1.5 L": "/images/nestle.png",
+  "Lipton Ice Tea 1 L": "/images/lipton.png",
+};
 
 function App() {
   const [showProducts, setShowProducts] = useState(() => {
@@ -134,23 +145,50 @@ function App() {
   }, [language]);
 
   const [dbProducts, setDbProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
 
-  useEffect(() => {
-    fetch("https://minimarket-backend-r4co.onrender.com/api/products")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Mahsulotlarni olishda xatolik");
-        }
-        return response.json();
-      })
-      .then((data) => {
+useEffect(() => {
+  const controller = new AbortController();
+
+  async function loadProducts() {
+    try {
+      setProductsLoading(true);
+
+      const response = await fetch(
+        "https://minimarket-backend-r4co.onrender.com/api/products",
+        { signal: controller.signal }
+      );
+
+      if (!response.ok) {
+        throw new Error("Mahsulotlarni yuklashda xatolik");
+      }
+
+      const data = await response.json();
+
+      if (!Array.isArray(data)) {
+        throw new Error("API noto'g'ri ma'lumot qaytardi");
+      }
+
+      if (!controller.signal.aborted) {
         setDbProducts(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, []);
+        console.log("Yuklangan mahsulotlar:", data.length);
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        console.error("Mahsulotlarni yuklash xatosi:", error);
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setProductsLoading(false);
+      }
+    }
+  }
+
+  loadProducts();
+
+  return () => controller.abort();
+}, []);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Barchasi");
@@ -393,26 +431,35 @@ async function handlePlaceOrder(e) {
 
   const filteredProducts = dbProducts
     .filter((product) => {
-      const matchesSearch = product.name
+      const matchesSearch = String(product.name || "")
         .toLowerCase()
         .includes(search.toLowerCase());
 
+      const normalizeCategory = (value) =>
+        String(value || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[‘’ʻ`']/g, "'");
+
       const matchesCategory =
-        category === "Barchasi" || product.category === category;
+        category === "Barchasi" ||
+        category === "" ||
+        normalizeCategory(product.category) === normalizeCategory(category);
 
       const matchesMin =
-        minPrice === "" || product.price >= Number(minPrice);
+        minPrice === "" || Number(product.price) >= Number(minPrice);
 
       const matchesMax =
-        maxPrice === "" || product.price <= Number(maxPrice);
+        maxPrice === "" || Number(product.price) <= Number(maxPrice);
 
       return matchesSearch && matchesCategory && matchesMin && matchesMax;
     })
-    .sort((a, b) => {
-      if (sort === "cheap") return a.price - b.price;
-      if (sort === "expensive") return b.price - a.price;
-      return b.id - a.id;
-  });
+
+.sort((a, b) => {
+  if (sort === "cheap") return Number(a.price) - Number(b.price);
+  if (sort === "expensive") return Number(b.price) - Number(a.price);
+  return Number(b.id) - Number(a.id);
+});
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -596,13 +643,17 @@ const handleUpdateProduct = async (e) => {
   const form = e.currentTarget;
 
   const body = {
-    name: form.elements.name.value,
-    description: editingProduct.description || "",
-    price: Number(form.elements.price.value),
-    category: form.elements.category.value,
-    image_url: form.elements.image_url.value,
-    stock: Number(editingProduct.stock ?? 10),
-  };
+  name: form.elements.name.value,
+  description: editingProduct.description || "",
+  price: Number(form.elements.price.value),
+  old_price: form.elements.old_price.value
+    ? Number(form.elements.old_price.value)
+    : null,
+  discount_percent: Number(form.elements.discount_percent.value || 0),
+  category: form.elements.category.value,
+  image_url: form.elements.image_url.value,
+  stock: Number(editingProduct.stock ?? 10),
+};
 
   try {
     const response = await fetch(
@@ -949,8 +1000,46 @@ const handleUpdateProduct = async (e) => {
 </div>
 
         <div className="products">
-        {filteredProducts
-          .map((product) => (
+          
+          {productsLoading && (
+            <div style={{
+              gridColumn: "1 / -1",
+              textAlign: "center",
+              padding: "60px 20px",
+              fontSize: "20px",
+              fontWeight: "bold",
+              color: "#6938ef"
+            }}>
+              ⏳ Mahsulotlar yuklanmoqda, iltimos kuting...
+            </div>
+          )}
+      {!productsLoading && (
+        filteredProducts.length === 0 ? (
+          <div className="empty-products">
+            <div className="empty-products-icon">📦</div>
+
+            <h2>Hozircha mahsulotlar mavjud emas</h2>
+
+            <p>
+              Ushbu kategoriyaga hali mahsulot qo‘shilmagan.
+              <br />
+              Tez orada yangi mahsulotlar paydo bo‘ladi!
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setCategory("Barchasi");
+                setSearch("");
+                setMinPrice("");
+                setMaxPrice("");
+              }}
+            >
+              🛍️ Barcha mahsulotlarni ko‘rish
+            </button>
+          </div>
+        ) : (
+          filteredProducts.map((product) => (
             <div
               className="product-card"
               key={product.id}
@@ -959,13 +1048,19 @@ const handleUpdateProduct = async (e) => {
             >
               <span className="product-new-badge">✨ Tavsiya etiladi</span>
               <img
-                src={product.image_url || "/no-image.svg"}
+                src={
+                  productImages[product.name] ||
+                  product.image_url ||
+                  "/no-image.svg"
+                }
                 alt={product.name}
+                className="product-image"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/no-image.svg";
                 }}
               />
+
               <div className="product-info">
                 <span>
                   {language === "ru"
@@ -1003,11 +1098,28 @@ const handleUpdateProduct = async (e) => {
                 >
                   {favorites.includes(product.id) ? "❤️" : "🤍"}
                 </button>
-                <h3 className="price">
-                  {Number(product.price).toLocaleString("ru-RU", {
-                    maximumFractionDigits: 0
-                  })} so‘m 
-                </h3>
+
+                <div className="product-price-box">
+                  {Number(product.old_price) > Number(product.price) && (
+                    <div className="old-price-row">
+                      <span className="old-price">
+                        {Number(product.old_price).toLocaleString("ru-RU")} so‘m
+                      </span>
+
+                      <span className="discount-badge">
+                        -{Math.round(
+                          (1 - Number(product.price) / Number(product.old_price)) * 100
+                        )}%
+                      </span>
+                    </div>
+                  )}
+
+                  <h3 className="price">
+                    {Number(product.price).toLocaleString("ru-RU", {
+                      maximumFractionDigits: 0
+                    })} so‘m
+                  </h3>
+                </div>
                 
                 <button
                   onClick={(e) => {
@@ -1020,7 +1132,8 @@ const handleUpdateProduct = async (e) => {
 
               </div>
             </div>
-          ))}
+          )))
+        )}
         </div>
         {selectedProduct && (
           <div
@@ -1042,7 +1155,11 @@ const handleUpdateProduct = async (e) => {
 
               <div className="product-modal-image">
                 <img
-                  src={selectedProduct.image_url || "/no-image.svg"}
+                  src={
+                    productImages[selectedProduct.name] ||
+                    selectedProduct.image_url ||
+                    "/no-image.svg"
+                  }
                   alt={selectedProduct.name}
                 />
               </div>
@@ -1053,6 +1170,38 @@ const handleUpdateProduct = async (e) => {
                 </span>
 
                 <h2>{selectedProduct.name}</h2>
+                {console.log("Sotuvchi tekshiruvi:", {
+                  userId: user?.id,
+                  userRole: user?.role,
+                  productSellerId: selectedProduct?.seller_id,
+                })}
+                {user?.role === "seller" &&
+                  String(user?.id) === String(selectedProduct.seller_id) && (
+                    <div className="seller-product-actions">
+                      <button
+                        type="button"
+                        className="seller-edit-btn"
+                        onClick={() => {
+                          setEditingProduct(selectedProduct);
+                          setSelectedProduct(null);
+                          setShowSellerPanel(true);
+                        }}
+                      >
+                        ✏️ Mahsulotni tahrirlash
+                      </button>
+
+                      <button
+                        type="button"
+                        className="seller-delete-btn"
+                        onClick={async () => {
+                          await handleDeleteProduct(selectedProduct.id);
+                          setSelectedProduct(null);
+                        }}
+                      >
+                        🗑️ Mahsulotni o‘chirish
+                      </button>
+                    </div>
+                  )}
                 <div className="product-extra-info">
                   <div className="product-rating">
                     <span>⭐⭐⭐⭐⭐</span>
@@ -1505,7 +1654,7 @@ const handleUpdateProduct = async (e) => {
 )}
       {showSellerPanel && user?.role === "seller" && (
         <div className="auth-overlay">
-          <div className="auth-box seller-modal-scroll">
+          <div className="auth-box seller-modal-scroll seller-modal">
 
             <button
               type="button"
@@ -1604,12 +1753,23 @@ const handleUpdateProduct = async (e) => {
             <form onSubmit={handleAddProduct}>
 
 
-              <input
-                type="text"
-                name="name"
-                placeholder="Mahsulot nomi"
-                required
-              />
+          <div className="seller-form-field">
+            <label htmlFor="add-product-name">
+              📦 Mahsulot nomi
+            </label>
+
+            <input
+              id="add-product-name"
+              type="text"
+              name="name"
+              placeholder="Masalan: iPhone 15 Pro Max"
+              required
+            />
+
+            <small>
+              Sotmoqchi bo‘lgan mahsulotingizning to‘liq nomini kiriting.
+            </small>
+          </div>
 
 
               <input
@@ -1655,62 +1815,120 @@ const handleUpdateProduct = async (e) => {
               <div className="edit-product">
                 <h3>✏️ Mahsulotni tahrirlash</h3>
 
-                <form onSubmit={handleUpdateProduct}>
-                  <input
-                    type="text"
-                    name="name"
-                    defaultValue={editingProduct.name}
-                    placeholder="Mahsulot nomi"
-                    required
-                  />
+<form onSubmit={handleUpdateProduct} className="seller-modern-form">
 
-                  <input
-                    type="number"
-                    name="price"
-                    defaultValue={editingProduct.price}
-                    placeholder="Mahsulot narxi"
-                    min="1"
-                    required
-                  />
+  <div className="seller-form-grid">
 
-                  <select
-                    name="category"
-                    defaultValue={editingProduct.category}
-                    required
-                  >
-                    <option value="Oziq-ovqat">🍎 Oziq-ovqat</option>
-                    <option value="Ichimliklar">🥤 Ichimliklar</option>
-                    <option value="Elektronika">📱 Elektronika</option>
-                    <option value="Kiyim-kechak">👕 Kiyim-kechak</option>
-                    <option value="Uy-ro'zg'or">🏠 Uy-ro‘zg‘or</option>
-                    <option value="Shirinliklar">🍫 Shirinliklar</option>
-                    <option value="Maishiy kimyo">🧼 Maishiy kimyo</option>
-                    <option value="Gigiyena vositalari">🧴 Gigiyena vositalari</option>
-                    <option value="Bolalar uchun">🧸 Bolalar uchun</option>
-                    <option value="Sport">⚽ Sport</option>
-                    <option value="Go'zallik">💄 Go‘zallik</option>
-                    <option value="Boshqalar">📦 Boshqalar</option>
-                  </select>
+    <div className="seller-form-field">
+      <label>📦 Mahsulot nomi</label>
+      <input
+        type="text"
+        name="name"
+        defaultValue={editingProduct.name}
+        placeholder="Masalan: iPhone 15 Pro Max"
+        required
+      />
+      <small>Mahsulotning to‘liq nomini kiriting.</small>
+    </div>
 
-                  <input
-                    type="url"
-                    name="image_url"
-                    defaultValue={editingProduct.image_url}
-                    placeholder="Mahsulot rasmi URL"
-                    required
-                  />
+    <div className="seller-form-field">
+      <label>💰 Sotuv narxi (so‘m)</label>
+      <input
+        type="number"
+        name="price"
+        defaultValue={editingProduct.price}
+        placeholder="Masalan: 80000"
+        min="1"
+        required
+      />
+      <small>Xaridor to‘laydigan narx.</small>
+    </div>
 
-                  <button type="submit">
-                    💾 Saqlash
-                  </button>
+    <div className="seller-form-field">
+      <label>🏷️ Eski narx (so‘m)</label>
+      <input
+        type="number"
+        name="old_price"
+        defaultValue={editingProduct.old_price ?? ""}
+        placeholder="Masalan: 100000"
+        min="1"
+        step="any"
+      />
+      <small>Chegirmadan oldingi narx (ixtiyoriy).</small>
+    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setEditingProduct(null)}
-                  >
-                    Bekor qilish
-                  </button>
-                </form>
+    <div className="seller-form-field">
+      <label>🔥 Chegirma foizi (%)</label>
+      <input
+        type="number"
+        name="discount_percent"
+        defaultValue={editingProduct.discount_percent ?? 0}
+        placeholder="Masalan: 20"
+        min="0"
+        max="100"
+        step="any"
+      />
+      <small>0 dan 100 gacha chegirma kiriting.</small>
+    </div>
+
+    <div className="seller-form-field">
+      <label>📂 Mahsulot kategoriyasi</label>
+
+      <select
+        name="category"
+        defaultValue={editingProduct.category}
+        required
+      >
+        <option value="Oziq-ovqat">🍎 Oziq-ovqat</option>
+        <option value="Ichimliklar">🥤 Ichimliklar</option>
+        <option value="Elektronika">📱 Elektronika</option>
+        <option value="Kiyim-kechak">👕 Kiyim-kechak</option>
+        <option value="Uy-ro'zg'or">🏠 Uy-ro‘zg‘or</option>
+        <option value="Shirinliklar">🍬 Shirinliklar</option>
+        <option value="Maishiy kimyo">🧼 Maishiy kimyo</option>
+        <option value="Gigiyena vositalari">🧴 Gigiyena vositalari</option>
+        <option value="Bolalar uchun">🧸 Bolalar uchun</option>
+        <option value="Sport">⚽ Sport</option>
+        <option value="Go'zallik">💄 Go‘zallik</option>
+        <option value="Boshqalar">📦 Boshqalar</option>
+      </select>
+
+      <small>Mahsulot qaysi turga kirishini tanlang.</small>
+    </div>
+
+    <div className="seller-form-field">
+      <label>🖼️ Mahsulot rasmi URL</label>
+
+      <input
+        type="url"
+        name="image_url"
+        defaultValue={editingProduct.image_url}
+        placeholder="https://example.com/rasm.jpg"
+        required
+      />
+
+      <small>Mahsulot rasmining internet manzilini kiriting.</small>
+    </div>
+
+  </div>
+
+  <div className="seller-form-actions">
+
+    <button type="submit" className="seller-save-btn">
+      💾 O‘zgarishlarni saqlash
+    </button>
+
+    <button
+      type="button"
+      className="seller-cancel-btn"
+      onClick={() => setEditingProduct(null)}
+    >
+      ✖ Bekor qilish
+    </button>
+
+  </div>
+
+</form>
               </div>
             )}
 
