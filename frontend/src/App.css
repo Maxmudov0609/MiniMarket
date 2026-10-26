@@ -1013,59 +1013,46 @@ select:focus {
 }
 /* Mahsulot haqida batafsil oyna */
 
-.product-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(6px);
-}
 
-.product-modal {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 35px;
-  width: 100%;
-  max-width: 900px;
-  padding: 35px;
-  background: white;
-  border-radius: 24px;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.2);
-}
+
+
 
 .product-modal-close {
   position: absolute;
-  top: 15px;
-  right: 15px;
-  width: 38px;
-  height: 38px;
-  border: none;
-  border-radius: 50%;
-  background: #f1f1f5;
-  cursor: pointer;
-  font-size: 18px;
-}
+  top: 20px;
+  right: 20px;
 
-.product-modal-image {
+  width: 46px;
+  height: 46px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 350px;
-  background: #f8f8ff;
-  border-radius: 18px;
-  overflow: hidden;
+
+  border: 1px solid #eee8ff;
+  border-radius: 50%;
+
+  background: white;
+  color: #7c3aed;
+
+  font-size: 24px;
+  cursor: pointer;
+
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+
+  transition: all 0.3s ease;
 }
 
-.product-modal-image img {
-  width: 100%;
-  height: 350px;
-  object-fit: contain;
+.product-modal-close:hover {
+  background: #7c3aed;
+  color: white;
+  transform: rotate(90deg);
 }
+
+
+
+
 
 .product-modal-info {
   display: flex;
@@ -1114,8 +1101,13 @@ select:focus {
 }
 
 .product-modal-cart:hover {
-  background: #5126dc;
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, #5126dc, #7c3aed);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(108, 61, 255, 0.35);
+}
+
+.product-modal-cart:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 700px) {
@@ -1127,11 +1119,25 @@ select:focus {
     overflow-y: auto;
   }
 
-  .product-modal-image,
-  .product-modal-image img {
-    height: 220px;
-    min-height: 0;
-  }
+
+.product-modal-image {
+  width: 100%;
+  height: 220px;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.product-modal-image img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  border-radius: 16px;
+}
 
   .product-modal-info h2 {
     font-size: 23px;
@@ -4172,4 +4178,526 @@ body {
 .product-card:hover .product-image {
   transform: scale(1.02);
   transition: transform 0.3s ease;
+}
+/* ===== MAHSULOT KATTA OYNASI ===== */
+
+.product-modal-image {
+  width: 100%;
+  min-height: 480px;
+  background: linear-gradient(145deg, #ffffff, #f3efff);
+  border-radius: 24px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.product-modal-image img {
+  display: block;
+  width: 100%;
+  height: 420px;
+
+  object-fit: contain;
+  object-position: center;
+
+  border-radius: 16px;
+  transition: transform 0.3s ease;
+}
+
+.product-modal-image img:hover {
+  transform: scale(1.04);
+}
+
+/* Telefon uchun */
+@media (max-width: 768px) {
+  .product-modal-image {
+    min-height: 300px;
+    padding: 16px;
+  }
+
+  .product-modal-image img {
+    height: 280px;
+  }
+}
+/* ===== MINIMARKET MAHSULOT RASMI ===== */
+
+.product-modal-image {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 100% !important;
+  min-height: 500px !important;
+  height: 100% !important;
+
+  padding: 24px !important;
+  margin: 0 !important;
+
+  background: #f7f5ff !important;
+  border-radius: 24px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.product-modal-image img {
+  display: block !important;
+
+  width: 100% !important;
+  max-width: 450px !important;
+  height: 450px !important;
+
+  object-fit: contain !important;
+  object-position: center !important;
+
+  margin: 0 auto !important;
+  padding: 0 !important;
+  border-radius: 18px !important;
+}
+
+@media (max-width: 768px) {
+  .product-modal-image {
+    min-height: 320px !important;
+    height: 320px !important;
+    padding: 16px !important;
+  }
+
+  .product-modal-image img {
+    height: 280px !important;
+  }
+}
+/* Mahsulot rasmi butun joyni egallasin */
+
+.product-modal-image {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 650px !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+
+  overflow: hidden !important;
+  border-radius: 24px !important;
+}
+
+.product-modal-image img {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 650px !important;
+  max-width: none !important;
+
+  object-fit: cover !important;
+  object-position: center !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  transform: none !important;
+}
+
+@media (max-width: 768px) {
+  .product-modal-image,
+  .product-modal-image img {
+    min-height: 350px !important;
+    height: 350px !important;
+  }
+}
+/* ==========================================
+   MINIMARKET — PROFESSIONAL PRODUCT IMAGES
+   ========================================== */
+
+/* 1. Mahsulot kartochkasidagi rasm */
+
+.product-card {
+  overflow: hidden;
+  border-radius: 22px;
+  background: #ffffff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(80, 50, 180, 0.15);
+}
+
+.product-card .product-image {
+  display: block;
+  width: 100%;
+  height: 280px;
+  object-fit: contain;
+  object-position: center;
+  padding: 12px;
+  box-sizing: border-box;
+  background: #ffffff;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.04);
+}
+
+
+/* 2. Mahsulot ustiga bosilganda ochiladigan oyna */
+
+.product-modal-image {
+  width: 100%;
+  min-height: 550px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 3. Katta oynadagi mahsulot rasmi */
+
+.product-modal-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 550px;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+}
+
+
+/* 4. Telefon ekranlari uchun */
+
+@media (max-width: 768px) {
+
+  .product-card .product-image {
+    height: 200px;
+    padding: 8px;
+  }
+
+  .product-modal-image {
+    min-height: 320px;
+    height: 320px;
+  }
+
+  .product-modal-image img {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: contain;
+  }
+}
+/* =====================================
+   MINIMARKET PREMIUM PRODUCT MODAL
+   ===================================== */
+
+/* Mahsulot oynasining tashqi ko'rinishi */
+.product-modal {
+  width: min(1250px, 96vw);
+  max-width: 1250px;
+  max-height: 94vh;
+  background: #ffffff;
+  border-radius: 28px;
+  overflow-y: auto;
+  box-shadow: 0 30px 90px rgba(20, 10, 70, 0.3);
+}
+
+/* Mahsulot rasmi joylashgan maydon */
+.product-modal-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-width: 0;
+  min-height: 600px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #f9f7ff, #e8e2ff);
+}
+
+/* Rasmni kattalashtirish */
+.product-modal-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+  padding: 0;
+  margin: 0;
+  border-radius: 0;
+}
+
+/* O'ng tomondagi ma'lumotlar */
+.product-modal-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 18px;
+  padding: 32px;
+  background: #ffffff;
+}
+
+/* Mahsulot nomi */
+.product-modal-info h2 {
+  margin: 0;
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 800;
+  line-height: 1.2;
+  color: #121239;
+}
+
+/* Kategoriya */
+.product-modal-category {
+  display: block;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: #f0eaff;
+  color: #6736ff;
+  font-weight: 700;
+}
+
+/* Narx */
+.product-modal-price {
+  font-size: 38px;
+  font-weight: 900;
+  color: #6936ff;
+}
+
+/* Yopish tugmasi */
+.product-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid #eee8ff;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #6936ff;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Telefon uchun */
+@media (max-width: 768px) {
+  .product-modal {
+    width: 96vw;
+    max-height: 95vh;
+    border-radius: 20px;
+  }
+
+  .product-modal-image {
+    min-height: 350px;
+    height: 350px;
+  }
+
+  .product-modal-image img {
+    height: 100%;
+    min-height: 0;
+    object-fit: contain;
+  }
+
+  .product-modal-info {
+    padding: 20px;
+    gap: 14px;
+  }
+
+  .product-modal-info h2 {
+    font-size: 26px;
+  }
+
+  .product-modal-price {
+    font-size: 30px;
+  }
+}
+/* MINIMARKET — MAHSULOT RASMINI KATTALASHTIRISH */
+
+/* Chap tomondagi rasm maydoni */
+.product-modal-image {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 650px !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  background: #f5f2ff !important;
+  overflow: hidden !important;
+}
+
+/* Rasm */
+.product-modal-image > img {
+  display: block !important;
+
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 650px !important;
+
+  max-width: none !important;
+  max-height: none !important;
+
+  object-fit: cover !important;
+  object-position: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Telefon uchun */
+@media (max-width: 768px) {
+  .product-modal-image {
+    min-height: 350px !important;
+  }
+
+  .product-modal-image > img {
+    min-height: 350px !important;
+    object-fit: contain !important;
+  }
+}
+/* MAHSULOT RASMLARI — YANGI DIZAYN */
+
+.product-modal-image {
+  width: 100%;
+  min-height: 500px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f6ff;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.product-modal-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 20px;
+}
+
+@media (max-width: 700px) {
+  .product-modal-image {
+    height: 350px;
+    min-height: 350px;
+  }
+
+  .product-modal-image img {
+    height: 350px;
+    min-height: 350px;
+  }
+}
+/* ===== MINIMARKET MODAL DIZAYN TUZATISH ===== */
+
+.product-modal-overlay {
+  padding: 24px !important;
+  overflow-y: auto !important;
+}
+
+.product-modal {
+  width: 100% !important;
+  max-width: 1100px !important;
+  max-height: 90vh !important;
+  padding: 28px !important;
+  grid-template-columns: 1fr 1fr !important;
+  align-items: start !important;
+  gap: 32px !important;
+  overflow-y: auto !important;
+  border-radius: 24px !important;
+}
+
+/* Rasm joylashgan maydon */
+.product-modal .product-modal-image {
+  width: 100% !important;
+  height: 520px !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #f5f3ff !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+}
+
+/* Mahsulot rasmi */
+.product-modal .product-modal-image img {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 18px !important;
+}
+
+/* Mahsulot ma'lumotlari */
+.product-modal .product-modal-info {
+  justify-content: flex-start !important;
+  gap: 18px !important;
+}
+
+/* Telefon ekranlari */
+@media (max-width: 700px) {
+  .product-modal {
+    grid-template-columns: 1fr !important;
+    padding: 16px !important;
+    gap: 20px !important;
+  }
+
+  .product-modal .product-modal-image {
+    height: 320px !important;
+  }
+}
+/* MiniMarket — mahsulot rasmi */
+
+@media (min-width: 701px) {
+  .product-modal .product-modal-image {
+    width: 100% !important;
+    height: 500px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .product-modal .product-modal-image img {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center !important;
+  }
 }

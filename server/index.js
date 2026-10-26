@@ -245,27 +245,62 @@ app.put('/api/products/:id', auth('seller'), wrap(async (req, res) => {
   }
 
   const b = req.body;
+  const discount = Number(b.discount_percent ?? 0);
 
-  const result = await db.query(
-    `UPDATE products
-     SET name=$1,
-         description=$2,
-         price=$3,
-         category=$4,
-         image_url=$5,
-         stock=$6
-     WHERE id=$7 AND seller_id=$8
-     RETURNING id`,
-    [
-      b.name.trim(),
-      b.description,
-      b.price,
-      b.category,
-      b.image_url || '',
-      b.stock,
-      req.params.id,
-      req.user.id
-    ]
+if (
+  !Number.isFinite(discount) ||
+  discount < 0 ||
+  discount > 100
+) {
+  return res.status(400).json({
+    error: "Chegirma 0 dan 100 gacha bo'lishi kerak"
+  });
+}
+
+const oldPrice =
+  b.old_price === undefined ||
+  b.old_price === null ||
+  b.old_price === ''
+    ? null
+    : Number(b.old_price);
+
+if (
+  (oldPrice !== null &&
+    (!Number.isFinite(oldPrice) || oldPrice <= 0)) ||
+  (discount > 0 &&
+    (oldPrice === null || oldPrice <= Number(b.price)))
+) {
+  return res.status(400).json({
+    error: "Chegirma uchun eski narx yangi narxdan katta bo'lishi kerak"
+  });
+}
+
+const result = await db.query(
+  `UPDATE products
+   SET name=$1,
+       description=$2,
+       price=$3,
+       category=$4,
+       image_url=$5,
+       stock=$6,
+       old_price=$7,
+       discount_percent=$8
+   WHERE id=$9 AND seller_id=$10
+   RETURNING id`,
+[
+  b.name.trim(),
+  b.description,
+  b.price,
+  b.category,
+  b.image_url || '',
+  b.stock,
+  b.old_price === undefined || b.old_price === null || b.old_price === ''
+    ? null
+    : Number(b.old_price),
+  Number(b.discount_percent ?? 0),
+  req.params.id,
+  req.user.id
+]
   );
 
   if (result.rows.length === 0) {
@@ -278,19 +313,23 @@ app.put('/api/products/:id', auth('seller'), wrap(async (req, res) => {
 }));
 app.delete('/api/products/:id', auth('seller'), wrap(async (req, res) => {
   const result = await db.query(
-    `DELETE FROM products
-     WHERE id=$1 AND seller_id=$2
+    `UPDATE products
+     SET is_active = false
+     WHERE id = $1 AND seller_id = $2 AND is_active = true
      RETURNING id`,
     [req.params.id, req.user.id]
   );
 
   if (result.rows.length === 0) {
     return res.status(404).json({
-      error: 'Mahsulot topilmadi yoki ruxsat yo‘q'
+      error: 'Mahsulot topilmadi yoki o‘chirishga ruxsat yo‘q'
     });
   }
 
-  res.json({ ok: true });
+  res.json({
+    ok: true,
+    message: 'Mahsulot muvaffaqiyatli o‘chirildi'
+  });
 }));
 const checkout = async (buyer, b) => {
   const client = await db.connect();
