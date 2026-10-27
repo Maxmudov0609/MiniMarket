@@ -4796,3 +4796,1440 @@ body {
     box-sizing: border-box !important;
   }
 }
+/* MiniMarket — ko'p tilli sarlavha */
+
+.hero-content h1 {
+  font-size: clamp(28px, 3vw, 46px);
+  line-height: 1.18;
+  letter-spacing: -1px;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.hero-content h1 span {
+  display: inline-block;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .hero-content h1 {
+    font-size: 30px;
+    line-height: 1.2;
+  }
+}
+/* =========================================
+   MINIMARKET — PREMIUM PRODUCT MODAL IMAGE
+========================================= */
+
+.product-modal-overlay .product-modal .product-modal-image {
+  width: 100%;
+  min-height: 440px;
+  max-height: 520px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  background: linear-gradient(145deg, #f8f7ff, #f0edff);
+
+  border-radius: 24px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.product-modal-overlay .product-modal .product-modal-image img {
+  display: block;
+
+  width: 100%;
+  height: auto;
+  max-height: 480px;
+
+  object-fit: contain;
+  object-position: center;
+
+  border-radius: 18px;
+
+  box-shadow: 0 15px 35px rgba(70, 40, 140, 0.12);
+
+  transition: transform 0.35s ease;
+}
+
+@media (hover: hover) {
+  .product-modal-overlay .product-modal .product-modal-image img:hover {
+    transform: scale(1.025);
+  }
+}
+
+/* Telefon ekranlari */
+
+@media (max-width: 701px) {
+  .product-modal-overlay .product-modal .product-modal-image {
+    min-height: 280px;
+    max-height: none;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .product-modal-overlay .product-modal .product-modal-image img {
+    max-height: 350px;
+    border-radius: 14px;
+  }
+}
+/* =====================================
+   MINIMARKET PREMIUM PRODUCT MODAL
+===================================== */
+
+.product-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+}
+
+.product-modal {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(1100px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 25px 80px rgba(30, 20, 90, 0.25);
+}
+
+.product-modal-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  padding: 35px;
+  background: linear-gradient(
+    145deg,
+    #f8f7ff,
+    #eae5ff
+  );
+}
+
+.product-modal-image img {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  height: 420px;
+  object-fit: contain;
+  border-radius: 20px;
+  transition: transform 0.3s ease;
+}
+
+.product-modal-image img:hover {
+  transform: scale(1.04);
+}
+
+.product-modal-info {
+  padding: 55px 40px 40px;
+  background: #ffffff;
+}
+
+.product-modal-info h2 {
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 800;
+  color: #16123d;
+  margin: 15px 0 20px;
+}
+
+.product-modal-category {
+  display: inline-block;
+  padding: 9px 15px;
+  border-radius: 12px;
+  background: #f1ebff;
+  color: #6734ff;
+  font-weight: 600;
+}
+
+.product-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 10;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: white;
+  color: #252047;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+}
+
+.product-modal-close:hover {
+  background: #6734ff;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .product-modal-overlay {
+    padding: 10px;
+  }
+
+  .product-modal {
+    grid-template-columns: 1fr;
+    max-height: 95vh;
+    border-radius: 20px;
+  }
+
+  .product-modal-image {
+    min-height: 280px;
+    padding: 20px;
+  }
+
+  .product-modal-image img {
+    height: 280px;
+  }
+
+  .product-modal-info {
+    padding: 25px 20px;
+  }
+}
+/* ===== MINIMARKET PRODUCT MODAL FIX ===== */
+
+.product-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 20px !important;
+  background: rgba(16, 16, 40, 0.65) !important;
+  backdrop-filter: blur(8px);
+  z-index: 9999 !important;
+}
+
+.product-modal {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 42% 58% !important;
+  width: min(1050px, 96vw) !important;
+  max-height: 88vh !important;
+  overflow-y: auto !important;
+  border-radius: 24px !important;
+  background: #fff !important;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+}
+
+.product-modal-image {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 24px !important;
+  background: linear-gradient(135deg, #f7f5ff, #eeeaff);
+}
+
+.product-modal-image img {
+  width: 100% !important;
+  max-width: 380px !important;
+  height: 360px !important;
+  object-fit: contain !important;
+  border-radius: 16px !important;
+}
+
+.product-modal-info {
+  padding: 35px !important;
+}
+
+.product-modal-info h2 {
+  font-size: 30px !important;
+  line-height: 1.25 !important;
+  margin: 12px 0 18px !important;
+  color: #17123c !important;
+}
+
+.product-modal-info p {
+  line-height: 1.6 !important;
+}
+
+.product-modal-close {
+  position: absolute !important;
+  top: 15px !important;
+  right: 15px !important;
+  z-index: 20 !important;
+}
+
+@media (max-width: 768px) {
+  .product-modal {
+    grid-template-columns: 1fr !important;
+    max-height: 94vh !important;
+  }
+
+  .product-modal-image {
+    padding: 18px !important;
+  }
+
+  .product-modal-image img {
+    height: 260px !important;
+  }
+
+  .product-modal-info {
+    padding: 22px !important;
+  }
+
+  .product-modal-info h2 {
+    font-size: 24px !important;
+  }
+}
+/* ===== MINIMARKET PREMIUM PRODUCT MODAL ===== */
+
+.product-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  background: rgba(20, 16, 48, 0.65) !important;
+  backdrop-filter: blur(8px);
+}
+
+.product-modal {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: 43% 57% !important;
+  width: min(1100px, 96vw) !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+  background: #fff !important;
+  border-radius: 24px !important;
+  box-shadow: 0 25px 80px rgba(25, 15, 70, 0.2);
+}
+
+/* Mahsulot rasmi */
+
+.product-modal-image {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 0 !important;
+  padding: 28px !important;
+  background: linear-gradient(145deg, #f8f6ff, #efebff) !important;
+}
+
+.product-modal-image img {
+  width: 100% !important;
+  max-width: 410px !important;
+  height: 410px !important;
+  object-fit: contain !important;
+  border-radius: 18px !important;
+}
+
+/* Mahsulot ma'lumotlari */
+
+.product-modal-info {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  padding: 32px !important;
+}
+
+.product-modal-info h2 {
+  margin: 0 !important;
+  font-size: 30px !important;
+  line-height: 1.25 !important;
+  color: #17123c !important;
+}
+
+.product-extra-info {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin: 0 !important;
+}
+
+.product-modal-description {
+  margin: 0 !important;
+  line-height: 1.6 !important;
+  color: #626080 !important;
+}
+
+.product-modal-price {
+  margin: 4px 0 !important;
+  font-size: 34px !important;
+  font-weight: 800 !important;
+  color: #6738ff !important;
+}
+
+.product-modal-total-price,
+.product-modal-delivery,
+.product-quantity {
+  margin: 0 !important;
+}
+
+.product-modal-cart {
+  width: 100% !important;
+  min-height: 54px !important;
+  margin: 0 !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #7542ff, #5b22ed) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+}
+
+/* Yopish tugmasi */
+
+.product-modal-close {
+  position: absolute !important;
+  top: 16px !important;
+  right: 16px !important;
+  z-index: 10 !important;
+}
+
+/* Telefon ekranlari */
+
+@media (max-width: 768px) {
+  .product-modal {
+    grid-template-columns: 1fr !important;
+    max-height: 94vh !important;
+  }
+
+  .product-modal-image {
+    padding: 20px !important;
+  }
+
+  .product-modal-image img {
+    height: 280px !important;
+  }
+
+  .product-modal-info {
+    padding: 22px !important;
+  }
+
+  .product-modal-info h2 {
+    font-size: 24px !important;
+  }
+
+  .product-modal-price {
+    font-size: 28px !important;
+  }
+}
+/* =========================================
+   MINIMARKET PREMIUM PRODUCT MODAL
+========================================= */
+
+/* Orqa fon */
+.product-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 18, 45, 0.65);
+  backdrop-filter: blur(8px);
+}
+
+/* Mahsulot oynasi */
+.product-modal {
+  position: relative;
+  display: grid;
+  grid-template-columns: 45% 55%;
+  width: min(1180px, 100%);
+  max-width: 1180px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 30px 90px rgba(20, 15, 60, 0.25);
+}
+
+/* Mahsulot rasmi */
+.product-modal-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 35px;
+  min-height: 500px;
+  background: linear-gradient(
+    145deg,
+    #f8f7ff,
+    #eeebff
+  );
+}
+
+.product-modal-image img {
+  display: block;
+  width: 100%;
+  max-width: 450px;
+  max-height: 480px;
+  object-fit: contain;
+  border-radius: 20px;
+  transition: transform 0.3s ease;
+}
+
+.product-modal-image img:hover {
+  transform: scale(1.03);
+}
+
+/* O'ng tomondagi ma'lumotlar */
+.product-modal-info {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 18px;
+  padding: 48px 40px;
+  min-width: 0;
+}
+
+/* Kategoriya */
+.product-modal-category {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 10px 18px;
+  background: #f1edff;
+  color: #6736ff;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Mahsulot nomi */
+.product-modal-info h2 {
+  margin: 0;
+  color: #15153f;
+  font-size: clamp(26px, 3vw, 36px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+/* Reyting va mavjudlik */
+.product-extra-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.product-rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  color: #77758f;
+  font-size: 14px;
+}
+
+.product-stock {
+  display: inline-flex;
+  padding: 12px 18px;
+  background: #e9fff2;
+  color: #008b4b;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+/* Sevimlilar */
+.product-favorite-btn {
+  padding: 13px 20px;
+  background: #f6f2ff;
+  color: #6938ff;
+  border: 1px solid #e3d9ff;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.product-favorite-btn:hover {
+  background: #ece4ff;
+}
+
+/* Tavsif */
+.product-modal-description {
+  margin: 0;
+  color: #666987;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+/* Narx */
+.product-modal-price {
+  margin: 0;
+  color: #6938ff;
+  font-size: clamp(30px, 4vw, 42px);
+  font-weight: 900;
+}
+
+/* Umumiy narx */
+.product-total-price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  background: #f1ebff;
+  border-radius: 16px;
+}
+
+.product-total-price strong {
+  color: #6938ff;
+  font-size: 23px;
+}
+
+/* Yetkazib berish */
+.product-modal-delivery {
+  margin: 0;
+  padding: 17px 20px;
+  background: #eafaf1;
+  color: #008b4b;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+/* Miqdor */
+.product-quantity {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 7px;
+  background: #f6f4ff;
+  border-radius: 14px;
+}
+
+.quantity-selector button {
+  width: 45px;
+  height: 45px;
+  border: none;
+  border-radius: 11px;
+  background: #6938ff;
+  color: white;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.quantity-selector strong {
+  min-width: 24px;
+  text-align: center;
+  font-size: 19px;
+}
+
+/* Savatcha tugmasi */
+.product-modal-cart {
+  width: 100%;
+  padding: 19px;
+  border: none;
+  border-radius: 15px;
+  background: linear-gradient(
+    135deg,
+    #773dff,
+    #5824ed
+  );
+  color: white;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.product-modal-cart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(105, 56, 255, 0.25);
+}
+
+/* Yopish tugmasi */
+.product-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 20;
+  width: 46px;
+  height: 46px;
+  border: 1px solid #e5ddff;
+  border-radius: 50%;
+  background: white;
+  color: #6938ff;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+/* Telefon uchun */
+@media (max-width: 768px) {
+  .product-modal-overlay {
+    padding: 12px;
+  }
+
+  .product-modal {
+    grid-template-columns: 1fr;
+    max-height: 94vh;
+    border-radius: 20px;
+  }
+
+  .product-modal-image {
+    min-height: 280px;
+    padding: 25px;
+  }
+
+  .product-modal-image img {
+    max-height: 300px;
+  }
+
+  .product-modal-info {
+    padding: 25px 20px;
+    gap: 16px;
+  }
+
+  .product-modal-info h2 {
+    font-size: 26px;
+  }
+
+  .product-modal-price {
+    font-size: 32px;
+  }
+
+  .product-total-price {
+    flex-wrap: wrap;
+  }
+}
+/* MiniMarket — mahsulot oynasini tartiblash */
+
+.product-modal-info .product-extra-info {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.product-modal-info .product-rating {
+  justify-content: flex-start;
+}
+
+.product-modal-info .product-stock {
+  align-self: flex-start;
+}
+
+.product-modal-info .product-favorite-btn {
+  align-self: flex-start;
+}
+
+.product-modal-info {
+  gap: 14px;
+  padding: 32px;
+}
+
+.product-modal-image {
+  min-height: 420px;
+  padding: 24px;
+}
+
+.product-modal-image img {
+  max-height: 420px;
+}
+
+.product-modal {
+  max-height: 92vh;
+}
+/* =========================================
+   MINIMARKET — PREMIUM PRODUCT MODAL
+========================================= */
+
+.product-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(17, 18, 45, 0.65);
+  backdrop-filter: blur(8px);
+}
+
+.product-modal-overlay .product-modal {
+  position: relative;
+  display: block;
+  width: min(1180px, 100%);
+  max-width: 1180px;
+  max-height: 92vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow: 0 30px 90px rgba(18, 14, 64, 0.25);
+  box-sizing: border-box;
+}
+
+.product-modal-overlay .product-modal-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  width: 46px;
+  height: 46px;
+  margin-bottom: -46px;
+  border: 1px solid #eeeaff;
+  border-radius: 50%;
+  background: white;
+  color: #6535ff;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 30;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+
+.pm-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 26px;
+  clear: both;
+}
+
+.pm-gallery,
+.pm-details {
+  min-width: 0;
+}
+
+.pm-image-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  padding: 35px;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #f5f3ff, #eae6ff);
+  overflow: hidden;
+}
+
+.pm-image-box img {
+  width: 100%;
+  height: 410px;
+  object-fit: contain;
+  border-radius: 16px;
+}
+
+.pm-recommend {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  padding: 12px 17px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #642dff, #9d59ff);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  z-index: 2;
+}
+
+.pm-image-heart {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 45px;
+  height: 45px;
+  border: none;
+  border-radius: 50%;
+  background: white;
+  font-size: 23px;
+  cursor: pointer;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.1);
+}
+
+.pm-details {
+  padding: 12px 4px;
+}
+
+.pm-breadcrumb {
+  margin-bottom: 20px;
+  color: #8885a6;
+  font-size: 13px;
+}
+
+.pm-category {
+  display: inline-block;
+  padding: 10px 15px;
+  border-radius: 12px;
+  background: #f1ecff;
+  color: #6736ff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pm-title {
+  margin: 18px 0;
+  color: #17163e;
+  font-size: clamp(25px, 3vw, 36px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.pm-rating {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+  color: #7a7799;
+  font-size: 14px;
+}
+
+.pm-stars {
+  color: #ffb400;
+  font-size: 22px;
+  letter-spacing: 2px;
+}
+
+.pm-price-row {
+  margin: 22px 0 14px;
+}
+
+.pm-price {
+  color: #6736ff;
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 900;
+}
+
+.pm-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 15px;
+  color: #06843a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pm-stock span {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: #0aa34d;
+  color: white;
+}
+
+.pm-description {
+  margin: 10px 0 26px;
+  color: #666383;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.pm-buy-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 14px;
+  align-items: stretch;
+}
+
+.pm-quantity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px;
+  border: 1px solid #e9e4ff;
+  border-radius: 14px;
+  background: #f7f6ff;
+}
+
+.pm-quantity button {
+  width: 39px;
+  height: 42px;
+  border: none;
+  border-radius: 10px;
+  background: white;
+  color: #25204d;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.pm-quantity strong {
+  color: #17163e;
+  font-size: 18px;
+}
+
+.pm-add-cart {
+  min-height: 54px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #713bff, #5420f4);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(103, 54, 255, 0.2);
+}
+
+.pm-add-cart:hover {
+  filter: brightness(1.08);
+}
+
+.pm-action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.pm-action-row button {
+  min-height: 52px;
+  padding: 10px;
+  border: none;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pm-favorite {
+  background: #fff0f6;
+  color: #e51d62;
+}
+
+.pm-share {
+  background: #f1efff;
+  color: #3e3476;
+}
+
+.pm-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 17px;
+  border-radius: 14px;
+  background: #f3efff;
+}
+
+.pm-total span {
+  color: #686184;
+}
+
+.pm-total strong {
+  color: #6736ff;
+  font-size: 21px;
+}
+
+.pm-services {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.pm-service {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 12px;
+  border: 1px solid #f0edff;
+  border-radius: 16px;
+  background: #f8f7ff;
+}
+
+.pm-service > span {
+  font-size: 27px;
+}
+
+.pm-service div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pm-service strong {
+  color: #211d49;
+  font-size: 13px;
+}
+
+.pm-service small {
+  color: #777393;
+  font-size: 12px;
+}
+
+.pm-bottom {
+  margin-top: 25px;
+  padding: 20px;
+  border: 1px solid #eeeaff;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.pm-tabs {
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eeeaff;
+}
+
+.pm-tab-active {
+  display: inline-block;
+  padding: 13px 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #713bff, #5420f4);
+  color: white;
+  font-weight: 700;
+}
+
+.pm-description-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 20px;
+}
+
+.pm-description-card > h3 {
+  grid-column: 1;
+  margin: 0;
+  color: #19163f;
+}
+
+.pm-description-card > p {
+  grid-column: 1;
+  margin: 0;
+  color: #696584;
+  line-height: 1.8;
+}
+
+.pm-specifications {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 18px;
+  border-radius: 16px;
+  background: #f8f7ff;
+}
+
+.pm-specifications h3 {
+  margin: 0 0 16px;
+  color: #19163f;
+}
+
+.pm-specifications > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 7px;
+  border-radius: 9px;
+  background: white;
+  font-size: 13px;
+}
+
+.pm-specifications span {
+  color: #777393;
+}
+
+.pm-specifications strong {
+  color: #211d49;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* PLANSHET */
+@media (max-width: 900px) {
+  .pm-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-image-box {
+    min-height: 350px;
+  }
+
+  .pm-image-box img {
+    height: 320px;
+  }
+
+  .pm-services {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* TELEFON */
+@media (max-width: 600px) {
+  .product-modal-overlay {
+    padding: 8px;
+  }
+
+  .product-modal-overlay .product-modal {
+    max-height: 96vh;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .pm-layout {
+    gap: 16px;
+  }
+
+  .pm-image-box {
+    min-height: 270px;
+    padding: 20px;
+  }
+
+  .pm-image-box img {
+    height: 260px;
+  }
+
+  .pm-title {
+    font-size: 26px;
+  }
+
+  .pm-buy-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-quantity {
+    max-width: 180px;
+  }
+
+  .pm-action-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-services {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .pm-service {
+    padding: 12px 8px;
+  }
+
+  .pm-service > span {
+    font-size: 21px;
+  }
+
+  .pm-service strong {
+    font-size: 12px;
+  }
+
+  .pm-description-card {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-description-card > h3,
+  .pm-description-card > p,
+  .pm-specifications {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+/* =========================================
+   MINIMARKET — PRODUCT MODAL LAYOUT FIX
+========================================= */
+
+/* Eski modal CSS ta'sirini cheklash */
+.product-modal-overlay .product-modal {
+  display: block !important;
+  width: min(1180px, calc(100vw - 40px)) !important;
+  max-width: 1180px !important;
+  max-height: 92vh !important;
+  padding: 28px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Asosiy ikki ustun */
+.product-modal-overlay .pm-layout {
+  display: grid !important;
+  grid-template-columns: minmax(0, 46%) minmax(0, 1fr) !important;
+  align-items: start !important;
+  gap: 28px !important;
+  width: 100% !important;
+}
+
+/* Eski modal qoidalarining grid elementlariga ta'sirini yo'qotish */
+.product-modal-overlay .pm-gallery,
+.product-modal-overlay .pm-details {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* Mahsulot rasmi */
+.product-modal-overlay .pm-image-box {
+  display: flex !important;
+  position: relative !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-height: 470px !important;
+  padding: 30px !important;
+  box-sizing: border-box !important;
+  border-radius: 22px !important;
+  background: linear-gradient(145deg, #f7f5ff, #e9e5ff) !important;
+}
+
+.product-modal-overlay .pm-image-box img {
+  display: block !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  height: 400px !important;
+  max-height: 400px !important;
+  object-fit: contain !important;
+  margin: auto !important;
+}
+
+/* O'ng tomondagi ma'lumotlar */
+.product-modal-overlay .pm-details {
+  padding: 10px 0 !important;
+}
+
+.product-modal-overlay .pm-title {
+  font-size: clamp(26px, 3vw, 36px) !important;
+  line-height: 1.2 !important;
+  overflow-wrap: break-word !important;
+}
+
+.product-modal-overlay .pm-price {
+  display: block !important;
+  font-size: clamp(28px, 3vw, 38px) !important;
+  line-height: 1.3 !important;
+}
+
+/* Miqdor va savatcha */
+.product-modal-overlay .pm-buy-row {
+  display: grid !important;
+  grid-template-columns: 155px minmax(0, 1fr) !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.product-modal-overlay .pm-add-cart {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 56px !important;
+  padding: 12px !important;
+  white-space: normal !important;
+  text-align: center !important;
+  line-height: 1.4 !important;
+}
+
+/* Sevimlilar va ulashish */
+.product-modal-overlay .pm-action-row {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+/* Xizmatlar asosiy ustunlar ostida */
+.product-modal-overlay .pm-services {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin-top: 24px !important;
+}
+
+.product-modal-overlay .pm-service {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 85px !important;
+  padding: 14px !important;
+  box-sizing: border-box !important;
+}
+
+.product-modal-overlay .pm-service div {
+  min-width: 0 !important;
+}
+
+.product-modal-overlay .pm-service strong,
+.product-modal-overlay .pm-service small {
+  display: block !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Tavsif pastda to'liq kenglikda */
+.product-modal-overlay .pm-bottom {
+  display: block !important;
+  width: 100% !important;
+  margin-top: 24px !important;
+  box-sizing: border-box !important;
+}
+
+.product-modal-overlay .pm-description-card {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  gap: 20px !important;
+  width: 100% !important;
+}
+
+.product-modal-overlay .pm-description-card > h3 {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+.product-modal-overlay .pm-description-card > p {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+
+.product-modal-overlay .pm-specifications {
+  grid-column: 2 !important;
+  grid-row: 1 / 3 !important;
+}
+
+/* Planshet */
+@media (max-width: 900px) {
+  .product-modal-overlay .pm-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .product-modal-overlay .pm-services {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Telefon */
+@media (max-width: 600px) {
+  .product-modal-overlay .product-modal {
+    width: calc(100vw - 16px) !important;
+    padding: 14px !important;
+  }
+
+  .product-modal-overlay .pm-image-box {
+    min-height: 300px !important;
+    padding: 15px !important;
+  }
+
+  .product-modal-overlay .pm-image-box img {
+    height: 280px !important;
+  }
+
+  .product-modal-overlay .pm-buy-row,
+  .product-modal-overlay .pm-action-row,
+  .product-modal-overlay .pm-description-card {
+    grid-template-columns: 1fr !important;
+  }
+
+  .product-modal-overlay .pm-description-card > h3,
+  .product-modal-overlay .pm-description-card > p,
+  .product-modal-overlay .pm-specifications {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+}

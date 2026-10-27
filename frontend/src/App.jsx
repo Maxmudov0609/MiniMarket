@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import "./App.css";
+import { useTranslation } from "react-i18next";
 
 const translations = {
   uz: {
@@ -93,6 +94,13 @@ const marketCategories = [
   { icon: "📱", name: "Elektronika" }
 ];
 const productImages = {
+  "Kir sovuni 200 g": "/sovun.jpg",
+  "HDMI kabel 2 m": "/hdmi.jpg",
+  "Choco Pie 6 dona": "/chocopie.jpg",
+  "Koptok": "/koptok.jpg",
+  "Dezodorant 150 ml": "/dezodorant.jpg",
+  "Fairy 450 ml": "/fairy.jpg",
+  "Nivea dush geli 250 ml": "/nivea.webp",
   "Bluetooth karnay": "/images/bluetooth-karnay.jpg",
   "Hydrolife suv 1 L": "/images/hydrolife.png",
   "Fanta 1.5 L": "/images/fanta.png",
@@ -105,6 +113,8 @@ const productImages = {
 };
 
 function App() {
+  const { t: translate, i18n } = useTranslation();
+
   const [showProducts, setShowProducts] = useState(() => {
     return localStorage.getItem("minimarket_showProducts") === "true";
   });
@@ -739,14 +749,22 @@ const handleUpdateProduct = async (e) => {
                   setShowOrderForm(false);
                 }}
               >
-                🚪 Akkauntdan chiqish
+                {language === "ru"
+  ? "Выйти"
+  : language === "en"
+  ? "Log out"
+  : "Akkauntdan chiqish"}
               </button>
 
               {user.role === "seller" && (
                 <button
                   onClick={() => setShowSellerPanel(true)}
                 >
-                  🏪 Sotuvchi kabineti
+                  {language === "ru"
+  ? "Кабинет продавца"
+  : language === "en"
+  ? "Seller dashboard"
+  : "Sotuvchi kabineti"}
                 </button>
               )}
               {user.role === "buyer" && (
@@ -760,23 +778,25 @@ const handleUpdateProduct = async (e) => {
             </>
           )}
           
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            aria-label="Tilni tanlash"
-            style={{
-              padding: "10px",
-              borderRadius: "10px",
-              border: "1px solid #ddd",
-              cursor: "pointer"
-            }}
-          >
-            <option value="uz">🇺🇿 UZ</option>
-            <option value="ru">🇷🇺 RU</option>
-            <option value="en">🇬🇧 EN</option>
-          </select>
-
-
+<select
+  value={language}
+  onChange={(e) => {
+    const newLanguage = e.target.value;
+    setLanguage(newLanguage);
+    i18n.changeLanguage(newLanguage);
+  }}
+  aria-label="Tilni tanlash"
+  style={{
+    padding: "10px",
+    borderRadius: "10px",
+    border: "1px solid #ddd",
+    cursor: "pointer",
+  }}
+>
+  <option value="uz">🇺🇿 UZ</option>
+  <option value="ru">🇷🇺 RU</option>
+  <option value="en">🇬🇧 EN</option>
+</select>
           <button onClick={() => setShowCart(!showCart)}>
             🛒 {t.cart} ({cart.reduce((total, item) => total + item.quantity, 0)})
           </button>
@@ -784,14 +804,18 @@ const handleUpdateProduct = async (e) => {
             type="button"
             onClick={() => setShowFavorites(!showFavorites)}
           >
-            ❤️ Sevimlilar ({favorites.length})
+            ❤️ {language === "ru"
+              ? "Избранное"
+              : language === "en"
+              ? "Favorites"
+              : "Sevimlilar"} ({favorites.length})
           </button>
           
           </div>
           </header>
           <div className="market-layout">
             <aside className="market-sidebar">
-              <h3>☷ Barcha kategoriyalar</h3>
+              <h3>☷ {i18n.language} — {translate("allCategories")}</h3>
 
               {marketCategories.map((category) => (
                 <button
@@ -805,7 +829,31 @@ const handleUpdateProduct = async (e) => {
                   }}
                 >
                   <span>{category.icon}</span>
-                  <span>{category.name}</span>
+                  <span>
+  {language === "ru"
+    ? ({
+        "Ichimliklar": "Напитки",
+        "Oziq-ovqat mahsulotlari": "Продукты питания",
+        "Shirinliklar": "Сладости",
+        "Maishiy kimyo": "Бытовая химия",
+        "Gigiyena vositalari": "Средства гигиены",
+        "Bolalar uchun": "Для детей",
+        "Uy-ro‘zg‘or": "Товары для дома",
+        "Elektronika": "Электроника"
+      }[category.name] || category.name)
+    : language === "en"
+    ? ({
+        "Ichimliklar": "Drinks",
+        "Oziq-ovqat mahsulotlari": "Groceries",
+        "Shirinliklar": "Sweets",
+        "Maishiy kimyo": "Household cleaning",
+        "Gigiyena vositalari": "Personal care",
+        "Bolalar uchun": "Kids",
+        "Uy-ro‘zg‘or": "Home goods",
+        "Elektronika": "Electronics"
+      }[category.name] || category.name)
+    : category.name}
+</span>
                   <span>›</span>
                 </button>
               ))}
@@ -815,22 +863,44 @@ const handleUpdateProduct = async (e) => {
 <section className="hero">
   <div className="hero-content">
 
-    <div className="hero-badge">
-      👑 Siz uchun eng yaxshi tanlovlar
-    </div>
+<div className="hero-badge">
+  👑 {language === "ru"
+    ? "Лучшие предложения для вас"
+    : language === "en"
+    ? "Best picks for you"
+    : "Siz uchun eng yaxshi tanlovlar"}
+</div>
+<h1>
+  {language === "ru"
+    ? "Добро пожаловать"
+    : language === "en"
+    ? "Welcome to"
+    : "MiniMarketga"}
+  <br />
+  <span>
+    {language === "ru"
+      ? "в MiniMarket!"
+      : language === "en"
+      ? "MiniMarket!"
+      : "xush kelibsiz!"}
+  </span>
+</h1>
 
-    <h1>
-      MiniMarketga
-      <br />
-      <span>xush kelibsiz!</span>
-    </h1>
+<p>
+  {language === "ru"
+    ? "Лучшие товары по выгодным ценам."
+    : language === "en"
+    ? "The best products at great prices."
+    : "Eng yaxshi mahsulotlar — qulay narxlarda."}
 
-    <p>
-      Eng yaxshi mahsulotlar — qulay narxlarda.
-      <br />
-      Sizning kundalik xaridlaringiz uchun ishonchli tanlov!
-    </p>
+  <br />
 
+  {language === "ru"
+    ? "Надёжный выбор для ваших ежедневных покупок!"
+    : language === "en"
+    ? "A trusted choice for your everyday shopping!"
+    : "Sizning kundalik xaridlaringiz uchun ishonchli tanlov!"}
+</p>
     <button
       className="hero-shop-btn"
       onClick={() => {
@@ -842,14 +912,28 @@ const handleUpdateProduct = async (e) => {
         }, 100);
       }}
     >
-      🛒 Mahsulotlarni ko‘rish
+      🛒 {language === "ru"
+  ? "Смотреть товары"
+  : language === "en"
+  ? "Shop products"
+  : "Mahsulotlarni ko‘rish"}
       <span>➜</span>
     </button>
 
     <div className="hero-features">
-      <div>🚚 Tez yetkazib berish</div>
-      <div>🛡️ Ishonchli xaridlar</div>
-      <div>💎 Qulay narxlar</div>
+<div className="hero-features">
+  <div>
+    🚚 {language === "ru" ? "Быстрая доставка" : language === "en" ? "Fast delivery" : "Tez yetkazib berish"}
+  </div>
+
+  <div>
+    🛡️ {language === "ru" ? "Надёжные покупки" : language === "en" ? "Secure shopping" : "Ishonchli xaridlar"}
+  </div>
+
+  <div>
+    💎 {language === "ru" ? "Выгодные цены" : language === "en" ? "Great prices" : "Qulay narxlar"}
+  </div>
+</div>
     </div>
 
   </div>
@@ -858,7 +942,7 @@ const handleUpdateProduct = async (e) => {
     <div className="hero-discount">🔥 -30%</div>
 
     <div className="hero-new">
-      ⭐ Yangi
+      ⭐ ⭐ {language === "ru" ? "Новинка" : language === "en" ? "New" : "Yangi"}
     </div>
 
     <img
@@ -874,8 +958,14 @@ const handleUpdateProduct = async (e) => {
       <div className="promo-cards">
         <div className="promo-card promo-sale">
           <span className="promo-icon">🎁</span>
-          <h3>Aksiyalar va chegirmalar</h3>
-          <p>Eng yaxshi takliflar shu yerda!</p>
+          <h3>{language === "ru" ? "Акции и скидки" : language === "en" ? "Promotions and discounts" : "Aksiyalar va chegirmalar"}</h3>
+          <p>
+  {language === "ru"
+    ? "Лучшие предложения здесь!"
+    : language === "en"
+    ? "Discover our best offers!"
+    : "Eng yaxshi takliflar shu yerda!"}
+</p>
           <button
             onClick={() =>
               document.getElementById("products")?.scrollIntoView({
@@ -883,20 +973,32 @@ const handleUpdateProduct = async (e) => {
               })
             }
           >
-            Ko‘rish →
+            {language === "ru" ? "Смотреть" : language === "en" ? "View" : "Ko‘rish"} →
           </button>
         </div>
 
         <div className="promo-card promo-delivery">
           <span className="promo-icon">🚚</span>
-          <h3>Tez yetkazib berish</h3>
-          <p>Toshkent bo‘ylab tez va ishonchli yetkazib berish</p>
+          <h3>
+  {language === "ru"
+    ? "Быстрая доставка"
+    : language === "en"
+    ? "Fast delivery"
+    : "Tez yetkazib berish"}
+</h3>
+          <p>
+  {language === "ru"
+    ? "Быстрая и надёжная доставка по Ташкенту"
+    : language === "en"
+    ? "Fast and reliable delivery across Tashkent"
+    : "Toshkent bo‘ylab tez va ishonchli yetkazib berish"}
+</p>
           <button
             onClick={() =>
               alert("Yetkazib berish xizmati haqida ma'lumot tez orada!")
             }
           >
-            Batafsil →
+            {language === "ru" ? "Подробнее" : language === "en" ? "Learn more" : "Batafsil"} →
           </button>
         </div>
       </div>
@@ -926,7 +1028,31 @@ const handleUpdateProduct = async (e) => {
             <span className="category-strip-icon">
               <img src={item.image} alt={item.name} />
             </span>
-            <span>{item.name}</span>
+            <span>
+  {language === "ru"
+    ? ({
+        "Ichimliklar": "Напитки",
+        "Oziq-ovqat mahsulotlari": "Продукты питания",
+        "Shirinliklar": "Сладости",
+        "Maishiy kimyo": "Бытовая химия",
+        "Gigiyena vositalari": "Средства гигиены",
+        "Bolalar uchun": "Для детей",
+        "Uy-ro‘zg‘or": "Товары для дома",
+        "Elektronika": "Электроника"
+      }[item.name] || item.name)
+    : language === "en"
+    ? ({
+        "Ichimliklar": "Drinks",
+        "Oziq-ovqat mahsulotlari": "Groceries",
+        "Shirinliklar": "Sweets",
+        "Maishiy kimyo": "Household cleaning",
+        "Gigiyena vositalari": "Personal care",
+        "Bolalar uchun": "Kids",
+        "Uy-ro‘zg‘or": "Home goods",
+        "Elektronika": "Electronics"
+      }[item.name] || item.name)
+    : item.name}
+</span>
           </button>
         ))}
       </div>
@@ -946,12 +1072,28 @@ const handleUpdateProduct = async (e) => {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }}
     >
-      ⬅ Bosh sahifaga qaytish
+      ← {language === "ru"
+  ? "На главную"
+  : language === "en"
+  ? "Back to home"
+  : "Bosh sahifaga qaytish"}
     </button>
 
     <div className="products-page-title">
-      <h1>🛍️ Barcha mahsulotlar</h1>
-      <p>Eng yaxshi mahsulotlarni qulay narxlarda xarid qiling!</p>
+      <h1>
+  🛍️ {language === "ru"
+    ? "Все товары"
+    : language === "en"
+    ? "All products"
+    : "Barcha mahsulotlar"}
+</h1>
+      <p>
+  {language === "ru"
+    ? "Покупайте лучшие товары по выгодным ценам!"
+    : language === "en"
+    ? "Shop the best products at great prices!"
+    : "Eng yaxshi mahsulotlarni qulay narxlarda xarid qiling!"}
+</p>
     </div>
   </div>
         <h2>🔥 {t.popular}</h2>
@@ -1047,19 +1189,25 @@ const handleUpdateProduct = async (e) => {
               style={{ cursor: "pointer" }}
             >
               <span className="product-new-badge">✨ Tavsiya etiladi</span>
-              <img
-                src={
-                  productImages[product.name] ||
-                  product.image_url ||
-                  "/no-image.svg"
-                }
-                alt={product.name}
-                className="product-image"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "/no-image.svg";
-                }}
-              />
+<img
+  src={
+    productImages[product.name] ||
+    product.image_url ||
+    "/no-image.svg"
+  }
+  alt=""
+  className="product-image"
+  loading="lazy"
+  onError={(e) => {
+    const img = e.currentTarget;
+
+    if (!img.src.endsWith("/no-image.svg")) {
+      img.src = "/no-image.svg";
+    } else {
+      img.style.visibility = "hidden";
+    }
+  }}
+/>
 
               <div className="product-info">
                 <span>
@@ -1135,160 +1283,374 @@ const handleUpdateProduct = async (e) => {
           )))
         )}
         </div>
-        {selectedProduct && (
-          <div
-            className="auth-overlay product-modal-overlay"
-            onClick={() => setSelectedProduct(null)}
-          >
-            <div
-              className="product-modal"
-              onClick={(e) => e.stopPropagation()}
+{selectedProduct && (
+  <div
+    className="auth-overlay product-modal-overlay"
+    onClick={() => setSelectedProduct(null)}
+  >
+    <div
+      className="product-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="product-modal-close"
+        onClick={() => setSelectedProduct(null)}
+        aria-label="Yopish"
+      >
+        ✕
+      </button>
+
+      <div className="pm-layout">
+        {/* CHAP TOMON — MAHSULOT RASMI */}
+        <div className="pm-gallery">
+          <div className="pm-image-box">
+            <span className="pm-recommend">✨ Tavsiya etiladi</span>
+
+            <img
+              src={
+                productImages[selectedProduct.name] ||
+                selectedProduct.image_url ||
+                "/no-image.svg"
+              }
+              alt={selectedProduct.name}
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/no-image.svg";
+              }}
+            />
+
+            <button
+              type="button"
+              className="pm-image-heart"
+              onClick={() => toggleFavorite(selectedProduct.id)}
             >
-              <button
-                type="button"
-                className="product-modal-close"
-                onClick={() => setSelectedProduct(null)}
-                aria-label="Yopish"
-              >
-                ✕
-              </button>
+              {favorites.includes(selectedProduct.id) ? "❤️" : "🤍"}
+            </button>
+          </div>
+        </div>
 
-              <div className="product-modal-image">
-                <img
-                  src={
-                    productImages[selectedProduct.name] ||
-                    selectedProduct.image_url ||
-                    "/no-image.svg"
-                  }
-                  alt={selectedProduct.name}
-                />
-              </div>
+        {/* O‘NG TOMON — MAHSULOT MA'LUMOTLARI */}
+        <div className="pm-details">
+          <div className="pm-breadcrumb">
+            🏠 Bosh sahifa › {selectedProduct.category}
+          </div>
 
-              <div className="product-modal-info">
-                <span className="product-modal-category">
-                  {selectedProduct.category}
-                </span>
+          <span className="pm-category">
+            {selectedProduct.category}
+          </span>
 
-                <h2>{selectedProduct.name}</h2>
-                {console.log("Sotuvchi tekshiruvi:", {
-                  userId: user?.id,
-                  userRole: user?.role,
-                  productSellerId: selectedProduct?.seller_id,
-                })}
-                {user?.role === "seller" &&
-                  String(user?.id) === String(selectedProduct.seller_id) && (
-                    <div className="seller-product-actions">
-                      <button
-                        type="button"
-                        className="seller-edit-btn"
-                        onClick={() => {
-                          setEditingProduct(selectedProduct);
-                          setSelectedProduct(null);
-                          setShowSellerPanel(true);
-                        }}
-                      >
-                        ✏️ Mahsulotni tahrirlash
-                      </button>
+          <h1 className="pm-title">{selectedProduct.name}</h1>
 
-                      <button
-                        type="button"
-                        className="seller-delete-btn"
-                        onClick={async () => {
-                          await handleDeleteProduct(selectedProduct.id);
-                          setSelectedProduct(null);
-                        }}
-                      >
-                        🗑️ Mahsulotni o‘chirish
-                      </button>
-                    </div>
-                  )}
-                <div className="product-extra-info">
-                  <div className="product-rating">
-                    <span>⭐⭐⭐⭐⭐</span>
-                    <span>Yuqori baholangan mahsulot</span>
-                  </div>
-
-                  <div className="product-stock">
-                    🟢 Sotuvda mavjud
-                  </div>
-
-                  <button
-                    type="button"
-                    className="product-favorite-btn"
-                    onClick={() => toggleFavorite(selectedProduct.id)}
-                  >
-                    {favorites.includes(selectedProduct.id)
-                      ? "❤️ Sevimlilardan olib tashlash"
-                      : "🤍 Sevimlilarga qo‘shish"}
-                  </button>
-                </div>
-
-                <p className="product-modal-description">
-                  Mahsulot haqida batafsil ma'lumot.
-                  Sifatli mahsulotlarni MiniMarket orqali
-                  qulay narxlarda xarid qiling.
-                </p>
-
-                <h3 className="product-modal-price">
-                  {Number(selectedProduct.price).toLocaleString("uz-UZ")} so‘m
-                </h3>
-                <div className="product-total-price">
-                  <span>💰 Umumiy narx:</span>
-
-                  <strong>
-                    {(Number(selectedProduct.price) * productQuantity)
-                      .toLocaleString("uz-UZ")} so‘m
-                  </strong>
-                </div>
-
-                <p className="product-modal-delivery">
-                  🚚 Toshkent bo‘ylab yetkazib berish
-                </p>
-                <div className="product-quantity">
-                  <span>Miqdori:</span>
-
-                  <div className="quantity-selector">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setProductQuantity((prev) => Math.max(1, prev - 1))
-                      }
-                    >
-                      −
-                    </button>
-
-                    <strong>{productQuantity}</strong>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setProductQuantity((prev) => prev + 1)
-                      }
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-                
+          {/* Sotuvchining o‘z mahsulotini boshqarishi */}
+          {user?.role === "seller" &&
+            String(user?.id) === String(selectedProduct.seller_id) && (
+              <div className="seller-product-actions">
+                <button
+                  type="button"
+                  className="seller-edit-btn"
+                  onClick={() => {
+                    setEditingProduct(selectedProduct);
+                    setSelectedProduct(null);
+                    setShowSellerPanel(true);
+                  }}
+                >
+                  ✏️ Mahsulotni tahrirlash
+                </button>
 
                 <button
                   type="button"
-                  className="product-modal-cart"
-                  onClick={() => {
-                    for (let i = 0; i < productQuantity; i++) {
-                      addToCart(selectedProduct);
-                    }
-
-                    setProductQuantity(1);
+                  className="seller-delete-btn"
+                  onClick={async () => {
+                    await handleDeleteProduct(selectedProduct.id);
                     setSelectedProduct(null);
                   }}
                 >
-                  🛒 Savatchaga qo‘shish
+                  🗑️ Mahsulotni o‘chirish
                 </button>
               </div>
+            )}
+
+          <div className="pm-rating">
+            <span className="pm-stars">★★★★★</span>
+            <span>Mahsulot haqida ma'lumot</span>
+          </div>
+
+          <div className="pm-price-row">
+            <strong className="pm-price">
+              {Number(selectedProduct.price).toLocaleString("uz-UZ")} so‘m
+            </strong>
+          </div>
+
+          <div className="pm-stock">
+            <span>✓</span> Sotuvda mavjud
+          </div>
+
+          <p className="pm-description">
+            {selectedProduct.description ||
+              "Mahsulot haqida batafsil ma'lumot. MiniMarket orqali qulay narxlarda xarid qiling."}
+          </p>
+
+          <div className="pm-buy-row">
+            <div className="pm-quantity">
+              <button
+                type="button"
+                onClick={() =>
+                  setProductQuantity((prev) => Math.max(1, prev - 1))
+                }
+              >
+                −
+              </button>
+
+              <strong>{productQuantity}</strong>
+
+              <button
+                type="button"
+                onClick={() => setProductQuantity((prev) => prev + 1)}
+              >
+                +
+              </button>
+            </div>
+
+<button
+  type="button"
+  className="pm-add-cart"
+  onClick={() => {
+    const quantity = productQuantity;
+
+    for (let i = 0; i < quantity; i++) {
+      addToCart(selectedProduct);
+    }
+
+    setProductQuantity(1);
+    setSelectedProduct(null);
+
+    alert(
+      `✅ ${selectedProduct.name}\n${quantity} dona savatchaga qo‘shildi!`
+    );
+  }}
+>
+  🛒 Savatchaga qo‘shish
+</button>
+          </div>
+
+          <div className="pm-action-row">
+            <button
+              type="button"
+              className="pm-favorite"
+              onClick={() => toggleFavorite(selectedProduct.id)}
+            >
+              {favorites.includes(selectedProduct.id)
+                ? "❤️ Sevimlilardan olib tashlash"
+                : "🤍 Sevimlilarga qo‘shish"}
+            </button>
+
+            <button
+              type="button"
+              className="pm-share"
+              onClick={async () => {
+                try {
+                  if (navigator.share) {
+                    await navigator.share({
+                      title: selectedProduct.name,
+                      url: window.location.href,
+                    });
+                  } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(
+                      window.location.href
+                    );
+                    alert("Havola nusxalandi!");
+                  } else {
+                    alert("Ulashish funksiyasi mavjud emas.");
+                  }
+                } catch (error) {
+                  if (error.name !== "AbortError") {
+                    alert("Havolani ulashib bo‘lmadi.");
+                  }
+                }
+              }}
+            >
+              🔗 Ulashish
+            </button>
+          </div>
+
+          <div className="pm-total">
+            <span>💰 Umumiy narx</span>
+            <strong>
+              {(
+                Number(selectedProduct.price) * productQuantity
+              ).toLocaleString("uz-UZ")} so‘m
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      {/* XIZMATLAR */}
+      <div className="pm-services">
+        <div className="pm-service">
+          <span>🚚</span>
+          <div>
+            <strong>Tez yetkazib berish</strong>
+            <small>Toshkent bo‘ylab</small>
+          </div>
+        </div>
+
+        <div className="pm-service">
+          <span>🛡️</span>
+          <div>
+            <strong>Ishonchli xarid</strong>
+            <small>Qulay va xavfsiz</small>
+          </div>
+        </div>
+
+        <div className="pm-service">
+          <span>💳</span>
+          <div>
+            <strong>Qulay to‘lovlar</strong>
+            <small>To‘lov imkoniyatlari</small>
+          </div>
+        </div>
+
+        <div className="pm-service">
+          <span>🎧</span>
+          <div>
+            <strong>Yordam xizmati</strong>
+            <small>Qo‘llab-quvvatlash</small>
+          </div>
+        </div>
+      </div>
+
+      {/* MAHSULOT TAVSIFI */}
+      <div className="pm-bottom">
+        <div className="pm-tabs">
+          <span className="pm-tab-active">📄 Tavsif</span>
+        </div>
+
+        <div className="pm-description-card">
+          <h3>Mahsulot tavsifi</h3>
+
+          <p>
+            {selectedProduct.description ||
+              `${selectedProduct.name} — MiniMarket do‘konidagi mahsulot. Batafsil ma'lumot uchun sotuvchiga murojaat qiling.`}
+          </p>
+
+          <div className="pm-specifications">
+            <h3>Mahsulot ma'lumotlari</h3>
+
+            <div>
+              <span>Mahsulot nomi</span>
+              <strong>{selectedProduct.name}</strong>
+            </div>
+
+            <div>
+              <span>Toifasi</span>
+              <strong>{selectedProduct.category}</strong>
+            </div>
+
+            <div>
+              <span>Narxi</span>
+              <strong>
+                {Number(selectedProduct.price).toLocaleString("uz-UZ")} so‘m
+              </strong>
+            </div>
+
+            <div>
+              <span>Mahsulot kodi</span>
+              <strong>#{selectedProduct.id}</strong>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+{showFavorites && (
+  <div
+    className="cart-overlay"
+    onClick={() => setShowFavorites(false)}
+  >
+    <div
+      className="cart-modal"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="cart-close"
+        onClick={() => setShowFavorites(false)}
+      >
+        ✕
+      </button>
+
+      <div className="cart-box">
+        <div className="cart-header">
+          <div className="cart-header-icon">❤️</div>
+
+          <div>
+            <h2>Sevimli mahsulotlarim</h2>
+            <p>Siz tanlagan mahsulotlar</p>
+          </div>
+
+          <span className="cart-count">
+            {favorites.length}
+          </span>
+        </div>
+
+        {favorites.length === 0 ? (
+          <p>Hozircha sevimli mahsulotlar yo‘q ❤️</p>
+        ) : (
+dbProducts
+  .filter((product) =>
+    favorites.some((id) => String(id) === String(product.id))
+  )
+  .map((product) => (
+              <div className="cart-item" key={product.id}>
+                <div className="cart-product">
+                  <img
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/no-image.svg";
+                  }}
+                    src={
+                      productImages[product.name] ||
+                      product.image_url ||
+                      "/no-image.svg"
+                    }
+                    alt=""
+                    className="cart-product-image"
+                  />
+
+                  <div className="cart-product-details">
+                    <strong>{product.name}</strong>
+                    <span>{product.category}</span>
+                  </div>
+                </div>
+
+                <div className="cart-unit-price">
+                  {Number(product.price).toLocaleString("uz-UZ")} so‘m
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    addToCart(product);
+                  }}
+                >
+                  🛒 Savatchaga
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => toggleFavorite(product.id)}
+                >
+                  🗑️ Olib tashlash
+                </button>
+              </div>
+            ))
         )}
+      </div>
+    </div>
+  </div>
+)}
         
         {showCart && (
           <div
@@ -1676,7 +2038,11 @@ const handleUpdateProduct = async (e) => {
                 setShowOrderForm(false);
               }}
             >
-              🚪 Akkauntdan chiqish
+              {language === "ru"
+  ? "Выйти"
+  : language === "en"
+  ? "Log out"
+  : "Akkauntdan chiqish"}
             </button>
             
             <h3>📦 Kelgan buyurtmalar</h3>
