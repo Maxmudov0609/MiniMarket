@@ -94,6 +94,7 @@ const marketCategories = [
   { icon: "📱", name: "Elektronika" }
 ];
 const productImages = {
+  "Persil 1.5 kg": "/persil.jpg",
   "Kir sovuni 200 g": "/sovun.jpg",
   "HDMI kabel 2 m": "/hdmi.jpg",
   "Choco Pie 6 dona": "/chocopie.jpg",
