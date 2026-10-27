@@ -94,6 +94,7 @@ const marketCategories = [
   { icon: "📱", name: "Elektronika" }
 ];
 const productImages = {
+  "Hydrolife suv 1 L": "/categories/cleaning-products.jpg",
   "Persil 1.5 kg": "/persil.jpg",
   "Kir sovuni 200 g": "/sovun.jpg",
   "HDMI kabel 2 m": "/hdmi.jpg",
@@ -103,7 +104,6 @@ const productImages = {
   "Fairy 450 ml": "/fairy.jpg",
   "Nivea dush geli 250 ml": "/nivea.webp",
   "Bluetooth karnay": "/images/bluetooth-karnay.jpg",
-  "Hydrolife suv 1 L": "/images/hydrolife.png",
   "Fanta 1.5 L": "/images/fanta.png",
   "Fuse Tea 1 L": "/images/fuse-tea.png",
   "Sprite 1.5 L": "/images/sprite.png",
