@@ -158,6 +158,9 @@ function App() {
   const [dbProducts, setDbProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [deleteProductId, setDeleteProductId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteToast, setDeleteToast] = useState(null);
 
 useEffect(() => {
   const controller = new AbortController();
@@ -547,9 +550,11 @@ const handleAddProduct = async (e) => {
 
   const body = {
     name: form.elements.name.value,
-    description: "",
+    description: form.elements.name.value + " — sifatli mahsulot",
     price: Number(form.elements.price.value),
-    category: form.elements.category.value,
+    category: form.elements.category.value === "Oziq-ovqat"
+  ? "Oziq-ovqat mahsulotlari"
+  : form.elements.category.value,
     image_url: form.elements.image_url.value,
     stock: 10,
   };
@@ -607,17 +612,54 @@ setTimeout(() => notification.remove(), 3000);
     setDbProducts(updatedProducts);
     form.reset();
   } catch (error) {
-    alert(error.message);
+    const notification = document.createElement("div");
+
+notification.innerHTML = `
+  <div style="font-size:30px; margin-bottom:10px;">⚠️</div>
+  <div style="font-size:17px; font-weight:700; margin-bottom:6px;">
+    Xatolik yuz berdi
+  </div>
+  <div style="font-size:14px; opacity:0.85;">
+    ${error.message}
+  </div>
+`;
+
+Object.assign(notification.style, {
+  position: "fixed",
+  top: "25px",
+  right: "25px",
+  background: "linear-gradient(135deg, #6d28d9, #9333ea)",
+  color: "white",
+  padding: "22px 30px",
+  borderRadius: "18px",
+  boxShadow: "0 15px 40px rgba(109,40,217,0.35)",
+  zIndex: "999999",
+  fontFamily: "Arial, sans-serif",
+  textAlign: "center",
+  minWidth: "260px",
+  maxWidth: "calc(100vw - 50px)",
+  boxSizing: "border-box",
+  animation: "fadeIn 0.3s ease"
+});
+
+document.body.appendChild(notification);
+
+setTimeout(() => {
+  notification.remove();
+}, 4000);
   }
 };
 
 
-const handleDeleteProduct = async (productId) => {
-  const confirmed = window.confirm(
-    "Haqiqatan ham mahsulotni o'chirmoqchimisiz?"
-  );
+const handleDeleteProduct = (productId) => {
+  setDeleteProductId(productId);
+};
 
-  if (!confirmed) return;
+const confirmDeleteProduct = async () => {
+  const productId = deleteProductId;
+  if (productId === null) return;
+
+
 
   try {
     const response = await fetch(
@@ -640,7 +682,9 @@ const handleDeleteProduct = async (productId) => {
       prev.filter((product) => product.id !== productId)
     );
 
-    alert("Mahsulot muvaffaqiyatli o'chirildi!");
+    setDeleteProductId(null);
+setDeleteToast("Mahsulot muvaffaqiyatli o'chirildi! 🎉");
+setTimeout(() => setDeleteToast(null), 3500);
   } catch (error) {
     alert(error.message);
   }
@@ -922,7 +966,6 @@ const handleUpdateProduct = async (e) => {
     </button>
 
     <div className="hero-features">
-<div className="hero-features">
   <div>
     🚚 {language === "ru" ? "Быстрая доставка" : language === "en" ? "Fast delivery" : "Tez yetkazib berish"}
   </div>
@@ -935,7 +978,7 @@ const handleUpdateProduct = async (e) => {
     💎 {language === "ru" ? "Выгодные цены" : language === "en" ? "Great prices" : "Qulay narxlar"}
   </div>
 </div>
-    </div>
+
 
   </div>
 
@@ -2298,6 +2341,39 @@ dbProducts
 </form>
               </div>
             )}
+            {deleteProductId !== null && (
+  <div className="delete-modal-overlay">
+    <div className="delete-modal">
+      <div className="delete-modal-icon">🗑️</div>
+
+      <h2>Mahsulotni o‘chirish</h2>
+
+      <p>
+        Haqiqatan ham ushbu mahsulotni o‘chirmoqchimisiz?
+        Bu amalni ortga qaytarib bo‘lmaydi.
+      </p>
+
+      <div className="delete-modal-actions">
+        <button
+          type="button"
+          className="delete-cancel-btn"
+          onClick={() => setDeleteProductId(null)}
+        >
+          Bekor qilish
+        </button>
+
+        <button
+          type="button"
+          className="delete-confirm-btn"
+          onClick={confirmDeleteProduct}
+          disabled={deleteLoading}
+        >
+          {deleteLoading ? "O‘chirilmoqda..." : "Ha, o‘chirish"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
 
                         
