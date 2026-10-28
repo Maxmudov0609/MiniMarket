@@ -1470,10 +1470,9 @@ const handleUpdateProduct = async (e) => {
                 <button
                   type="button"
                   className="seller-delete-btn"
-                  onClick={async () => {
-                    await handleDeleteProduct(selectedProduct.id);
-                    setSelectedProduct(null);
-                  }}
+onClick={() => {
+  handleDeleteProduct(selectedProduct.id);
+}}
                 >
                   🗑️ Mahsulotni o‘chirish
                 </button>
