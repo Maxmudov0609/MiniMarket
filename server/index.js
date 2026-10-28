@@ -3,11 +3,21 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import { db } from './db.js';
 
 if (!process.env.JWT_SECRET) throw new Error('Set JWT_SECRET in server/.env');
 
 const app=express();
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "https://minimarket-uz.vercel.app"
+  ]
+}));
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 app.get('/api/db-check', async (req, res) => {
   try {
     const result = await db.query(`
@@ -24,32 +34,43 @@ app.get('/api/db-check', async (req, res) => {
     `);
 
     res.json(result.rows[0]);
-  } catch (error) {
-    res.status(500).json({ error: 'Database tekshiruvida xatolik' });
-  }
+} catch (error) {
+  console.error("DATABASE XATOSI:", error.message);
+  res.status(500).json({ error: "Database tekshiruvda xatolik" });
+}
 });
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "https://minimarket-uz.vercel.app"
-  ]
-}));
+
 app.use(express.json({limit:'100kb'}));
 const wrap=fn=>(req,res,next)=>{try{fn(req,res,next)}catch(e){next(e)}};
 const tokenFor=u=>jwt.sign({id:u.id,role:u.role},process.env.JWT_SECRET,{expiresIn:'7d'});
-const auth=(role)=>wrap(async (req,res,next)=>{
- const token=(req.headers.authorization||'').replace(/^Bearer /,'');
- let payload;try{payload=jwt.verify(token,process.env.JWT_SECRET)}catch{return res.status(401).json({error:'Tizimga kiring'})}
- const result = await db.query(
+const auth = (role) => wrap(async (req, res, next) => {
+  const token = (req.headers.authorization || '').replace(/^Bearer\s+/, '');
+
+  let payload;
+
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return res.status(401).json({ error: 'Tizimga kiring' });
+  }
+
+  const result = await db.query(
     'SELECT id, name, email, role FROM users WHERE id=$1',
     [payload.id]
   );
+
   const user = result.rows[0];
- if(!user)return res.status(401).json({error:'Foydalanuvchi topilmadi'});
- if(role&&user.role!==role)return res.status(403).json({error:'Ruxsat yo‘q'});
- req.user=user;next();
+
+  if (!user) {
+    return res.status(401).json({ error: 'Foydalanuvchi topilmadi' });
+  }
+
+  if (role && user.role !== role && user.role !== 'admin') {
+    return res.status(403).json({ error: 'Ruxsat yo‘q' });
+  }
+
+  req.user = user;
+  next();
 });
 const categories = [
   "Ichimliklar",
@@ -131,6 +152,66 @@ app.post('/api/auth/login', wrap(async (req, res) => {
   res.json({
     user,
     token: tokenFor(user)
+  });
+}));
+app.post('/api/auth/google', wrap(async (req, res) => {
+  const { credential } = req.body;
+
+  if (!credential || typeof credential !== 'string') {
+    return res.status(400).json({ error: 'Google token yuborilmadi' });
+  }
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload?.email_verified || !payload?.email || !payload?.sub) {
+    return res.status(401).json({ error: 'Google akkaunti tasdiqlanmadi' });
+  }
+
+  const email = payload.email.trim().toLowerCase();
+  const googleId = payload.sub;
+  const name = payload.name || email.split('@')[0];
+
+  const existing = await db.query(
+    'SELECT * FROM users WHERE google_id = $1',
+    [googleId]
+  );
+
+  let user;
+
+  if (existing.rows.length > 0) {
+    user = existing.rows[0];
+  } else {
+    const byEmail = await db.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (byEmail.rows.length > 0) {
+      return res.status(409).json({
+        error: 'Bu email bilan akkaunt mavjud. Avval email va parol orqali kiring.'
+      });
+    }
+
+    const result = await db.query(
+      `INSERT INTO users (name, email, password_hash, role, google_id)
+       VALUES ($1, $2, NULL, 'buyer', $3)
+       RETURNING id, name, email, role`,
+      [name, email, googleId]
+    );
+
+    user = result.rows[0];
+  }
+
+  const { password_hash, google_id, ...safeUser } = user;
+
+  res.json({
+    user: safeUser,
+    token: tokenFor(safeUser)
   });
 }));
 app.get('/api/auth/me',auth(),(req,res)=>res.json(req.user));
@@ -312,23 +393,27 @@ const result = await db.query(
   res.json({ ok: true });
 }));
 app.delete('/api/products/:id', auth('seller'), wrap(async (req, res) => {
+  const isAdmin = req.user.role === 'admin';
+
   const result = await db.query(
     `UPDATE products
      SET is_active = false
-     WHERE id = $1 AND seller_id = $2 AND is_active = true
+     WHERE id = $1
+       AND is_active = true
+       AND ($3::boolean = true OR seller_id = $2)
      RETURNING id`,
-    [req.params.id, req.user.id]
+    [req.params.id, req.user.id, isAdmin]
   );
 
   if (result.rows.length === 0) {
     return res.status(404).json({
-      error: 'Mahsulot topilmadi yoki o‘chirishga ruxsat yo‘q'
+      error: "Mahsulot topilmadi yoki o'chirishga ruxsat yo'q"
     });
   }
 
   res.json({
     ok: true,
-    message: 'Mahsulot muvaffaqiyatli o‘chirildi'
+    message: "Mahsulot muvaffaqiyatli o'chirildi"
   });
 }));
 const checkout = async (buyer, b) => {

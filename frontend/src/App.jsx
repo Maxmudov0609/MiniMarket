@@ -258,6 +258,71 @@ useEffect(() => {
     
   const [showCart, setShowCart] = useState(false);
   const [showOrderForm, setShowOrderForm] = useState(false);
+  useEffect(() => {
+  if (!showLogin || isRegister) return;
+
+  let cancelled = false;
+  let timer;
+
+  const initGoogle = () => {
+    if (cancelled) return;
+
+    const google = window.google;
+
+    if (!google?.accounts?.id) {
+      timer = setTimeout(initGoogle, 300);
+      return;
+    }
+
+    const button = document.getElementById("google-signin-button");
+    if (!button) return;
+
+google.accounts.id.initialize({
+  client_id: "957838455109-tsmj5fstgcncsjj19qo29sfkoe9i3kfa.apps.googleusercontent.com",
+callback: async (response) => {
+  try {
+    const res = await fetch("http://localhost:4000/api/auth/google", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        credential: response.credential,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || data.message || "Google orqali kirishda xatolik");
+    }
+
+    console.log("Google login natijasi:", data);
+    alert("Google orqali kirish muvaffaqiyatli!");
+  } catch (error) {
+    console.error("Google login xatosi:", error);
+    alert(error.message);
+  }
+},
+    });
+
+    button.innerHTML = "";
+
+    google.accounts.id.renderButton(button, {
+      theme: "outline",
+      size: "large",
+      text: "signin_with",
+      width: 300,
+    });
+  };
+
+  initGoogle();
+
+  return () => {
+    cancelled = true;
+    clearTimeout(timer);
+  };
+}, [showLogin, isRegister]);
 
 
   function addToCart(product) {
@@ -2047,6 +2112,15 @@ dbProducts
           {isRegister ? "✨ Ro‘yxatdan o‘tish" : "🔐 Kirish"}
         </button>
       </form>
+      {!isRegister && (
+        <div style={{ marginTop: "15px", textAlign: "center" }}>
+          <div style={{ marginBottom: "12px", color: "#777" }}>
+            yoki
+          </div>
+
+          <div id="google-signin-button"></div>
+        </div>
+      )}
 
       <button
         type="button"
