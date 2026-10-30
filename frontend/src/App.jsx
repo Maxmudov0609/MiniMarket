@@ -1215,24 +1215,18 @@ const handleUpdateProduct = async (e) => {
         <h2>🔥 {t.popular}</h2>
         
 <div className="filters">
-  <select value={category} onChange={(e) => setCategory(e.target.value)}>
-    <option value="Barchasi">{t.allCategories}</option>
-    <option value="Elektronika">
-      {language === "ru" ? "Электроника" : language === "en" ? "Electronics" : "Elektronika"}
+<select
+  value={category}
+  onChange={(e) => setCategory(e.target.value)}
+>
+  <option value="Barchasi">{t.allCategories}</option>
+
+  {marketCategories.map((item) => (
+    <option key={item.name} value={item.name}>
+      {item.icon} {item.name}
     </option>
-    <option value="Kiyim-kechak">
-      {language === "ru" ? "Одежда" : language === "en" ? "Clothing" : "Kiyim-kechak"}
-    </option>
-    <option value="Uy jihozlari">
-      {language === "ru" ? "Товары для дома" : language === "en" ? "Home goods" : "Uy jihozlari"}
-    </option>
-    <option value="Sport">
-      {language === "ru" ? "Спорт" : "Sport"}
-    </option>
-    <option value="Boshqalar">
-      {language === "ru" ? "Другие" : language === "en" ? "Others" : "Boshqalar"}
-    </option>
-  </select>
+  ))}
+</select>
 
   <input
     type="number"
