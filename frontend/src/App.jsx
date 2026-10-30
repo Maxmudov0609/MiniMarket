@@ -170,7 +170,7 @@ useEffect(() => {
       setProductsLoading(true);
 
       const response = await fetch(
-        "http://localhost:4000/api/products",
+        "https://minimarket-backend-r4co.onrender.com/api/products",
         { signal: controller.signal }
       );
 
@@ -281,7 +281,7 @@ google.accounts.id.initialize({
   client_id: "957838455109-tsmj5fstgcncsjj19qo29sfkoe9i3kfa.apps.googleusercontent.com",
 callback: async (response) => {
   try {
-    const res = await fetch("http://localhost:4000/api/auth/google", {
+    const res = await fetch("https://minimarket-backend-r4co.onrender.com/api/auth/google", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -447,7 +447,7 @@ async function handlePlaceOrder(e) {
   }
 
   try {
-    const response = await fetch("http://localhost:4000/api/orders", {
+    const response = await fetch("https://minimarket-backend-r4co.onrender.com/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -552,7 +552,7 @@ async function handlePlaceOrder(e) {
       }
 
       const response = await fetch(
-        `http://localhost:4000/api/auth/${endpoint}`,
+        `https://minimarket-backend-r4co.onrender.com/api/auth/${endpoint}`,
         {
           method: "POST",
           headers: {
