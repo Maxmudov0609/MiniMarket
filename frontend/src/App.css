@@ -6436,3 +6436,331 @@ body {
     line-height: 1.4;
   }
 }
+/* ===== PREMIUM BUYER DASHBOARD ===== */
+
+.buyer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(13, 16, 40, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.buyer-dashboard {
+  position: relative;
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  width: min(1150px, 100%);
+  max-height: 90vh;
+  overflow: hidden;
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
+  text-align: left;
+}
+
+.buyer-close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  z-index: 10;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: #f1edff;
+  color: #39216f;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.buyer-sidebar {
+  background: #faf9ff;
+  overflow-y: auto;
+}
+
+.buyer-profile {
+  padding: 38px 20px;
+  text-align: center;
+  color: white;
+  background: linear-gradient(135deg, #753cff, #5624eb);
+  border-radius: 0 0 40px 40px;
+}
+
+.buyer-avatar {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: #fff;
+  color: #6734fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 800;
+  border: 5px solid #d8c9ff;
+}
+
+.buyer-profile h2 {
+  margin: 0;
+  color: white;
+  font-size: 27px;
+}
+
+.buyer-profile p {
+  margin: 10px 0;
+}
+
+.buyer-profile > span {
+  display: inline-block;
+  padding: 9px 16px;
+  background: white;
+  color: #632cff;
+  border-radius: 30px;
+  font-weight: 700;
+}
+
+.buyer-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 16px;
+}
+
+.buyer-navigation button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px 15px;
+  border: none;
+  border-radius: 14px;
+  background: white;
+  color: #172044;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.buyer-navigation button:hover {
+  background: #eee7ff;
+  color: #612aff;
+  transform: translateX(3px);
+}
+
+.buyer-navigation button:disabled,
+.buyer-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buyer-navigation .buyer-logout {
+  margin-top: 18px;
+  background: #fff0f2;
+  color: #ed2845;
+}
+
+.buyer-content {
+  min-width: 0;
+  padding: 35px 30px;
+  overflow-y: auto;
+}
+
+.buyer-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 28px;
+  border-radius: 20px;
+  background: linear-gradient(120deg, #f8f5ff, #eae2ff);
+}
+
+.buyer-welcome h1 {
+  margin: 0 0 12px;
+  font-size: 28px;
+  color: #16183d;
+}
+
+.buyer-welcome strong {
+  color: #6729ff;
+}
+
+.buyer-welcome p {
+  color: #737b9a;
+  margin: 0;
+}
+
+.buyer-welcome-icon {
+  font-size: 65px;
+}
+
+.buyer-content > h3 {
+  margin: 28px 0 20px;
+  color: #16183d;
+}
+
+.buyer-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.buyer-card {
+  position: relative;
+  min-height: 205px;
+  padding: 22px;
+  border: none;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+  color: #182044;
+}
+
+.buyer-card:hover:not(:disabled) {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(94, 46, 210, 0.13);
+}
+
+.cart-card {
+  background: #f1eaff;
+}
+
+.order-card {
+  background: #e8f2ff;
+}
+
+.favorite-card {
+  background: #ffeaf0;
+}
+
+.buyer-card-icon {
+  font-size: 36px;
+}
+
+.buyer-card strong {
+  font-size: 17px;
+}
+
+.buyer-card small {
+  color: #697391;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.buyer-card-count {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 7px 12px;
+  border-radius: 50px;
+  background: #6530f6;
+  color: white;
+  font-weight: 700;
+}
+
+.buyer-card-arrow {
+  margin-top: auto;
+  align-self: flex-end;
+  color: #642dff;
+  font-size: 22px;
+}
+
+.buyer-promo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 28px;
+  padding: 24px;
+  border-radius: 18px;
+  background: linear-gradient(120deg, #fff4e5, #fffaf1);
+}
+
+.buyer-promo > span {
+  font-size: 40px;
+}
+
+.buyer-promo h3 {
+  margin: 0 0 10px;
+  color: #172044;
+}
+
+.buyer-promo p {
+  margin: 0;
+  color: #6c7590;
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 800px) {
+  .buyer-overlay {
+    padding: 10px;
+  }
+
+  .buyer-dashboard {
+    grid-template-columns: 1fr;
+    max-height: 95dvh;
+    overflow-y: auto;
+    border-radius: 20px;
+  }
+
+  .buyer-sidebar,
+  .buyer-content {
+    overflow: visible;
+  }
+
+  .buyer-profile {
+    padding: 25px 15px;
+  }
+
+  .buyer-navigation {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .buyer-navigation button {
+    font-size: 13px;
+    padding: 12px;
+  }
+
+  .buyer-content {
+    padding: 20px 15px;
+  }
+
+  .buyer-welcome h1 {
+    font-size: 21px;
+  }
+
+  .buyer-welcome-icon {
+    font-size: 38px;
+  }
+
+  .buyer-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .buyer-card {
+    min-height: 150px;
+  }
+
+  .buyer-promo {
+    padding: 16px;
+  }
+
+  .buyer-promo > span {
+    font-size: 25px;
+  }
+}

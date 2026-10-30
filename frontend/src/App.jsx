@@ -2492,61 +2492,169 @@ dbProducts
           </div>
         </div>
       )}
-      {showBuyerPanel && user?.role === "buyer" && (
+{showBuyerPanel && user?.role === "buyer" && (
   <div
-    className="auth-overlay"
+    className="auth-overlay buyer-overlay"
     onClick={() => setShowBuyerPanel(false)}
   >
     <div
-      className="auth-box"
+      className="buyer-dashboard"
       onClick={(e) => e.stopPropagation()}
     >
-      <h2>🛍️ Xaridor kabineti</h2>
-
-      <p>Xush kelibsiz, {user.name}!</p>
-
-      <p>👤 Hisob turi: Xaridor</p>
-
       <button
         type="button"
-        onClick={() => {
-          setShowBuyerPanel(false);
-          setShowCart(true);
-        }}
-      >
-        🛒 Mening savatcham
-      </button>
-
-      <button
-        type="button"
-        disabled={cart.length === 0}
-        onClick={() => {
-          setShowBuyerPanel(false);
-          setShowOrderForm(true);
-        }}
-      >
-        📦 Buyurtma berish
-      </button>
-
-      <button
-        type="button"
-        onClick={() => {
-          setUser(null);
-          setToken("");
-          setShowBuyerPanel(false);
-          setShowCart(false);
-          setShowOrderForm(false);
-        }}
-      >
-        🚪 Akkauntdan chiqish
-      </button>
-
-      <button
-        type="button"
+        className="buyer-close"
         onClick={() => setShowBuyerPanel(false)}
       >
-        Yopish
+        ✕
       </button>
+
+      <aside className="buyer-sidebar">
+        <div className="buyer-profile">
+          <div className="buyer-avatar">
+            {user.name?.charAt(0).toUpperCase() || "U"}
+          </div>
+          <h2>{user.name}</h2>
+          <p>Xush kelibsiz!</p>
+          <span>👤 Xaridor hisobi</span>
+        </div>
+
+        <nav className="buyer-navigation">
+          <button
+            type="button"
+            onClick={() => setShowBuyerPanel(false)}
+          >
+            🏠 Bosh sahifa
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowBuyerPanel(false);
+              setShowCart(true);
+            }}
+          >
+            🛒 Mening savatcham
+            <span>{cart.length}</span>
+          </button>
+
+          <button
+            type="button"
+            disabled={cart.length === 0}
+            onClick={() => {
+              setShowBuyerPanel(false);
+              setShowOrderForm(true);
+            }}
+          >
+            📦 Buyurtma berish
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowBuyerPanel(false);
+              setShowFavorites(true);
+            }}
+          >
+            ❤️ Sevimlilarim
+            <span>{favorites.length}</span>
+          </button>
+
+          <button
+            type="button"
+            className="buyer-logout"
+            onClick={() => {
+              setUser(null);
+              setToken("");
+              setShowBuyerPanel(false);
+              setShowCart(false);
+              setShowOrderForm(false);
+            }}
+          >
+            🚪 Akkauntdan chiqish
+          </button>
+        </nav>
+      </aside>
+
+      <section className="buyer-content">
+        <div className="buyer-welcome">
+          <div>
+            <h1>
+              Xush kelibsiz, <strong>{user.name}!</strong>
+            </h1>
+            <p>MiniMarket'da xarid qilishdan zavqlaning 🛍️</p>
+          </div>
+          <span className="buyer-welcome-icon">🛍️</span>
+        </div>
+
+        <h3>Tezkor amallar</h3>
+
+        <div className="buyer-cards">
+          <button
+            type="button"
+            className="buyer-card cart-card"
+            onClick={() => {
+              setShowBuyerPanel(false);
+              setShowCart(true);
+            }}
+          >
+            <span className="buyer-card-icon">🛒</span>
+            <span className="buyer-card-count">
+              {cart.reduce(
+                (total, item) => total + item.quantity,
+                0
+              )}
+            </span>
+            <strong>Mening savatcham</strong>
+            <small>Savatchadagi mahsulotlarni ko‘rish</small>
+            <span className="buyer-card-arrow">➜</span>
+          </button>
+
+          <button
+            type="button"
+            className="buyer-card order-card"
+            disabled={cart.length === 0}
+            onClick={() => {
+              setShowBuyerPanel(false);
+              setShowOrderForm(true);
+            }}
+          >
+            <span className="buyer-card-icon">📦</span>
+            <strong>Buyurtma berish</strong>
+            <small>Tanlangan mahsulotlarni buyurtma qilish</small>
+            <span className="buyer-card-arrow">➜</span>
+          </button>
+
+          <button
+            type="button"
+            className="buyer-card favorite-card"
+            onClick={() => {
+              setShowBuyerPanel(false);
+              setShowFavorites(true);
+            }}
+          >
+            <span className="buyer-card-icon">❤️</span>
+            <span className="buyer-card-count">
+              {favorites.length}
+            </span>
+            <strong>Sevimlilarim</strong>
+            <small>Saqlangan mahsulotlarni ko‘rish</small>
+            <span className="buyer-card-arrow">➜</span>
+          </button>
+        </div>
+
+        <div className="buyer-promo">
+          <span>👑</span>
+          <div>
+            <h3>MiniMarket bilan qulay xarid qiling!</h3>
+            <p>
+              Sifatli mahsulotlar, qulay narxlar va
+              ajoyib xarid tajribasi.
+            </p>
+          </div>
+          <span>🛒</span>
+        </div>
+      </section>
     </div>
   </div>
 )}
