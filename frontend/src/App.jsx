@@ -818,7 +818,19 @@ const handleUpdateProduct = async (e) => {
     <div>
 
       <header className="navbar">
-        <h2>🛍️ MiniMarket</h2>
+        <h2 style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+  <img
+    src="/minimarket-logo.png"
+    alt="MiniMarket logotipi"
+    style={{
+      width: "42px",
+      height: "42px",
+      objectFit: "contain",
+      borderRadius: "10px"
+    }}
+  />
+  <span>MiniMarket</span>
+</h2>
   <input
     type="text"
     placeholder={t.search}
