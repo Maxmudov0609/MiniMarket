@@ -8,13 +8,16 @@ import { db } from './db.js';
 
 if (!process.env.JWT_SECRET) throw new Error('Set JWT_SECRET in server/.env');
 
-const app=express();
+const app = express();
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
-    "https://minimarket-uz.vercel.app"
+    "https://minimarket-uz.vercel.app",
+    "https://market-mj.uz",
+    "https://www.market-mj.uz"
   ]
 }));
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
