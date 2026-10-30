@@ -94,6 +94,9 @@ const marketCategories = [
   { icon: "📱", name: "Elektronika" }
 ];
 const productImages = {
+  "Hydrolife suv 1 L": "/images/hydrolife.jpg",
+  "Plastilin 12 rang": "/images/plastilin.jpg",
+  "Grechka 1 kg": "/images/grechka.jpg",
   "Hydrolife suv 1 L": "/categories/cleaning-products.jpg",
   "Persil 1.5 kg": "/persil.jpg",
   "Kir sovuni 200 g": "/sovun.jpg",
