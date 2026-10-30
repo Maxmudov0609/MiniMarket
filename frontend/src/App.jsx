@@ -170,7 +170,7 @@ useEffect(() => {
       setProductsLoading(true);
 
       const response = await fetch(
-        "https://minimarket-backend-r4co.onrender.com/api/products",
+        "http://localhost:4000/api/products",
         { signal: controller.signal }
       );
 
@@ -447,7 +447,7 @@ async function handlePlaceOrder(e) {
   }
 
   try {
-    const response = await fetch("https://minimarket-backend-r4co.onrender.com/api/orders", {
+    const response = await fetch("http://localhost:4000/api/orders", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -503,11 +503,6 @@ async function handlePlaceOrder(e) {
 }
 }
 
-
-
-
-
-
   const filteredProducts = dbProducts
     .filter((product) => {
       const matchesSearch = String(product.name || "")
@@ -557,7 +552,7 @@ async function handlePlaceOrder(e) {
       }
 
       const response = await fetch(
-        `https://minimarket-backend-r4co.onrender.com/api/auth/${endpoint}`,
+        `http://localhost:4000/api/auth/${endpoint}`,
         {
           method: "POST",
           headers: {
@@ -1693,13 +1688,19 @@ onClick={() => {
       className="cart-modal"
       onClick={(e) => e.stopPropagation()}
     >
-      <button
-        type="button"
-        className="cart-close"
-        onClick={() => setShowFavorites(false)}
-      >
-        ✕
-      </button>
+<button
+  type="button"
+  className="cart-close"
+  onClick={() => {
+    setShowFavorites(false);
+
+    if (user?.role === "buyer") {
+      setShowBuyerPanel(true);
+    }
+  }}
+>
+  X
+</button>
 
       <div className="cart-box">
         <div className="cart-header">
@@ -1781,13 +1782,16 @@ dbProducts
               className="cart-modal"
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                type="button"
-                className="cart-close"
-                onClick={() => setShowCart(false)}
-              >
-                ✕
-              </button>
+  <button
+  type="button"
+  className="cart-close"
+onClick={() => {
+  setShowCart(false);
+  setShowBuyerPanel(false);
+}}
+>
+  ✕
+</button>
 
               <div className="cart-box">
                 <div className="cart-header">
@@ -1811,11 +1815,20 @@ dbProducts
               {cart.map((item) => (
               <div className="cart-item" key={item.id}>
                 <div className="cart-product">
-                  <img
-                    src={item.image_url || item.image || "/no-image.svg"}
-                    alt={item.name}
-                    className="cart-product-image"
-                  />
+<img
+  src={
+    productImages[item.name] ||
+    item.image_url ||
+    item.image ||
+    "/no-image.svg"
+  }
+  alt={item.name}
+  className="cart-product-image"
+  onError={(e) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = "/no-image.svg";
+  }}
+/>
 
                   <div className="cart-product-details">
                     <strong>{item.name}</strong>
@@ -1869,7 +1882,12 @@ dbProducts
               </h3>
               <button
                 type="button"
-                onClick={() => setShowOrderForm(true)}
+                onClick={() => {
+                  setShowCart(false);
+                  setShowBuyerPanel(false);
+                  setShowFavorites(false);
+                  setShowOrderForm(true);
+                }}
                 style={{
                   backgroundColor: "#6c3bff",
                   color: "white",
@@ -1882,7 +1900,14 @@ dbProducts
               >
                 🛒 Buyurtma berish
               </button>
-              {showOrderForm && (
+
+            </>
+          )}
+        </div>
+            </div>
+  </div>
+      )}
+                {showOrderForm && (
                 <div className="order-form">
                   <div style={{
                     display: "flex",
@@ -2010,13 +2035,7 @@ dbProducts
                   </form>
                 </div>
               )}
-            </>
-          )}
-        </div>
-            </div>
-  </div>
-      )}
-{showLogin && (
+              {showLogin && (
   <div className="auth-overlay" onClick={() => setShowLogin(false)}>
     <div
       className="auth-box login-modern"
@@ -2538,16 +2557,22 @@ dbProducts
             <span>{cart.length}</span>
           </button>
 
-          <button
-            type="button"
-            disabled={cart.length === 0}
-            onClick={() => {
-              setShowBuyerPanel(false);
-              setShowOrderForm(true);
-            }}
-          >
-            📦 Buyurtma berish
-          </button>
+<button
+  type="button"
+  onClick={() => {
+    if (cart.length === 0) {
+      alert("Avval savatchaga mahsulot qo‘shing!");
+      return;
+    }
+
+setShowBuyerPanel(false);
+setShowFavorites(false);
+setShowCart(true);
+setShowOrderForm(true);
+  }}
+>
+  📦 Buyurtma berish
+</button>
 
           <button
             type="button"
