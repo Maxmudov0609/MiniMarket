@@ -83,16 +83,20 @@ const products = [
   }
   
 ];
+
+
 const marketCategories = [
-  { icon: "🥤", name: "Ichimliklar" },
-  { icon: "🍎", name: "Oziq-ovqat mahsulotlari" },
-  { icon: "🍬", name: "Shirinliklar" },
-  { icon: "🧴", name: "Maishiy kimyo" },
-  { icon: "🧻", name: "Gigiyena vositalari" },
-  { icon: "🧸", name: "Bolalar uchun" },
-  { icon: "🏠", name: "Uy-ro‘zg‘or" },
-  { icon: "📱", name: "Elektronika" }
+  { icon: "🥤", name: "Ichimliklar", image: "/categories/drinks.jpg" },
+  { icon: "🍔", name: "Oziq-ovqat mahsulotlari", image: "/categories/food.jpg" },
+  { icon: "🍬", name: "Shirinliklar", image: "/categories/sweets.jpg" },
+  { icon: "🧴", name: "Maishiy kimyo", image: "/categories/cleaning.jpg" },
+  { icon: "🧻", name: "Gigiyena vositalari", image: "/categories/hygiene.jpg" },
+  { icon: "🧸", name: "Bolalar uchun", image: "/categories/bolalar.jpg" },
+  { icon: "🏠", name: "Uy-ro‘zg‘or", image: "/categories/home.jpg" },
+  { icon: "📱", name: "Elektronika", image: "/categories/electronics.jpg" },
 ];
+
+
 const productImages = {
   "Hydrolife suv 1 L": "/images/hydrolife.jpg",
   "Plastilin 12 rang": "/images/plastilin.jpg",
@@ -116,8 +120,43 @@ const productImages = {
   "Lipton Ice Tea 1 L": "/images/lipton.png",
 };
 
+const bannerSlides = [
+  {
+    id: 1,
+    title: "Katta chegirmalar!",
+    description: "Eng yaxshi mahsulotlar siz uchun qulay narxlarda.",
+    image: "/images/aksiya.jpg",
+    background: "linear-gradient(120deg, #5522df, #9b65ff)",
+  },
+  {
+    id: 2,
+    title: "Tez va qulay yetkazib berish",
+    description: "Sevimli mahsulotlaringizni MiniMarket orqali buyurtma qiling.",
+    image: "/images/yetkazish.jpg",
+    background: "linear-gradient(120deg, #ff7a18, #ffbf47)",
+  },
+  {
+    id: 3,
+    title: "Har kuni yangi takliflar",
+    description: "MiniMarket bilan xarid qilish yanada oson!",
+    image: "/images/takliflar.jpg",
+    background: "linear-gradient(120deg, #008cbb, #53d6dc)",
+  },
+];
+
 function App() {
   const { t: translate, i18n } = useTranslation();
+  
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % bannerSlides.length);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
 
   const [showProducts, setShowProducts] = useState(() => {
     return localStorage.getItem("minimarket_showProducts") === "true";
@@ -839,16 +878,17 @@ const handleUpdateProduct = async (e) => {
           {!user ? (
             <>
               <button
-                onClick={() => {
-                  setIsRegister(false);
-                  setShowLogin(true);
-                }}
-              >
-                {t.login}
-              </button>
-
+  className="nav-login-btn"
+  onClick={() => {
+    setIsRegister(false);
+    setShowLogin(true);
+  }}
+>
+  {t.login}
+</button>
               <button
-                onClick={() => {
+  className="nav-register-btn"
+  onClick={() => {
                   setIsRegister(true);
                   setShowLogin(true);
                 }}
@@ -917,163 +957,97 @@ const handleUpdateProduct = async (e) => {
   <option value="ru">🇷🇺 RU</option>
   <option value="en">🇬🇧 EN</option>
 </select>
-          <button onClick={() => setShowCart(!showCart)}>
-            🛒 {t.cart} ({cart.reduce((total, item) => total + item.quantity, 0)})
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowFavorites(!showFavorites)}
-          >
-            ❤️ {language === "ru"
-              ? "Избранное"
-              : language === "en"
-              ? "Favorites"
-              : "Sevimlilar"} ({favorites.length})
-          </button>
+<button
+  type="button"
+  className="nav-cart-btn"
+  onClick={() => {
+  setShowCart(!showCart);
+}}
+>
+  🛒 {t.cart} ({cart.reduce((total, item) => total + item.quantity, 0)})
+</button>
+
+<button
+  type="button"
+  className="nav-favorites-btn"
+  onClick={() => setShowFavorites(!showFavorites)}
+>
+  ❤️ {language === "ru"
+    ? "Избранное"
+    : language === "en"
+    ? "Favorites"
+    : "Sevimlilar"} ({favorites.length})
+</button>
           
           </div>
           </header>
           <div className="market-layout">
-            <aside className="market-sidebar">
-              <h3>☷ {i18n.language} — {translate("allCategories")}</h3>
-
-              {marketCategories.map((category) => (
-                <button
-                  key={category.name}
-                  type="button"
-                  onClick={() => {
-                    setCategory(category.name);
-                    document.getElementById("products")?.scrollIntoView({
-                      behavior: "smooth",
-                    });
-                  }}
-                >
-                  <span>{category.icon}</span>
-                  <span>
-  {language === "ru"
-    ? ({
-        "Ichimliklar": "Напитки",
-        "Oziq-ovqat mahsulotlari": "Продукты питания",
-        "Shirinliklar": "Сладости",
-        "Maishiy kimyo": "Бытовая химия",
-        "Gigiyena vositalari": "Средства гигиены",
-        "Bolalar uchun": "Для детей",
-        "Uy-ro‘zg‘or": "Товары для дома",
-        "Elektronika": "Электроника"
-      }[category.name] || category.name)
-    : language === "en"
-    ? ({
-        "Ichimliklar": "Drinks",
-        "Oziq-ovqat mahsulotlari": "Groceries",
-        "Shirinliklar": "Sweets",
-        "Maishiy kimyo": "Household cleaning",
-        "Gigiyena vositalari": "Personal care",
-        "Bolalar uchun": "Kids",
-        "Uy-ro‘zg‘or": "Home goods",
-        "Elektronika": "Electronics"
-      }[category.name] || category.name)
-    : category.name}
-</span>
-                  <span>›</span>
-                </button>
-              ))}
-            </aside>
 
 
-<section className="hero">
-  <div className="hero-content">
 
-<div className="hero-badge">
-  👑 {language === "ru"
-    ? "Лучшие предложения для вас"
-    : language === "en"
-    ? "Best picks for you"
-    : "Siz uchun eng yaxshi tanlovlar"}
-</div>
-<h1>
-  {language === "ru"
-    ? "Добро пожаловать"
-    : language === "en"
-    ? "Welcome to"
-    : "MiniMarketga"}
-  <br />
-  <span>
-    {language === "ru"
-      ? "в MiniMarket!"
-      : language === "en"
-      ? "MiniMarket!"
-      : "xush kelibsiz!"}
-  </span>
-</h1>
 
-<p>
-  {language === "ru"
-    ? "Лучшие товары по выгодным ценам."
-    : language === "en"
-    ? "The best products at great prices."
-    : "Eng yaxshi mahsulotlar — qulay narxlarda."}
-
-  <br />
-
-  {language === "ru"
-    ? "Надёжный выбор для ваших ежедневных покупок!"
-    : language === "en"
-    ? "A trusted choice for your everyday shopping!"
-    : "Sizning kundalik xaridlaringiz uchun ishonchli tanlov!"}
-</p>
+<section className="hero-slider">
+<div className="slider-banner">
+  <img
+    className="slider-product-image"
+    src={bannerSlides[activeSlide].image}
+    alt={bannerSlides[activeSlide].title}
+  />
     <button
-      className="hero-shop-btn"
-      onClick={() => {
-        setShowProducts((prev) => !prev);
-        setTimeout(() => {
+    
+  type="button"
+  className="slider-arrow slider-arrow-left"
+  onClick={() =>
+    setActiveSlide((prev) =>
+      (prev - 1 + bannerSlides.length) % bannerSlides.length
+    )
+  }
+  aria-label="Oldingi banner"
+>
+  &#10094;
+</button>
+<button
+  type="button"
+  className="slider-arrow slider-arrow-right"
+  onClick={() =>
+    setActiveSlide((prev) => (prev + 1) % bannerSlides.length)
+  }
+  aria-label="Keyingi slayd"
+>
+  ❯
+</button> 
+    <div className="slider-text">
+      <h2>{bannerSlides[activeSlide].title}</h2>
+      <p>{bannerSlides[activeSlide].description}</p>
+
+      <button
+        type="button"
+        onClick={() =>
           document.getElementById("products")?.scrollIntoView({
             behavior: "smooth",
-          });
-        }, 100);
-      }}
-    >
-      🛒 {language === "ru"
-  ? "Смотреть товары"
-  : language === "en"
-  ? "Shop products"
-  : "Mahsulotlarni ko‘rish"}
-      <span>➜</span>
-    </button>
-
-    <div className="hero-features">
-  <div>
-    🚚 {language === "ru" ? "Быстрая доставка" : language === "en" ? "Fast delivery" : "Tez yetkazib berish"}
-  </div>
-
-  <div>
-    🛡️ {language === "ru" ? "Надёжные покупки" : language === "en" ? "Secure shopping" : "Ishonchli xaridlar"}
-  </div>
-
-  <div>
-    💎 {language === "ru" ? "Выгодные цены" : language === "en" ? "Great prices" : "Qulay narxlar"}
-  </div>
-</div>
-
-
-  </div>
-
-  <div className="hero-visual">
-    <div className="hero-discount">🔥 -30%</div>
-
-    <div className="hero-new">
-      ⭐ ⭐ {language === "ru" ? "Новинка" : language === "en" ? "New" : "Yangi"}
+          })
+        }
+      >
+        Mahsulotlarni ko‘rish →
+      </button>
     </div>
 
-    <img
-      src="/grocery-basket.png"
-      alt="MiniMarket mahsulotlari"
-      className="hero-image"
-    />
 
-    <div className="hero-floating hero-floating-one">✨</div>
-    <div className="hero-floating hero-floating-two">💜</div>
+  </div>
+
+  <div className="slider-dots">
+    {bannerSlides.map((slide, index) => (
+      <button
+        key={slide.id}
+        type="button"
+        className={activeSlide === index ? "active" : ""}
+        onClick={() => setActiveSlide(index)}
+        aria-label={`${index + 1}-banner`}
+      />
+    ))}
   </div>
 </section>
+
       <div className="promo-cards">
         <div className="promo-card promo-sale">
           <span className="promo-icon">🎁</span>
