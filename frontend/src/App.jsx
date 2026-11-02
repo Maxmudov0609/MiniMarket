@@ -1054,11 +1054,10 @@ const handleUpdateProduct = async (e) => {
 
       <button
         type="button"
-        onClick={() =>
-          document.getElementById("products")?.scrollIntoView({
-            behavior: "smooth",
-          })
-        }
+onClick={() => {
+  setShowProducts(true);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}}
       >
         Mahsulotlarni ko‘rish →
       </button>
