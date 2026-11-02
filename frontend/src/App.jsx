@@ -197,7 +197,29 @@ function App() {
     localStorage.setItem("minimarket_language", language);
   }, [language]);
 
-  const [dbProducts, setDbProducts] = useState([]);
+  const [dbProducts, setDbProducts] = useState(() => {
+  try {
+    const cached = localStorage.getItem("minimarket_products_cache");
+    const cacheTime = Number(
+  localStorage.getItem("minimarket_products_cache_time")
+);
+
+const cacheMaxAge = 5 * 60 * 1000;
+
+if (!cacheTime || Date.now() - cacheTime > cacheMaxAge) {
+  return [];
+}
+
+    if (!cached) return [];
+
+    const products = JSON.parse(cached);
+
+    return Array.isArray(products) ? products : [];
+  } catch (error) {
+    console.error("Keshni o'qishda xatolik:", error);
+    return [];
+  }
+});
   const [productsLoading, setProductsLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteProductId, setDeleteProductId] = useState(null);
@@ -226,10 +248,20 @@ useEffect(() => {
         throw new Error("API noto'g'ri ma'lumot qaytardi");
       }
 
-      if (!controller.signal.aborted) {
-        setDbProducts(data);
-        console.log("Yuklangan mahsulotlar:", data.length);
-      }
+if (!controller.signal.aborted) {
+  setDbProducts(data);
+localStorage.setItem(
+  "minimarket_products_cache",
+  JSON.stringify(data)
+);
+
+localStorage.setItem(
+  "minimarket_products_cache_time",
+  String(Date.now())
+);
+
+  console.log("Yuklangan mahsulotlar:", data.length);
+}
     } catch (error) {
       if (error.name !== "AbortError") {
         console.error("Mahsulotlarni yuklash xatosi:", error);
