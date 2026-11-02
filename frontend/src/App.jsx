@@ -916,7 +916,7 @@ const handleUpdateProduct = async (e) => {
   : "Akkauntdan chiqish"}
               </button>
 
-              {user.role === "seller" && (
+              {(user.role === "seller" || user.role === "admin") && (
                 <button
                   onClick={() => setShowSellerPanel(true)}
                 >
@@ -2133,7 +2133,7 @@ onClick={() => {
     </div>
   </div>
 )}
-      {showSellerPanel && user?.role === "seller" && (
+      {showSellerPanel && (user?.role === "seller" || user?.role === "admin") && (
         <div className="auth-overlay">
           <div className="auth-box seller-modal-scroll seller-modal">
 
@@ -2455,7 +2455,11 @@ onClick={() => {
             <h3>Mening mahsulotlarim</h3>
 
             {dbProducts
-              .filter((product) => product.seller_id === user?.id)
+              .filter(
+  (product) =>
+    user?.role === "admin" ||
+    Number(product.seller_id) === Number(user?.id)
+)
               .map((product) => (
                 <div key={product.id} className="seller-product">
                   <p>{product.name}</p>

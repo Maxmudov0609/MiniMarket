@@ -265,7 +265,15 @@ app.get('/api/products', wrap(async (req, res) => {
 
   sql += ` ORDER BY ${order[sort] || order.new}`;
 
-  const result = await db.query(sql, args);
+  const startTime = performance.now();
+
+const result = await db.query(sql, args);
+
+const duration = performance.now() - startTime;
+
+console.log(
+  `[PERFORMANCE] /api/products: ${duration.toFixed(2)} ms, mahsulotlar: ${result.rows.length}`
+);
 
   res.json(result.rows);
 }));
