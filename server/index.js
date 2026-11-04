@@ -4,11 +4,13 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
+import { rateLimit } from 'express-rate-limit';
 import { db } from './db.js';
 
 if (!process.env.JWT_SECRET) throw new Error('Set JWT_SECRET in server/.env');
 
 const app = express();
+app.set('trust proxy', 1);
 
 app.use(cors({
   origin: [
@@ -45,6 +47,15 @@ app.get('/api/db-check', async (req, res) => {
 
 app.use(express.json({limit:'100kb'}));
 const wrap=fn=>(req,res,next)=>{try{fn(req,res,next)}catch(e){next(e)}};
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: {
+    error: "Juda ko'p kirish urinishi. 15 daqiqadan keyin qayta urinib ko'ring."
+  }
+});
 const tokenFor=u=>jwt.sign({id:u.id,role:u.role},process.env.JWT_SECRET,{expiresIn:'7d'});
 const auth = (role) => wrap(async (req, res, next) => {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/, '');
@@ -133,7 +144,7 @@ app.post('/api/auth/register', wrap(async (req, res) => {
     token: tokenFor(user)
   });
 }));
-app.post('/api/auth/login', wrap(async (req, res) => {
+app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
 
