@@ -1261,7 +1261,7 @@ onClick={() => {
 
         <div className="products">
           
-          {productsLoading && (
+          {productsLoading && dbProducts.length === 0 && (
             <div style={{
               gridColumn: "1 / -1",
               textAlign: "center",
@@ -1273,7 +1273,7 @@ onClick={() => {
               ⏳ Mahsulotlar yuklanmoqda, iltimos kuting...
             </div>
           )}
-      {!productsLoading && (
+      {(!productsLoading || dbProducts.length > 0) && (
         filteredProducts.length === 0 ? (
           <div className="empty-products">
             <div className="empty-products-icon">📦</div>
