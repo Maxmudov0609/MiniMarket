@@ -3,6 +3,7 @@ import "./AppNext.css";
 import "./MarketEditorial.css";
 import "./MarketSearch.css";
 import "./MarketplaceRefinements.css";
+import "./MarketV3.css";
 
 const GOOGLE_CLIENT_ID = "957838455109-tsmj5fstgcncsjj19qo29sfkoe9i3kfa.apps.googleusercontent.com";
 const CATEGORIES = [
@@ -259,14 +260,36 @@ function ProductPicture({ product, className = "", eager = false }) {
       alt={product.name} onError={() => setBroken(true)} referrerPolicy="no-referrer" draggable="false" />
   </div>;
 }
-function Modal({ title, onClose, children, wide = false }) {
+function useDialogFocus(ref, onClose) {
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
-    const handler = event => { if (event.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
+    const previousFocus = document.activeElement;
+    const dialog = ref.current;
+    const selector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const candidates = () => [...(dialog?.querySelectorAll(selector) || [])].filter(el => el.getClientRects().length);
+    candidates()[0]?.focus();
+    const handler = event => {
+      if (event.key === "Escape") { event.preventDefault(); closeRef.current(); }
+      if (event.key !== "Tab") return;
+      const nodes = candidates();
+      if (!nodes.length) { event.preventDefault(); return; }
+      const first = nodes[0], last = nodes[nodes.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !dialog?.contains(document.activeElement))) {
+        event.preventDefault(); last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialog?.contains(document.activeElement))) {
+        event.preventDefault(); first.focus();
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => { document.removeEventListener("keydown", handler); previousFocus?.focus?.(); };
+  }, [ref]);
+}
+function Modal({ title, onClose, children, wide = false }) {
+  const ref = useRef(null);
+  useDialogFocus(ref, onClose);
   return <div className="nm-overlay" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <section className={"nm-dialog " + (wide ? "nm-dialog-wide" : "")}
+    <section ref={ref} className={"nm-dialog " + (wide ? "nm-dialog-wide" : "")}
       role="dialog" aria-modal="true" aria-label={title}>
       <div className="nm-dialog-heading">
         <h2>{title}</h2><button type="button" className="nm-icon-btn" aria-label="Yopish" onClick={onClose}><Icon name="x"/></button>
@@ -815,11 +838,6 @@ export default function AppNext() {
       });
     return () => controller.abort();
   }, [refreshKey]);
-  useEffect(() => {
-    const handler = event => { if (event.key === "Escape") setDialog(""); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
   useEffect(() => { document.body.classList.toggle("nm-lock-scroll", !!dialog); return () => document.body.classList.remove("nm-lock-scroll"); }, [dialog]);
   useEffect(() => setVisibleCount(12), [query, category, sort, minPrice, maxPrice, favoritesOnly, onlyAvailable]);
 
