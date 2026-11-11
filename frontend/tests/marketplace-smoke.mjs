@@ -129,6 +129,10 @@ async function runSeller() {
       token:'seller-token',user:{id:998,name:'Test Seller',email:'seller@example.test',role:'seller'}
     })
   }));
+  await page.route('**/api/auth/me', route=>route.fulfill({
+    status:200,contentType:'application/json',
+    body:JSON.stringify({id:998,name:'Test Seller',email:'seller@example.test',role:'seller'})
+  }));
   await page.route('**/api/seller/**', route=>{
     const path=new URL(route.request().url()).pathname;
     const body=path==='/api/seller/products' ? inventory : [];
