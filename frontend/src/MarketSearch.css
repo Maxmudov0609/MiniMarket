@@ -1,0 +1,30 @@
+
+.mm-live-search{position:relative;z-index:80}
+.mm-search-suggestions{position:absolute;top:calc(100% + 9px);left:0;right:0;z-index:85;display:flex;flex-direction:column;overflow:hidden;background:#fff;border:1px solid #e5ece4;border-radius:18px;box-shadow:0 22px 55px rgba(22,50,40,.16);color:#214738}
+.mm-suggestion-label{padding:14px 17px 8px;font-size:10px;letter-spacing:.1em;color:#799586;font-weight:900;text-transform:uppercase}
+.mm-search-suggestion{width:100%;display:flex;align-items:center;gap:12px;padding:9px 14px;background:white;border:0;border-bottom:1px solid #f1f3ee;text-align:left;color:#253e33;transition:background .15s}
+.mm-search-suggestion:hover,.mm-search-suggestion:focus-visible{background:#f3f8f1}
+.mm-search-suggestion-art{display:grid;place-items:center;width:46px;height:46px;flex-shrink:0;border-radius:10px;background:#f2f5ef;overflow:hidden}
+.mm-search-suggestion-art .nm-product-image{width:100%;height:100%;padding:2px}
+.mm-search-suggestion-art img{width:100%;height:100%;object-fit:contain}
+.mm-search-suggestion-art .mm-image-fallback{width:100%;height:100%}
+.mm-search-suggestion-art .mm-fallback-graphic{width:32px;height:32px;border:0;border-radius:7px}
+.mm-search-suggestion-art .mm-fallback-graphic svg{width:18px}
+.mm-search-suggestion-art .mm-image-fallback>small,.mm-search-suggestion-art .mm-image-fallback>span{display:none}
+.mm-search-suggestion-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:800}
+.mm-search-suggestion-name small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#92a198;font-weight:500;font-size:10px}
+.mm-search-suggestion>strong{font-size:12px;color:#125a4b;white-space:nowrap}
+.mm-suggestion-empty{margin:15px;padding:15px;color:#708d7b;font-size:12px}
+.mm-suggestion-all{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;background:#f0f6ef;border:0;color:#155849;font-weight:800;font-size:12px}
+.mm-suggestion-all:hover{background:#e4f0e1}
+@media(max-width:800px){
+.mm-live-search{z-index:90}
+.mm-search-suggestions{top:calc(100% + 6px)}
+}
+@media(max-width:570px){
+.mm-search-suggestions{border-radius:13px}
+.mm-search-suggestion{padding:8px 10px;gap:8px}
+.mm-search-suggestion-art{height:38px;width:38px}
+.mm-search-suggestion-name{font-size:11px}
+.mm-search-suggestion>strong{font-size:10px}
+}
