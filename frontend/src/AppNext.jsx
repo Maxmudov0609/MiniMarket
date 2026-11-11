@@ -974,7 +974,7 @@ export default function AppNext() {
               <span className="mm-search-suggestion-name">{item.name}<small>{item.category}</small></span>
               <strong>{money(item.price)}</strong>
             </button>) : <p className="mm-suggestion-empty">{WORD(language, "noResults")}</p>}
-            <button type="button" className="mm-suggestion-all" onClick={() => { setSearchFocused(false); goCatalog(category); }}>
+            <button type="button" className="mm-suggestion-all" onClick={() => { setSearchFocused(false); goCatalog(category, true); }}>
               {WORD(language, "browse")} <Icon name="arrow" size={16}/>
             </button>
           </div>}
@@ -1136,7 +1136,7 @@ export default function AppNext() {
     </div>}
     {dialog === "auth" && <AuthPanel language={language} onClose={() => setDialog("")} onSuccess={signedIn} notify={notify}/>}
     {dialog === "cart" && <CartPanel language={language} cart={cart} products={products} onClose={() => setDialog("")}
-      onQty={changeQuantity} onRemove={id => setCart(prev => prev.filter(item => String(item.id) !== String(id)))}
+      onBrowse={() => goCatalog("")} onQty={changeQuantity} onRemove={id => setCart(prev => prev.filter(item => String(item.id) !== String(id)))}
       onCheckout={openCheckout}/>}
     {dialog === "checkout" && <CheckoutPanel language={language} user={{ ...user, token }} cart={cart} onClose={() => setDialog("")}
       onSuccess={orderPlaced} notify={notify}/>}
