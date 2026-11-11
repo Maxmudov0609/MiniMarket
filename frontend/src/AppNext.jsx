@@ -183,7 +183,7 @@ function productImage(product) {
   const mappings = [
     [/nivea/, "/nivea.webp"], [/fairy/, "/fairy.jpg"],
     [/grechka|гречк/, "/grechka.jpg"], [/persil/, "/persil.jpg"],
-    [/hydrolife/, "/hydrolife.jpg"], [/plastilin|пластилин/, "/plastilin.jpg"],
+    [/hydrolife/, "/hydrolife.png"], [/plastilin|пластилин/, "/plastilin.png"],
     [/dezodorant|deodorant/, "/dezodorant.jpg"], [/sovun|совун/, "/sovun.jpg"],
     [/hdmi/, "/hdmi.jpg"], [/bluetooth|karnay/, "/images/bluetooth-karnay.jpg"],
     [/fanta/, "/images/fanta.png"], [/fuse.?tea/, "/images/fuse-tea.png"],
