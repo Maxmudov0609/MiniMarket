@@ -711,7 +711,11 @@ export default function AppNext() {
     else rows.sort((a,b) => Number(b.id) - Number(a.id));
     return rows;
   }, [products, query, category, minPrice, maxPrice, favoritesOnly, favorites, sort]);
-  const showcased = useMemo(() => products.filter(p => p.is_active !== false && Number(p.stock) > 0 && Number(p.price) > 0).slice(0,3), [products]);
+  const showcased = useMemo(() => products
+    .filter(p => p.is_active !== false && Number(p.stock) > 0 && Number(p.price) > 0 && productImage(p))
+    .slice(0,3), [products]);
+  const featured = showcased[0];
+  const catalogCount = products.filter(p => p.is_active !== false && Number(p.price) > 0).length;
   const count = cart.reduce((sum,p) => sum + p.quantity, 0);
   function goCatalog(nextCategory = "") {
     setFavoritesOnly(false);
@@ -803,29 +807,44 @@ export default function AppNext() {
     </header>
 
     <main>
-      <section className="nm-wrap nm-hero-layout">
-        <div className="nm-hero">
-          <div className="nm-hero-copy">
-            <div className="nm-hero-overline"><span className="nm-pulse"/> MINI MARKETPLACE · 2026</div>
-            <h1>{WORD(language,"heroTitle")}</h1>
-            <p>{WORD(language,"heroText")}</p>
-            <div className="nm-hero-buttons">
-              <button className="nm-hero-primary" type="button" onClick={() => goCatalog("")}>{WORD(language,"explore")} <Icon name="arrow"/></button>
-              <span><Icon name="check" size={18}/> {WORD(language,"realPrices")}</span>
+      <section className="mm-home-hero nm-wrap nm-hero-layout" aria-label={WORD(language, "heroTitle")}>
+        <div className="mm-hero-stage">
+          <div className="mm-hero-copy">
+            <span className="mm-kicker"><span className="mm-kicker-dot"/> MINI MARKET · NEW EXPERIENCE</span>
+            <h1>{language === "ru" ? <>Ваши любимые товары. <em>Проще, чем когда-либо.</em></> :
+              language === "en" ? <>Everything you need. <em>A little more extraordinary.</em></> :
+              <>Har kuni kerakli narsalar. <em>Endi yanada oson.</em></>}</h1>
+            <p>{WORD(language, "heroText")}</p>
+            <div className="mm-hero-actions">
+              <button type="button" className="mm-button-dark" onClick={() => goCatalog("")}>
+                {WORD(language, "explore")} <Icon name="arrow" size={19}/>
+              </button>
+              <button type="button" className="mm-link-arrow" onClick={() => document.getElementById("categories")?.scrollIntoView({behavior:"smooth",block:"start"})}>
+                {WORD(language, "categories")} <Icon name="chevron" size={18}/>
+              </button>
+            </div>
+            <div className="mm-hero-footnote">
+              <span><Icon name="shield" size={16}/> {language === "en" ? "Live catalog" : language === "ru" ? "Актуальный каталог" : "Haqiqiy katalog"}</span>
+              <span><Icon name="bag" size={16}/> {catalogCount} {WORD(language, "found")}</span>
             </div>
           </div>
-          <div className="nm-hero-art" aria-hidden="true">
-            <div className="nm-hero-orbit"/>
-            {showcased.length ? showcased.map((p,i) => <div className={"nm-hero-product nm-hero-product-" + i} key={p.id}>
-              <ProductPicture product={p}/><div><span>{p.category}</span><strong>{money(p.price)}</strong></div>
-            </div>) : <div className="nm-hero-empty-art"><span>🛍️</span><span>🥤</span><span>🎧</span></div>}
-            <div className="nm-floating-label"><Icon name="spark" size={15}/> {WORD(language,"newItems")}</div>
+          <div className="mm-hero-visual">
+            <div className="mm-visual-orbit mm-visual-orbit-one"/>
+            <div className="mm-visual-orbit mm-visual-orbit-two"/>
+            <div className="mm-visual-glow"/>
+            <div className="mm-hero-image-stage">
+              {featured ? <ProductPicture product={featured} eager className="mm-hero-feature-picture"/> :
+                <div className="mm-hero-generic" aria-hidden="true"><Icon name="bag" size={114} strokeWidth={1.1}/></div>}
+            </div>
+            {featured && <div className="mm-feature-caption"><span>{featured.category}</span><strong>{featured.name}</strong><small>{money(featured.price)}</small></div>}
+            <div className="mm-float-icon mm-float-icon-one"><Icon name="spark" size={22}/></div>
+            <div className="mm-float-icon mm-float-icon-two"><Icon name="heart" size={20}/></div>
           </div>
         </div>
-        <div className="nm-hero-stats">
-          <div><span className="nm-stat-icon orange"><Icon name="package"/></span><strong>{products.length > 0 ? products.length + "+" : "MiniMarket"}</strong><small>{WORD(language,"catalog")}</small></div>
-          <div><span className="nm-stat-icon mint"><Icon name="shield"/></span><strong>{WORD(language,"realPrices")}</strong><small>{WORD(language,"notice")}</small></div>
-          <div><span className="nm-stat-icon lavender"><Icon name="truck"/></span><strong>{WORD(language,"delivery")}</strong><small>{WORD(language,"payment")}</small></div>
+        <div className="mm-value-bar" aria-label="Marketplace information">
+          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="search" size={22}/></span><div><strong>{language === "ru" ? "Быстрый поиск" : language === "en" ? "Find it faster" : "Tez va qulay qidiruv"}</strong><small>{WORD(language,"productsText")}</small></div></div>
+          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="shield" size={22}/></span><div><strong>{language === "ru" ? "Прозрачные цены" : language === "en" ? "Clear product pricing" : "Aniq ko‘rsatilgan narxlar"}</strong><small>{WORD(language,"notice")}</small></div></div>
+          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="truck" size={22}/></span><div><strong>{language === "ru" ? "Удобное оформление" : language === "en" ? "Simple checkout" : "Oson buyurtma berish"}</strong><small>{WORD(language,"payment")}</small></div></div>
         </div>
       </section>
 
@@ -834,12 +853,17 @@ export default function AppNext() {
           <div><span className="nm-eyebrow">{WORD(language,"categories")}</span><h2>{WORD(language,"categoriesTitle")}</h2></div>
           <button className="nm-text-link" type="button" onClick={() => goCatalog("")}>{WORD(language,"catalog")} <Icon name="arrow" size={18}/></button>
         </div>
-        <div className="nm-categories-grid">{CATEGORIES.map(([name,emoji],index) => (
-          <button key={name} className={"nm-category-tile nm-cat-color-" + (index % 6)} type="button" onClick={() => goCatalog(name)}>
-            <span className="nm-category-emoji" aria-hidden="true">{emoji}</span>
-            <span>{name}</span><Icon name="chevron" size={17}/>
-          </button>
-        ))}</div>
+        <div className="nm-categories-grid mm-categories-grid">{CATEGORIES.map(([name],index) => {
+          const categoryProduct = products.find(p => p.category === name && Number(p.stock) > 0 && productImage(p));
+          return <button key={name} className={"nm-category-tile mm-category-tile mm-cat-" + (index % 6)}
+            type="button" onClick={() => goCatalog(name)}>
+            <span className="mm-category-number">{String(index+1).padStart(2,"0")}</span>
+            <span className="mm-category-media">
+              {categoryProduct ? <ProductPicture product={categoryProduct}/> : <Icon name={index % 3 === 0 ? "bag" : index % 3 === 1 ? "package" : "spark"} size={43} strokeWidth={1.1}/>}
+            </span>
+            <span className="mm-category-title">{name}</span><span className="mm-category-arrow"><Icon name="arrow" size={17}/></span>
+          </button>;
+        })}</div>
       </section>
 
       <section className="nm-wrap nm-section nm-products-section" id="catalog">
