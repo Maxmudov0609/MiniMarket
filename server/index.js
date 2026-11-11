@@ -117,7 +117,7 @@ const validProduct = b =>
   Number.isSafeInteger(b.stock) && b.stock >= 0 &&
   (!b.image_url || (
     typeof b.image_url === 'string' && b.image_url.length <= 2048 &&
-    /^https?:\/\//i.test(b.image_url)
+    (/^https?:\/\//i.test(b.image_url) || /^\/(?!\/)[\w./-]+$/.test(b.image_url))
   ));
 app.post('/api/auth/register', registerLimiter, wrap(async (req, res) => {
   const { name, email, password, role } = req.body;
