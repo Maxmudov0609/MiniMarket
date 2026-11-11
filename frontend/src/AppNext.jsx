@@ -438,6 +438,10 @@ function CartPanel({ language, cart, products, onClose, onBrowse, onQty, onRemov
     const product = byId.get(String(item.id));
     return sum + (Number(product?.price ?? item.price) || 0) * item.quantity;
   }, 0);
+  const hasUnavailable = cart.some(item => {
+    const product = byId.get(String(item.id));
+    return !product || product.is_active === false || Number(product.stock) < item.quantity;
+  });
   return <div className="nm-drawer-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
     <aside ref={drawerRef} className="nm-cart-drawer" role="dialog" aria-modal="true" aria-label={WORD(language,"cart")}>
       <div className="nm-drawer-top"><h2><Icon name="bag"/> {WORD(language,"cart")}</h2>
@@ -451,6 +455,9 @@ function CartPanel({ language, cart, products, onClose, onBrowse, onQty, onRemov
             return <div className="nm-cart-item" key={item.id}>
               <ProductPicture product={product}/>
               <div className="nm-cart-item-main"><strong>{product.name}</strong><span>{money(product.price)}</span>
+                 {(!byId.has(String(item.id)) || Number(product.stock) < item.quantity) && <small className="mm-cart-item-warning">
+                   {language === "en" ? "Availability changed — remove or reduce quantity" : language === "ru" ? "Остаток изменился — удалите или уменьшите количество" : "Miqdor o‘zgargan — mahsulotni olib tashlang yoki kamaytiring"}
+                 </small>}
                 <div className="nm-stepper">
                   <button type="button" onClick={() => onQty(item.id, -1)} aria-label="Kamaytirish"><Icon name="minus" size={15}/></button>
                   <span>{item.quantity}</span>
@@ -473,8 +480,11 @@ function CartPanel({ language, cart, products, onClose, onBrowse, onQty, onRemov
 }
 function CheckoutPanel({ language, user, cart, onClose, onSuccess, notify }) {
   const [busy, setBusy] = useState(false);
+  const submittingRef = useRef(false);
   async function submit(event) {
     event.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setBusy(true);
     const form = event.currentTarget;
     const payload = {
@@ -489,7 +499,7 @@ function CheckoutPanel({ language, user, cart, onClose, onSuccess, notify }) {
       const order = await api("/orders", { method: "POST", data: payload, token: user.token });
       onSuccess(order);
     } catch (error) { notify(error.message, "error"); }
-    finally { setBusy(false); }
+    finally { submittingRef.current = false; setBusy(false); }
   }
   return <Modal title={WORD(language,"buy")} onClose={onClose}>
     <form onSubmit={submit} className="nm-form">
@@ -924,8 +934,10 @@ export default function AppNext() {
         "Savatchadagi ayrim mahsulotlar tugagan. Savatchani yangilang.", "error");
       return;
     }
-    if (loadStatus === "error") {
-      notify("Buyurtma berish uchun serverga ulanish kerak. Qayta urinib ko‘ring.", "error");
+    if (loadStatus !== "ready") {
+      notify(language === "en" ? "Please wait for the catalog to update before checkout." :
+        language === "ru" ? "Дождитесь обновления каталога перед заказом." :
+        "Buyurtma berishdan oldin katalog yangilanishini kuting.", "error");
       return;
     }
     if (!user || !token) { setDialog("auth"); notify(WORD(language, "loginFirst"), "error"); return; }
@@ -962,10 +974,10 @@ export default function AppNext() {
             autoComplete="off"
             onKeyDown={event => {
               if (event.key === "Escape") setSearchFocused(false);
-              if (event.key === "Enter") { setSearchFocused(false); goCatalog(category, true); }
+              if (event.key === "Enter") { setSearchFocused(false); goCatalog("", true); }
             }}/>
           {query && <button className="nm-search-clear" type="button" onClick={() => { setQuery(""); setSearchFocused(false); }} aria-label="Tozalash"><Icon name="x" size={17}/></button>}
-          <button type="button" className="nm-search-btn" onClick={() => { setSearchFocused(false); goCatalog(category, true); }} aria-label="Qidirish"><Icon name="search" size={19}/></button>
+          <button type="button" className="nm-search-btn" onClick={() => { setSearchFocused(false); goCatalog("", true); }} aria-label="Qidirish"><Icon name="search" size={19}/></button>
           {searchFocused && query.trim() && <div className="mm-search-suggestions" role="region" aria-label="Qidiruv natijalari">
             <div className="mm-suggestion-label">{WORD(language, "search")}</div>
             {searchSuggestions.length ? searchSuggestions.map(item => <button type="button" className="mm-search-suggestion"
@@ -974,7 +986,7 @@ export default function AppNext() {
               <span className="mm-search-suggestion-name">{item.name}<small>{item.category}</small></span>
               <strong>{money(item.price)}</strong>
             </button>) : <p className="mm-suggestion-empty">{WORD(language, "noResults")}</p>}
-            <button type="button" className="mm-suggestion-all" onClick={() => { setSearchFocused(false); goCatalog(category, true); }}>
+            <button type="button" className="mm-suggestion-all" onClick={() => { setSearchFocused(false); goCatalog("", true); }}>
               {WORD(language, "browse")} <Icon name="arrow" size={16}/>
             </button>
           </div>}
