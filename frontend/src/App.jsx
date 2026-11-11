@@ -162,12 +162,36 @@ function App() {
   const [showProducts, setShowProducts] = useState(() => {
     return localStorage.getItem("minimarket_showProducts") === "true";
   });
+  const [catalogNavTick, setCatalogNavTick] = useState(0);
+  const [infoToast, setInfoToast] = useState("");
+
   useEffect(() => {
-    localStorage.setItem(
-      "minimarket_showProducts",
-      String(showProducts)
-    );
+    localStorage.setItem("minimarket_showProducts", String(showProducts));
   }, [showProducts]);
+
+  // React katalogni ekranga chiqargandan keyingina silliq aylantiramiz.
+  useEffect(() => {
+    if (!showProducts || catalogNavTick === 0) return undefined;
+    let secondFrame;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => {
+        const target = document.getElementById("products");
+        if (!target) return;
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        target.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+      });
+    });
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      if (secondFrame !== undefined) cancelAnimationFrame(secondFrame);
+    };
+  }, [catalogNavTick, showProducts]);
+
+  useEffect(() => {
+    if (!infoToast) return undefined;
+    const timeout = setTimeout(() => setInfoToast(""), 4500);
+    return () => clearTimeout(timeout);
+  }, [infoToast]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productQuantity, setProductQuantity] = useState(1);
   const [favorites, setFavorites] = useState(() => {
@@ -618,12 +642,7 @@ async function handlePlaceOrder(e) {
   const showCatalog = (selectedCategory = null) => {
     if (selectedCategory !== null) setCategory(selectedCategory);
     setShowProducts(true);
-    requestAnimationFrame(() => {
-      document.getElementById("products")?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    });
+    setCatalogNavTick((tick) => tick + 1);
   };
 
   const isRecentlyAdded = (createdAt) => {
@@ -1049,6 +1068,7 @@ const handleUpdateProduct = async (e) => {
 <section className="hero-slider">
 <div className="slider-banner">
   <img
+    key={bannerSlides[activeSlide].id}
     className="slider-product-image"
     src={bannerSlides[activeSlide].image}
     alt={bannerSlides[activeSlide].title}
@@ -1076,13 +1096,15 @@ const handleUpdateProduct = async (e) => {
 >
   ❯
 </button> 
-    <div className="slider-text">
+    <div className="slider-text" key={bannerSlides[activeSlide].id}>
       <h2>{bannerSlides[activeSlide].title}</h2>
       <p>{bannerSlides[activeSlide].description}</p>
 
       <button
         type="button"
 onClick={() => showCatalog()}
+        aria-controls="products"
+        aria-expanded={showProducts}
       >
         Mahsulotlarni ko‘rish →
       </button>
@@ -1139,9 +1161,13 @@ onClick={() => showCatalog()}
     : "Toshkent bo‘ylab tez va ishonchli yetkazib berish"}
 </p>
           <button
-            onClick={() =>
-              alert("Yetkazib berish xizmati haqida ma'lumot tez orada!")
-            }
+            onClick={() => setInfoToast(
+              language === "ru"
+                ? "Подробности о доставке появятся скоро."
+                : language === "en"
+                  ? "Delivery details will be available soon."
+                  : "Yetkazib berish tafsilotlari tez orada qo‘shiladi."
+            )}
           >
             {language === "ru" ? "Подробнее" : language === "en" ? "Learn more" : "Batafsil"} →
           </button>
@@ -1200,7 +1226,7 @@ onClick={() => showCatalog()}
 
 <main
   id="products"
-  className="container products-page"
+  className={showProducts ? "container products-page mm-catalog-visible" : "container products-page"}
   style={{ display: showProducts ? "block" : "none" }}
 >
   <div className="products-page-header">
@@ -2761,6 +2787,13 @@ setShowOrderForm(true);
 )}
       
       </main>
+      {infoToast && (
+        <div className="mm-toast" role="status" aria-live="polite">
+          <span aria-hidden="true">ℹ️</span>
+          <span>{infoToast}</span>
+          <button type="button" onClick={() => setInfoToast("")} aria-label="Xabarni yopish">✕</button>
+        </div>
+      )}
     </div>
   );
 }
