@@ -266,6 +266,12 @@ function Modal({ title, onClose, children, wide = false }) {
   </div>;
 }
 function ProductCard({ product, language, onAdd, onFavorite, favorite, onOpen }) {
+  const [added, setAdded] = useState(false);
+  useEffect(() => {
+    if (!added) return undefined;
+    const timer = setTimeout(() => setAdded(false), 1100);
+    return () => clearTimeout(timer);
+  }, [added]);
   const out = Number(product.stock) <= 0;
   const old = Number(product.old_price);
   const price = Number(product.price);
@@ -304,9 +310,11 @@ function ProductCard({ product, language, onAdd, onFavorite, favorite, onOpen })
         <strong>{money(price)}</strong>
         {discount > 0 && <s>{money(old)}</s>}
       </div>
-      <button type="button" className="nm-add-btn mm-card-add" onClick={() => onAdd(product)}
+      <button type="button" className={"nm-add-btn mm-card-add " + (added ? "mm-added" : "")}
+        onClick={() => { if (onAdd(product)) setAdded(true); }}
         disabled={out} aria-label={WORD(language, "add") + ": " + product.name}>
-        <span>{WORD(language, "add")}</span><Icon name="plus" size={18}/>
+        <span>{added ? (language === "ru" ? "Добавлено" : language === "en" ? "Added" : "Qo‘shildi") : WORD(language, "add")}</span>
+        <Icon name={added ? "check" : "plus"} size={18}/>
       </button>
     </div>
   </article>;
@@ -724,7 +732,10 @@ export default function AppNext() {
   }, [products, query, category, minPrice, maxPrice, favoritesOnly, favorites, sort]);
   const showcased = useMemo(() => products
     .filter(p => p.is_active !== false && Number(p.stock) > 0 && Number(p.price) > 0 && productImage(p))
-    .slice(0,3), [products]);
+    .sort((a,b) => {
+      const pick = p => /nivea|choco.?pie|fairy|persil|grechka/i.test(p.name) ? 0 : 1;
+      return pick(a) - pick(b);
+    }).slice(0,3), [products]);
   const featured = showcased[0];
   const catalogCount = products.filter(p => p.is_active !== false && Number(p.price) > 0).length;
   const count = cart.reduce((sum,p) => sum + p.quantity, 0);
@@ -744,7 +755,7 @@ export default function AppNext() {
     const existing = cart.find(x => String(x.id) === String(product.id));
     const remaining = stock - (existing?.quantity || 0);
     if (!Number.isFinite(stock) || remaining <= 0) {
-      notify("Mahsulot miqdori omborda yetarli emas", "error"); return;
+      notify("Mahsulot miqdori omborda yetarli emas", "error"); return false;
     }
     const actualQuantity = Math.max(1, Math.min(Math.floor(quantity), remaining));
     setCart(prev => {
@@ -756,6 +767,7 @@ export default function AppNext() {
         image_url: product.image_url, stock: product.stock }];
     });
     notify("Savatchaga qo‘shildi");
+    return true;
   }
   function changeQuantity(id, change) {
     setCart(prev => prev.map(item => {
