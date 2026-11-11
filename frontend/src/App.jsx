@@ -616,6 +616,23 @@ async function handlePlaceOrder(e) {
   return Number(b.id) - Number(a.id);
 });
 
+  const showCatalog = (selectedCategory = null) => {
+    if (selectedCategory !== null) setCategory(selectedCategory);
+    setShowProducts(true);
+    requestAnimationFrame(() => {
+      document.getElementById("products")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const isRecentlyAdded = (createdAt) => {
+    const created = Date.parse(createdAt);
+    return Number.isFinite(created) && created <= Date.now() &&
+      Date.now() - created <= 14 * 24 * 60 * 60 * 1000;
+  };
+
   const handleAuth = async (e) => {
     e.preventDefault();
 
@@ -911,7 +928,12 @@ const handleUpdateProduct = async (e) => {
     type="text"
     placeholder={t.search}
     value={search}
-    onChange={(e) => setSearch(e.target.value)}
+    onChange={(e) => {
+      const value = e.target.value;
+      setSearch(value);
+      if (value.trim() && !showProducts) showCatalog();
+    }}
+    aria-label={language === "ru" ? "Поиск товаров" : language === "en" ? "Search products" : "Mahsulotlarni qidirish"}
   />
           <div className="nav-actions">
           {!user ? (
@@ -1061,10 +1083,7 @@ const handleUpdateProduct = async (e) => {
 
       <button
         type="button"
-onClick={() => {
-  setShowProducts(true);
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}}
+onClick={() => showCatalog()}
       >
         Mahsulotlarni ko‘rish →
       </button>
@@ -1098,11 +1117,7 @@ onClick={() => {
     : "Eng yaxshi takliflar shu yerda!"}
 </p>
           <button
-            onClick={() =>
-              document.getElementById("products")?.scrollIntoView({
-                behavior: "smooth",
-              })
-            }
+            onClick={() => showCatalog()}
           >
             {language === "ru" ? "Смотреть" : language === "en" ? "View" : "Ko‘rish"} →
           </button>
@@ -1149,12 +1164,7 @@ onClick={() => {
             key={item.name}
             type="button"
             className="category-strip-item"
-            onClick={() => {
-              setCategory(item.name);
-              document.getElementById("products")?.scrollIntoView({
-                behavior: "smooth",
-              });
-            }}
+            onClick={() => showCatalog(item.name)}
           >
             <span className="category-strip-icon">
               <img src={item.image} alt={item.name} />
@@ -1265,6 +1275,26 @@ onClick={() => {
     <option value="expensive">Qimmatidan arzoniga</option>
   </select>
 </div>
+<div className="catalog-toolbar" aria-live="polite">
+  <span className="catalog-count">
+    <strong>{filteredProducts.length}</strong> {language === "ru" ? "товаров найдено" : language === "en" ? "products found" : "ta mahsulot topildi"}
+  </span>
+  {(category !== "Barchasi" || search.trim() || minPrice !== "" || maxPrice !== "" || sort !== "newest") && (
+    <button
+      type="button"
+      className="catalog-reset"
+      onClick={() => {
+        setCategory("Barchasi");
+        setSearch("");
+        setMinPrice("");
+        setMaxPrice("");
+        setSort("newest");
+      }}
+    >
+      ✕ {language === "ru" ? "Сбросить фильтры" : language === "en" ? "Clear filters" : "Filtrlarni tozalash"}
+    </button>
+  )}
+</div>
 
         <div className="products">
           {productsError && (
@@ -1322,14 +1352,16 @@ onClick={() => {
               onClick={() => setSelectedProduct(product)}
               style={{ cursor: "pointer" }}
             >
-              <span className="product-new-badge">✨ Tavsiya etiladi</span>
+              {isRecentlyAdded(product.created_at) && (
+                <span className="product-new-badge">{language === "ru" ? "Новинка" : language === "en" ? "New arrival" : "✨ Yangi"}</span>
+              )}
 <img
   src={
     productImages[product.name] ||
     product.image_url ||
     "/no-image.svg"
   }
-  alt=""
+  alt={product.name}
   className="product-image"
   loading="lazy"
   onError={(e) => {
@@ -1373,6 +1405,8 @@ onClick={() => {
                 <button
                   type="button"
                   className="favorite-btn"
+                  aria-label={favorites.includes(product.id) ? "Sevimlilardan o‘chirish" : "Sevimlilarga qo‘shish"}
+                  aria-pressed={favorites.includes(product.id)}
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleFavorite(product.id);
@@ -1402,14 +1436,24 @@ onClick={() => {
                     })} so‘m
                   </h3>
                 </div>
-                
+                <span className={Number(product.stock) <= 0 ? "stock-status out-of-stock" : "stock-status"}>
+                  {Number(product.stock) <= 0
+                    ? (language === "ru" ? "Нет в наличии" : language === "en" ? "Out of stock" : "Sotuvda yo‘q")
+                    : (language === "ru" ? "В наличии" : language === "en" ? "In stock" : "Omborda mavjud")}
+                </span>
                 <button
+                  type="button"
+                  disabled={Number(product.stock) <= 0}
                   onClick={(e) => {
                     e.stopPropagation();
                     addToCart(product);
                   }}
                 >
-                  Savatchaga qo'shish
+                  {Number(product.stock) <= 0
+                    ? (language === "ru" ? "Нет в наличии" : language === "en" ? "Unavailable" : "Sotuvda yo‘q")
+                    : cart.some((item) => String(item.id) === String(product.id))
+                    ? (language === "ru" ? "➕ Добавить ещё" : language === "en" ? "➕ Add another" : "✓ Savatchada · Yana qo‘shish")
+                    : (language === "ru" ? "В корзину" : language === "en" ? "Add to cart" : "Savatchaga qo‘shish")}
                 </button>
 
               </div>
@@ -1505,8 +1549,7 @@ onClick={() => {
             )}
 
           <div className="pm-rating">
-            <span className="pm-stars">★★★★★</span>
-            <span>Mahsulot haqida ma'lumot</span>
+            <span>📋 Mahsulot haqida ma'lumot</span>
           </div>
 
           <div className="pm-price-row">
