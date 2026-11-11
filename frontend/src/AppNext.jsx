@@ -229,7 +229,13 @@ function Icon({ name, size = 21, strokeWidth = 1.9 }) {
     logout: <><path d="M10 4H4v16h6M14 8l4 4-4 4M8 12h10"/></>,
     eye: <><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></>,
     spark: <path d="m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5L12 2Z"/>,
-    star: <path d="m12 2 3.1 6.3 7 1-5 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7-5-4.9 7-1L12 2Z"/>
+    star: <path d="m12 2 3.1 6.3 7 1-5 4.9 1.2 7-6.3-3.3-6.3 3.3 1.2-7-5-4.9 7-1L12 2Z"/>,
+    bottle: <><path d="M9 2h6v4l2 3v11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9l2-3V2Z"/><path d="M7 12h10M9 6h6"/></>,
+    utensils: <><path d="M4 2v7a3 3 0 0 0 6 0V2M7 2v20M18 2c-3 2-3 6-3 10h4V2h-1ZM19 12v10"/></>,
+    gift: <><rect x="3" y="9" width="18" height="12" rx="2"/><path d="M2 9h20M12 9v12M12 9C2 8 5 2 9 3c2 1 3 6 3 6Zm0 0c10-1 7-7 3-6-2 1-3 6-3 6Z"/></>,
+    droplet: <path d="M12 2C8 8 5 11 5 15a7 7 0 0 0 14 0c0-4-3-7-7-13Z"/>,
+    laptop: <><rect x="4" y="4" width="16" height="13" rx="1"/><path d="m2 21 2-4h16l2 4H2Z"/></>,
+    shirt: <path d="m8 3 4 3 4-3 5 4-3 5-2-1v10H8V11l-2 1-3-5 5-4Z"/>
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor"
     strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -833,13 +839,16 @@ export default function AppNext() {
   }, [products, query, category, minPrice, maxPrice, favoritesOnly, favorites, sort, onlyAvailable]);
   const showcased = useMemo(() => products
     .filter(p => p.is_active !== false && Number(p.stock) > 0 && Number(p.price) > 0 && productImage(p))
-    .sort((a,b) => {
-      const pick = p => /nivea|choco.?pie|fairy|persil|grechka/i.test(p.name) ? 0 : 1;
-      return pick(a) - pick(b);
-    }).slice(0,3), [products]);
-  const featured = showcased[0];
+    .sort((a,b) => Number(b.id)-Number(a.id))
+    .slice(0,2), [products]);
   const catalogCount = products.filter(p => p.is_active !== false && Number(p.price) > 0).length;
   const count = cart.reduce((sum,p) => sum + p.quantity, 0);
+  const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function goTop() { window.scrollTo({top:0,behavior:reducedMotion() ? "auto":"smooth"}); }
+  function goCategories() {
+    setDialog("");
+    document.getElementById("categories")?.scrollIntoView({behavior:reducedMotion()?"auto":"smooth",block:"start"});
+  }
   function goCatalog(nextCategory = "") {
     setFavoritesOnly(false);
     setCategory(nextCategory);
@@ -906,14 +915,14 @@ export default function AppNext() {
     notify(WORD(language,"successOrder") + order.id);
   }
   function refreshProducts() { setRefreshKey(x => x + 1); }
-  function favoritesClick() { setFavoritesOnly(x => !x); setCategory(""); setDialog(""); requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth",block:"start"})); }
+  function favoritesClick() { setFavoritesOnly(x => !x); setCategory(""); setDialog(""); requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({behavior:reducedMotion()?"auto":"smooth",block:"start"})); }
   const searchSuggestions = query.trim() ? searchProducts.slice(0, 5) : [];
 
   return <div className="nm-app" translate="no" lang={language}>
     <div className="nm-topline"><div className="nm-wrap"><span><Icon name="shield" size={15}/> {WORD(language,"realPrices")}</span><span><Icon name="truck" size={16}/> {WORD(language,"delivery")}</span></div></div>
     <header className="nm-header">
       <div className="nm-wrap nm-header-main">
-        <button className="nm-logo" type="button" onClick={() => window.scrollTo({top:0,behavior:"smooth"})}>
+        <button className="nm-logo" type="button" onClick={goTop}>
           <span className="nm-logo-mark"><Icon name="bag" size={23}/></span>
           <span>Mini<span>Market</span><small>ONLINE STORE</small></span>
         </button>
@@ -962,7 +971,7 @@ export default function AppNext() {
       </div>
       <div className="nm-navline"><div className="nm-wrap">
         <button type="button" onClick={() => goCatalog("")} className="nm-all-nav"><Icon name="menu" size={18}/>{WORD(language,"catalog")}</button>
-        <button type="button" onClick={() => document.getElementById("categories")?.scrollIntoView({behavior:"smooth"})}>{WORD(language,"categories")}</button>
+        <button type="button" onClick={goCategories}>{WORD(language,"categories")}</button>
         <button type="button" onClick={() => goCatalog("")}>{WORD(language,"shop")}</button>
         <span className="nm-nav-caption"><Icon name="spark" size={16}/> {WORD(language,"subtitle")}</span>
       </div></div>
@@ -970,43 +979,40 @@ export default function AppNext() {
 
     <main>
       <section className="mm-home-hero nm-wrap nm-hero-layout" aria-label={WORD(language, "heroTitle")}>
-        <div className="mm-hero-stage">
+        <div className="mm-hero-stage mm-v3-hero">
           <div className="mm-hero-copy">
-            <span className="mm-kicker"><span className="mm-kicker-dot"/> MINI MARKET · NEW EXPERIENCE</span>
-            <h1>{language === "ru" ? <>Ваши любимые товары. <em>Проще, чем когда-либо.</em></> :
-              language === "en" ? <>Everything you need. <em>A little more extraordinary.</em></> :
-              <>Har kuni kerakli narsalar. <em>Endi yanada oson.</em></>}</h1>
-            <p>{WORD(language, "heroText")}</p>
+            <span className="mm-kicker"><Icon name="spark" size={16}/> MINIMARKET · ONLINE MARKETPLACE</span>
+            <h1>{language === "ru" ? <>Покупки, которые <em>радуют каждый день.</em></> : language === "en" ? <>Everyday shopping, <em>made better.</em></> : <>Har kuningiz uchun <em>qulay xaridlar.</em></>}</h1>
+            <p>{WORD(language,"heroText")}</p>
             <div className="mm-hero-actions">
-              <button type="button" className="mm-button-dark" onClick={() => goCatalog("")}>
-                {WORD(language, "explore")} <Icon name="arrow" size={19}/>
-              </button>
-              <button type="button" className="mm-link-arrow" onClick={() => document.getElementById("categories")?.scrollIntoView({behavior:"smooth",block:"start"})}>
-                {WORD(language, "categories")} <Icon name="chevron" size={18}/>
-              </button>
+              <button type="button" className="mm-button-dark" onClick={() => goCatalog("")}>{WORD(language,"explore")} <Icon name="arrow" size={19}/></button>
+              <button type="button" className="mm-link-arrow" onClick={goCategories}>{WORD(language,"categories")} <Icon name="chevron" size={18}/></button>
             </div>
             <div className="mm-hero-footnote">
-              <span><Icon name="shield" size={16}/> {language === "en" ? "Live catalog" : language === "ru" ? "Актуальный каталог" : "Haqiqiy katalog"}</span>
-              <span><Icon name="bag" size={16}/> {catalogCount} {WORD(language, "found")}</span>
+              <span><Icon name="shield" size={16}/>{WORD(language,"notice")}</span>
+              <span><Icon name="bag" size={16}/>{catalogCount} {WORD(language,"found")}</span>
             </div>
           </div>
-          <div className="mm-hero-visual">
-            <div className="mm-visual-orbit mm-visual-orbit-one"/>
-            <div className="mm-visual-orbit mm-visual-orbit-two"/>
-            <div className="mm-visual-glow"/>
-            <div className="mm-hero-image-stage">
-              {featured ? <ProductPicture product={featured} eager className="mm-hero-feature-picture"/> :
-                <div className="mm-hero-generic" aria-hidden="true"><Icon name="bag" size={114} strokeWidth={1.1}/></div>}
+          <div className="mm-v3-stage-visual">
+            <div className="mm-v3-orbit" aria-hidden="true"/>
+            <div className="mm-v3-stage-topline"><Icon name="spark" size={15}/>{language === "ru" ? "Найдите своё" : language === "en" ? "Discover something great" : "O‘zingizga keraklisini toping"}</div>
+            <div className="mm-v3-showcase">
+              {showcased.map((item,i) => <button type="button" key={item.id} className={"mm-v3-feature-card mm-v3-feature-"+i}
+                onClick={() => {setSelectedProduct(item);setDialog("product");}}>
+                <span className="mm-v3-feature-picture"><ProductPicture product={item} eager/></span>
+                <span className="mm-v3-feature-details"><small>{item.category}</small><strong>{item.name}</strong><b>{money(item.price)}</b></span>
+                <span className="mm-v3-feature-link"><Icon name="arrow" size={16}/></span>
+              </button>)}
+              {!showcased.length && <div className="mm-v3-showcase-empty"><Icon name="bag" size={66}/><strong>MiniMarket</strong><span>{WORD(language,"productsText")}</span></div>}
             </div>
-            {featured && <div className="mm-feature-caption"><span>{featured.category}</span><strong>{featured.name}</strong><small>{money(featured.price)}</small></div>}
-            <div className="mm-float-icon mm-float-icon-one"><Icon name="spark" size={22}/></div>
-            <div className="mm-float-icon mm-float-icon-two"><Icon name="heart" size={20}/></div>
+            <div className="mm-v3-stage-bottom"><span><Icon name="check" size={15}/> {language === "ru" ? "Выбирайте с удобством" : language === "en" ? "Easy browsing" : "Qulay tanlov"}</span>
+              <button type="button" onClick={() => goCatalog("")} aria-label={WORD(language,"browse")}><Icon name="arrow" size={21}/></button></div>
           </div>
         </div>
         <div className="mm-value-bar" aria-label="Marketplace information">
-          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="search" size={22}/></span><div><strong>{language === "ru" ? "Быстрый поиск" : language === "en" ? "Find it faster" : "Tez va qulay qidiruv"}</strong><small>{WORD(language,"productsText")}</small></div></div>
-          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="shield" size={22}/></span><div><strong>{language === "ru" ? "Прозрачные цены" : language === "en" ? "Clear product pricing" : "Aniq ko‘rsatilgan narxlar"}</strong><small>{WORD(language,"notice")}</small></div></div>
-          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="truck" size={22}/></span><div><strong>{language === "ru" ? "Удобное оформление" : language === "en" ? "Simple checkout" : "Oson buyurtma berish"}</strong><small>{WORD(language,"payment")}</small></div></div>
+          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="search" size={22}/></span><div><strong>{language === "en" ? "Search with ease" : language === "ru" ? "Удобный поиск" : "Qulay qidiruv"}</strong><small>{WORD(language,"productsText")}</small></div></div>
+          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="shield" size={22}/></span><div><strong>{language === "en" ? "Clear pricing" : language === "ru" ? "Понятные цены" : "Shaffof narxlar"}</strong><small>{WORD(language,"notice")}</small></div></div>
+          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="bag" size={22}/></span><div><strong>{language === "en" ? "Easy ordering" : language === "ru" ? "Лёгкий заказ" : "Oson buyurtma"}</strong><small>{WORD(language,"payment")}</small></div></div>
         </div>
       </section>
 
@@ -1016,13 +1022,11 @@ export default function AppNext() {
           <button className="nm-text-link" type="button" onClick={() => goCatalog("")}>{WORD(language,"catalog")} <Icon name="arrow" size={18}/></button>
         </div>
         <div className="nm-categories-grid mm-categories-grid">{CATEGORIES.map(([name],index) => {
-          const categoryProduct = products.find(p => p.category === name && Number(p.stock) > 0 && productImage(p));
+          const iconNames = ["bottle","utensils","gift","spark","droplet","heart","home","laptop","shirt","package","star","bag"];
           return <button key={name} className={"nm-category-tile mm-category-tile mm-cat-" + (index % 6)}
-            type="button" onClick={() => goCatalog(name)}>
+            type="button" onClick={() => goCatalog(name)} aria-label={name}>
             <span className="mm-category-number">{String(index+1).padStart(2,"0")}</span>
-            <span className="mm-category-media">
-              {categoryProduct ? <ProductPicture product={categoryProduct}/> : <Icon name={index % 3 === 0 ? "bag" : index % 3 === 1 ? "package" : "spark"} size={43} strokeWidth={1.1}/>}
-            </span>
+            <span className="mm-category-media"><Icon name={iconNames[index]} size={39} strokeWidth={1.45}/></span>
             <span className="mm-category-title">{name}</span><span className="mm-category-arrow"><Icon name="arrow" size={17}/></span>
           </button>;
         })}</div>
@@ -1094,7 +1098,7 @@ export default function AppNext() {
     </main>
     <footer className="nm-footer"><div className="nm-wrap"><strong><Icon name="bag" size={22}/> MiniMarket</strong><span>© 2026 MiniMarket. {WORD(language,"foot")}</span><span>market-mj.uz</span></div></footer>
     <nav className="nm-mobile-tabs" aria-label="Mobile navigation">
-      <button type="button" onClick={() => window.scrollTo({top:0,behavior:"smooth"})}><Icon name="home"/><span>{WORD(language,"shop")}</span></button>
+      <button type="button" onClick={goTop}><Icon name="home"/><span>{WORD(language,"shop")}</span></button>
       <button type="button" onClick={() => goCatalog("")}><Icon name="search"/><span>{WORD(language,"catalog")}</span></button>
       <button type="button" onClick={favoritesClick}><Icon name="heart"/><span>{WORD(language,"favorites")}</span></button>
       <button type="button" onClick={() => setDialog("cart")}><Icon name="bag"/><span>{WORD(language,"cart")}{count ? " (" + count + ")" : ""}</span></button>
