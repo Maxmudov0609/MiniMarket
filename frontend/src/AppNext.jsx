@@ -147,7 +147,7 @@ async function api(path, { method = "GET", data, token, signal } = {}) {
       signal.addEventListener("abort", abortHandler, { once: true });
     }
   }
-  const timeout = setTimeout(() => controller.abort(), 75000);
+  const timeout = setTimeout(() => controller.abort(), 25000);
   try {
     const response = await fetch("/api" + path, {
       method,
@@ -495,7 +495,70 @@ function ProductPanel({ product, language, onClose, onAdd, favorite, onFavorite 
     </div>
   </Modal>;
 }
-function AccountPanel({ user, language, onClose, notify }) {
+function LinkGooglePanel({ user, language, onClose, notify }) {
+  const slot = useRef(null);
+  const [status, setStatus] = useState("waiting");
+  useEffect(() => {
+    let cancelled = false;
+    let timeoutId;
+    let tries = 0;
+    const init = () => {
+      if (cancelled || !slot.current) return;
+      if (!window.google?.accounts?.id) {
+        tries += 1;
+        if (tries < 30) timeoutId = setTimeout(init, 400);
+        else setStatus("unavailable");
+        return;
+      }
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async response => {
+          if (cancelled) return;
+          setStatus("linking");
+          try {
+            await api("/auth/google/link", {
+              method: "POST",
+              token: user.token,
+              data: { credential: response.credential }
+            });
+            if (!cancelled) {
+              notify(language === "en" ? "Google account linked!" :
+                language === "ru" ? "Google-аккаунт привязан!" : "Google akkauntingiz bog‘landi!");
+              onClose();
+            }
+          } catch (error) {
+            if (!cancelled) {
+              notify(error.message, "error");
+              setStatus("ready");
+            }
+          }
+        }
+      });
+      slot.current.replaceChildren();
+      window.google.accounts.id.renderButton(slot.current, {
+        theme: "outline", size: "large", shape: "pill", width: 280
+      });
+      setStatus("ready");
+    };
+    init();
+    return () => { cancelled = true; clearTimeout(timeoutId); };
+  }, [user.token, language, notify, onClose]);
+  return <Modal title={language === "en" ? "Connect Google" :
+    language === "ru" ? "Привязать Google" : "Google akkauntni bog‘lash"} onClose={onClose}>
+    <div className="mm-link-google-panel">
+      <Icon name="shield" size={35}/>
+      <p>{language === "en" ? "For your security, Google must verify the same email as your MiniMarket account." :
+        language === "ru" ? "Для безопасности адрес Google должен совпадать с адресом MiniMarket." :
+        "Xavfsizlik uchun Google emailingiz MiniMarket akkauntingizdagi email bilan bir xil bo‘lishi kerak."}</p>
+      <strong>{user.email}</strong>
+      <div ref={slot} className="nm-google"/>
+      {status === "linking" && <span>⏳ {WORD(language,"loading")}</span>}
+      {status === "unavailable" && <span>{language === "en" ? "Google sign-in is unavailable. Please try again later." :
+        language === "ru" ? "Google временно недоступен." : "Google xizmati hozircha yuklanmadi. Keyinroq qayta urinib ko‘ring."}</span>}
+    </div>
+  </Modal>;
+}
+function AccountPanel({ user, language, onClose, notify, onLinkGoogle }) {
   const [orders, setOrders] = useState([]);
   const [busy, setBusy] = useState(true);
   useEffect(() => {
@@ -508,6 +571,10 @@ function AccountPanel({ user, language, onClose, notify }) {
   return <Modal title={WORD(language,"yourOrders")} onClose={onClose} wide>
     <div className="nm-account-head"><div className="nm-avatar">{user.name?.charAt(0)?.toUpperCase() || "M"}</div>
       <div><strong>{user.name}</strong><span>{user.email}</span></div></div>
+    <div className="mm-account-tool"><button type="button" onClick={onLinkGoogle}>
+      <Icon name="shield" size={18}/>
+      {language === "en" ? "Connect Google sign-in" : language === "ru" ? "Привязать Google" : "Google orqali kirishni bog‘lash"}
+      <Icon name="arrow" size={16}/></button></div>
     {busy ? <p className="nm-inline-wait">⏳ {WORD(language,"loading")}</p> :
       orders.length === 0 ? <div className="nm-no-orders"><Icon name="package" size={38}/><p>Hozircha buyurtmalaringiz yo‘q.</p></div> :
       <div className="nm-order-list">{orders.map(order => <article className="nm-order" key={order.id}>
@@ -517,7 +584,7 @@ function AccountPanel({ user, language, onClose, notify }) {
       </article>)}</div>}
   </Modal>;
 }
-function SellerPanel({ user, language, onClose, notify, onProductsChanged }) {
+function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLinkGoogle }) {
   const [tab, setTab] = useState("products");
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -583,6 +650,9 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged }) {
     finally { setBusy(false); }
   }
   return <Modal title={WORD(language,"seller")} onClose={onClose} wide>
+    <div className="mm-seller-connect"><button type="button" onClick={onLinkGoogle}>
+      <Icon name="shield" size={16}/> {language === "en" ? "Connect Google" :
+        language === "ru" ? "Привязать Google" : "Google akkauntni bog‘lash"}</button></div>
     <div className="nm-seller-tabs">
       <button type="button" className={tab === "products" ? "active" : ""} onClick={() => { setTab("products"); setEditing(false); }}>{WORD(language,"myProducts")} ({products.length})</button>
       <button type="button" className={tab === "orders" ? "active" : ""} onClick={() => { setTab("orders"); setEditing(false); }}>{WORD(language,"orders")} ({orders.length})</button>
@@ -634,6 +704,7 @@ export default function AppNext() {
     return Array.isArray(saved) ? saved : [];
   });
   const [loadStatus, setLoadStatus] = useState("loading");
+  const [lastUpdated, setLastUpdated] = useState(null);
   const [loadError, setLoadError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [query, setQuery] = useState("");
@@ -704,13 +775,27 @@ export default function AppNext() {
     const controller = new AbortController();
     setLoadStatus("loading");
     setLoadError("");
-    api("/products", { signal: controller.signal })
-      .then(data => {
+    const retry = async () => {
+      let error;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          return await api("/products", { signal: controller.signal });
+        } catch (currentError) {
+          if (controller.signal.aborted) throw currentError;
+          error = currentError;
+          if (currentError.status && currentError.status < 500) break;
+          if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 900));
+        }
+      }
+      throw error;
+    };
+    retry().then(data => {
         if (!Array.isArray(data)) throw new Error("Mahsulotlar ro‘yxati noto‘g‘ri");
         setProducts(data);
         persist("minimarket_products_cache", data);
         try { localStorage.setItem("minimarket_products_cache_time",String(Date.now())); } catch {}
         setLoadStatus("ready");
+        setLastUpdated(Date.now());
       })
       .catch(error => {
         if (controller.signal.aborted) return;
@@ -725,7 +810,7 @@ export default function AppNext() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
   useEffect(() => { document.body.classList.toggle("nm-lock-scroll", !!dialog); return () => document.body.classList.remove("nm-lock-scroll"); }, [dialog]);
-  useEffect(() => setVisibleCount(12), [query, category, sort, minPrice, maxPrice, favoritesOnly]);
+  useEffect(() => setVisibleCount(12), [query, category, sort, minPrice, maxPrice, favoritesOnly, onlyAvailable]);
 
   const searchProducts = useMemo(() => {
     let rows = products.filter(p => p.is_active !== false && Number(p.price) > 0);
@@ -735,11 +820,12 @@ export default function AppNext() {
     if (minPrice) rows = rows.filter(p => Number(p.price) >= Number(minPrice));
     if (maxPrice) rows = rows.filter(p => Number(p.price) <= Number(maxPrice));
     if (favoritesOnly) rows = rows.filter(p => favorites.some(id => String(id) === String(p.id)));
+    if (onlyAvailable) rows = rows.filter(p => Number(p.stock) > 0);
     if (sort === "asc") rows.sort((a,b) => Number(a.price) - Number(b.price));
     else if (sort === "desc") rows.sort((a,b) => Number(b.price) - Number(a.price));
     else rows.sort((a,b) => Number(b.id) - Number(a.id));
     return rows;
-  }, [products, query, category, minPrice, maxPrice, favoritesOnly, favorites, sort]);
+  }, [products, query, category, minPrice, maxPrice, favoritesOnly, favorites, sort, onlyAvailable]);
   const showcased = useMemo(() => products
     .filter(p => p.is_active !== false && Number(p.stock) > 0 && Number(p.price) > 0 && productImage(p))
     .sort((a,b) => {
@@ -788,6 +874,15 @@ export default function AppNext() {
     }).filter(item => item.quantity > 0));
   }
   function openCheckout() {
+    if (cart.some(item => {
+      const live = products.find(p => String(p.id) === String(item.id));
+      return !live || live.is_active === false || Number(live.stock) < item.quantity;
+    })) {
+      notify(language === "en" ? "Some items are unavailable. Update your cart before checkout." :
+        language === "ru" ? "Некоторые товары закончились. Проверьте корзину." :
+        "Savatchadagi ayrim mahsulotlar tugagan. Savatchani yangilang.", "error");
+      return;
+    }
     if (loadStatus === "error") {
       notify("Buyurtma berish uchun serverga ulanish kerak. Qayta urinib ko‘ring.", "error");
       return;
@@ -808,6 +903,7 @@ export default function AppNext() {
   function refreshProducts() { setRefreshKey(x => x + 1); }
   function favoritesClick() { setFavoritesOnly(x => !x); setCategory(""); setDialog(""); requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth",block:"start"})); }
   const searchSuggestions = query.trim() ? searchProducts.slice(0, 5) : [];
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
   return <div className="nm-app" translate="no" lang={language}>
     <div className="nm-topline"><div className="nm-wrap"><span><Icon name="shield" size={15}/> {WORD(language,"realPrices")}</span><span><Icon name="truck" size={16}/> {WORD(language,"delivery")}</span></div></div>
     <header className="nm-header">
@@ -951,9 +1047,19 @@ export default function AppNext() {
           </select>
           {(category || query || minPrice || maxPrice || favoritesOnly) && <button className="nm-reset-btn" type="button" onClick={() => {setCategory("");setQuery("");setMinPrice("");setMaxPrice("");setFavoritesOnly(false);}}>{WORD(language,"clear")}</button>}
         </div>
+        <div className="mm-stock-filter">
+          <label><input type="checkbox" checked={onlyAvailable} onChange={e => setOnlyAvailable(e.target.checked)}/>
+            <span>{language === "en" ? "In-stock products only" :
+              language === "ru" ? "Только в наличии" : "Faqat mavjud mahsulotlar"}</span>
+          </label>
+          <span>{language === "en" ? "Shop with confidence" : language === "ru" ? "Удобные покупки" : "O‘zingizga qulay mahsulotni tanlang"}</span>
+        </div>
         <div className="nm-catalog-meta">
           <p><strong>{searchProducts.length}</strong> {WORD(language,"found")}</p>
           {loadStatus === "loading" && <span><Icon name="refresh" size={15}/> {WORD(language,"updated")}</span>}
+          {loadStatus === "ready" && lastUpdated && <span className="mm-updated"><Icon name="check" size={14}/>
+            {language === "en" ? "Catalog updated" : language === "ru" ? "Каталог обновлён" : "Katalog yangilandi"}
+          </span>}
         </div>
         {loadStatus === "error" && <div className="nm-alert" role="alert">
           <Icon name="refresh" size={19}/><span>{products.length ? WORD(language,"offline") : loadError}</span>
@@ -1001,8 +1107,12 @@ export default function AppNext() {
     {dialog === "product" && selectedProduct && <ProductPanel key={selectedProduct.id} product={selectedProduct} language={language}
       onClose={() => setDialog("")} onAdd={addToCart} favorite={favorites.some(id => String(id) === String(selectedProduct.id))}
       onFavorite={toggleFavorite}/>}
-    {dialog === "account" && user && <AccountPanel user={{ ...user, token }} language={language} onClose={() => setDialog("")} notify={notify}/>}
+    {dialog === "account" && user && <AccountPanel user={{ ...user, token }} language={language}
+      onClose={() => setDialog("")} notify={notify} onLinkGoogle={() => setDialog("google-link")}/>}
+    {dialog === "google-link" && user && <LinkGooglePanel user={{ ...user, token }} language={language}
+      onClose={() => setDialog("")} notify={notify}/>}
+
     {dialog === "seller" && user && <SellerPanel user={{ ...user, token }} language={language}
-      onClose={() => setDialog("")} notify={notify} onProductsChanged={refreshProducts}/>}
+      onClose={() => setDialog("")} notify={notify} onProductsChanged={refreshProducts} onLinkGoogle={() => setDialog("google-link")}/>}
   </div>;
 }
