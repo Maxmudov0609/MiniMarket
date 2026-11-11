@@ -222,6 +222,8 @@ if (!cacheTime || Date.now() - cacheTime > cacheMaxAge) {
   }
 });
   const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState("");
+  const [productsRetryKey, setProductsRetryKey] = useState(0);
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteProductId, setDeleteProductId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -233,6 +235,7 @@ useEffect(() => {
   async function loadProducts() {
     try {
       setProductsLoading(true);
+      setProductsError("");
 
       const response = await fetch(
         "https://minimarket-backend-r4co.onrender.com/api/products",
@@ -240,7 +243,7 @@ useEffect(() => {
       );
 
       if (!response.ok) {
-        throw new Error("Mahsulotlarni yuklashda xatolik");
+        throw new Error(`Server javob bermadi (HTTP ${response.status}).`);
       }
 
       const data = await response.json();
@@ -266,6 +269,9 @@ localStorage.setItem(
     } catch (error) {
       if (error.name !== "AbortError") {
         console.error("Mahsulotlarni yuklash xatosi:", error);
+        if (!controller.signal.aborted) {
+          setProductsError("Server bilan bog‘lanib bo‘lmadi. Internet ulanishini tekshiring yoki qayta urinib ko‘ring.");
+        }
       }
     } finally {
       if (!controller.signal.aborted) {
@@ -277,7 +283,7 @@ localStorage.setItem(
   loadProducts();
 
   return () => controller.abort();
-}, []);
+}, [productsRetryKey]);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Barchasi");
@@ -1261,6 +1267,15 @@ onClick={() => {
 </div>
 
         <div className="products">
+          {productsError && (
+            <div className="products-error" role="alert">
+              <strong>⚠️ Mahsulotlarni yuklab bo‘lmadi</strong>
+              <p>{productsError}</p>
+              <button type="button" onClick={() => setProductsRetryKey((key) => key + 1)}>
+                🔄 Qayta yuklash
+              </button>
+            </div>
+          )}
           
           {productsLoading && dbProducts.length === 0 && (
             <div style={{
@@ -1274,17 +1289,17 @@ onClick={() => {
               ⏳ Mahsulotlar yuklanmoqda, iltimos kuting...
             </div>
           )}
-      {(!productsLoading || dbProducts.length > 0) && (
+      {(!productsLoading || dbProducts.length > 0) && !(productsError && dbProducts.length === 0) && (
         filteredProducts.length === 0 ? (
           <div className="empty-products">
             <div className="empty-products-icon">📦</div>
 
-            <h2>Hozircha mahsulotlar mavjud emas</h2>
+            <h2>{dbProducts.length === 0 ? "Hozircha mahsulotlar mavjud emas" : "Mos mahsulot topilmadi"}</h2>
 
             <p>
-              Ushbu kategoriyaga hali mahsulot qo‘shilmagan.
-              <br />
-              Tez orada yangi mahsulotlar paydo bo‘ladi!
+              {dbProducts.length === 0
+                ? "Hozircha faol mahsulotlar ro‘yxati bo‘sh."
+                : "Tanlangan kategoriya yoki qidiruv filtrlariga mos mahsulot topilmadi."}
             </p>
 
             <button
