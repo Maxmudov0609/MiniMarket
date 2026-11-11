@@ -35,3 +35,32 @@ jobs:
         run: |
           node --check server/index.js
           node --check server/db.js
+
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - name: Install headless browser
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Test marketplace interactions on desktop and mobile
+        run: node tests/marketplace-smoke.mjs
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: marketplace-smoke-screenshots
+          path: |
+            frontend/smoke-desktop.png
+            frontend/smoke-mobile.png
+          if-no-files-found: ignore
