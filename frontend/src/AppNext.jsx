@@ -159,7 +159,11 @@ async function api(path, { method = "GET", data, token, signal } = {}) {
     const body = contentType.includes("application/json")
       ? await response.json()
       : { error: "Serverdan kutilmagan javob keldi" };
-    if (!response.ok) throw new Error(body.error || "HTTP " + response.status);
+    if (!response.ok) {
+      const error = new Error(body.error || "HTTP " + response.status);
+      error.status = response.status;
+      throw error;
+    }
     return body;
   } catch (error) {
     if (error.name === "AbortError" && !signal?.aborted) {
@@ -643,6 +647,7 @@ export default function AppNext() {
     catch { return ""; }
   });
   const [dialog, setDialog] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [toast, setToast] = useState(null);
   const notify = useCallback((message, type = "success") => setToast({ message, type, id: Date.now() }), []);
@@ -669,7 +674,11 @@ export default function AppNext() {
     if (!token) return undefined;
     let alive = true;
     api("/auth/me", { token }).then(current => { if (alive) setUser(current); })
-      .catch(() => { if (alive) { setUser(null); setToken(""); } });
+      .catch(error => {
+        if (alive && (error.status === 401 || error.status === 403)) {
+          setUser(null); setToken("");
+        }
+      });
     return () => { alive = false; };
   }, [token]);
   useEffect(() => {
@@ -731,14 +740,19 @@ export default function AppNext() {
   }
   function addToCart(product, quantity = 1) {
     const stock = Number(product.stock);
-    if (stock <= 0) { notify("Bu mahsulot omborda qolmagan", "error"); return; }
+    const existing = cart.find(x => String(x.id) === String(product.id));
+    const remaining = stock - (existing?.quantity || 0);
+    if (!Number.isFinite(stock) || remaining <= 0) {
+      notify("Mahsulot miqdori omborda yetarli emas", "error"); return;
+    }
+    const actualQuantity = Math.max(1, Math.min(Math.floor(quantity), remaining));
     setCart(prev => {
       const old = prev.find(x => String(x.id) === String(product.id));
-      const allowed = Number.isFinite(stock) ? Math.max(0, stock - (old?.quantity || 0)) : quantity;
-      const add = Math.max(0, Math.min(quantity, allowed));
-      if (add === 0) { notify("Omborda bundan ortiq mahsulot yo‘q", "error"); return prev; }
-      if (old) return prev.map(x => String(x.id) === String(product.id) ? { ...x, quantity: x.quantity + add } : x);
-      return [...prev,{ id: product.id, name: product.name, price: product.price, quantity: add, category: product.category, image_url: product.image_url, stock: product.stock }];
+      if (old) return prev.map(x => String(x.id) === String(product.id) ?
+        { ...x, quantity: Math.min(stock, x.quantity + actualQuantity), price: product.price } : x);
+      return [...prev, { id: product.id, name: product.name, price: product.price,
+        quantity: actualQuantity, category: product.category,
+        image_url: product.image_url, stock: product.stock }];
     });
     notify("Savatchaga qo‘shildi");
   }
@@ -751,6 +765,10 @@ export default function AppNext() {
     }).filter(item => item.quantity > 0));
   }
   function openCheckout() {
+    if (loadStatus === "error") {
+      notify("Buyurtma berish uchun serverga ulanish kerak. Qayta urinib ko‘ring.", "error");
+      return;
+    }
     if (!user || !token) { setDialog("auth"); notify(WORD(language, "loginFirst"), "error"); return; }
     if (user.role === "seller") { notify(WORD(language, "loginFirst"), "error"); return; }
     setDialog("checkout");
@@ -766,6 +784,7 @@ export default function AppNext() {
   }
   function refreshProducts() { setRefreshKey(x => x + 1); }
   function favoritesClick() { setFavoritesOnly(x => !x); setCategory(""); setDialog(""); requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth",block:"start"})); }
+  const searchSuggestions = query.trim() ? searchProducts.slice(0, 5) : [];
   return <div className="nm-app">
     <div className="nm-topline"><div className="nm-wrap"><span><Icon name="shield" size={15}/> {WORD(language,"realPrices")}</span><span><Icon name="truck" size={16}/> {WORD(language,"delivery")}</span></div></div>
     <header className="nm-header">
@@ -774,13 +793,31 @@ export default function AppNext() {
           <span className="nm-logo-mark"><Icon name="bag" size={23}/></span>
           <span>Mini<span>Market</span><small>ONLINE STORE</small></span>
         </button>
-        <div className="nm-search">
+        <div className="nm-search mm-live-search" onBlur={event => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setSearchFocused(false);
+        }}>
           <Icon name="search" size={21}/>
-          <input value={query} onChange={event => setQuery(event.target.value)}
+          <input value={query} onFocus={() => setSearchFocused(true)} onChange={event => { setQuery(event.target.value); setSearchFocused(true); }}
             placeholder={WORD(language, "search")} aria-label={WORD(language,"search")}
-            onKeyDown={event => { if (event.key === "Enter") goCatalog(category); }}/>
-          {query && <button className="nm-search-clear" type="button" onClick={() => setQuery("")} aria-label="Tozalash"><Icon name="x" size={17}/></button>}
-          <button type="button" className="nm-search-btn" onClick={() => goCatalog(category)} aria-label="Qidirish"><Icon name="search" size={19}/></button>
+            autoComplete="off"
+            onKeyDown={event => {
+              if (event.key === "Escape") setSearchFocused(false);
+              if (event.key === "Enter") { setSearchFocused(false); goCatalog(category); }
+            }}/>
+          {query && <button className="nm-search-clear" type="button" onClick={() => { setQuery(""); setSearchFocused(false); }} aria-label="Tozalash"><Icon name="x" size={17}/></button>}
+          <button type="button" className="nm-search-btn" onClick={() => { setSearchFocused(false); goCatalog(category); }} aria-label="Qidirish"><Icon name="search" size={19}/></button>
+          {searchFocused && query.trim() && <div className="mm-search-suggestions" role="region" aria-label="Qidiruv natijalari">
+            <div className="mm-suggestion-label">{WORD(language, "search")}</div>
+            {searchSuggestions.length ? searchSuggestions.map(item => <button type="button" className="mm-search-suggestion"
+              key={item.id} onClick={() => { setSearchFocused(false); setSelectedProduct(item); setDialog("product"); }}>
+              <span className="mm-search-suggestion-art"><ProductPicture product={item}/></span>
+              <span className="mm-search-suggestion-name">{item.name}<small>{item.category}</small></span>
+              <strong>{money(item.price)}</strong>
+            </button>) : <p className="mm-suggestion-empty">{WORD(language, "noResults")}</p>}
+            <button type="button" className="mm-suggestion-all" onClick={() => { setSearchFocused(false); goCatalog(category); }}>
+              {WORD(language, "browse")} <Icon name="arrow" size={16}/>
+            </button>
+          </div>}
         </div>
         <div className="nm-header-actions">
           <select className="nm-lang" aria-label={WORD(language,"changeLang")} value={language} onChange={event => setLanguage(event.target.value)}>
