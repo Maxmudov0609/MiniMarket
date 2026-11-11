@@ -426,23 +426,25 @@ function AuthPanel({ language, onClose, onSuccess, notify }) {
     {mode === "login" && <>
       <div className="nm-or"><span>yoki</span></div>
       <div className="nm-google" ref={googleSlot}/>
-      <p className="nm-form-note">Agar bu email bilan avval parol orqali ro‘yxatdan o‘tgan bo‘lsangiz, o‘sha usulda kiring. Google akkauntini bog‘lash hozircha mavjud emas.</p>
+      <p className="nm-form-note">{language === "en" ? "Existing email account? Sign in with your password first, then connect Google from your account." : language === "ru" ? "Если этот адрес уже зарегистрирован, войдите по паролю и подключите Google в кабинете." : "Bu email avval ro‘yxatdan o‘tgan bo‘lsa, avval parol bilan kiring va kabinetingizda Google akkauntni bog‘lang."}</p>
     </>}
   </Modal>;
 }
-function CartPanel({ language, cart, products, onClose, onQty, onRemove, onCheckout }) {
+function CartPanel({ language, cart, products, onClose, onBrowse, onQty, onRemove, onCheckout }) {
+  const drawerRef = useRef(null);
+  useDialogFocus(drawerRef, onClose);
   const byId = new Map(products.map(p => [String(p.id), p]));
   const total = cart.reduce((sum, item) => {
     const product = byId.get(String(item.id));
     return sum + (Number(product?.price ?? item.price) || 0) * item.quantity;
   }, 0);
   return <div className="nm-drawer-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <aside className="nm-cart-drawer" role="dialog" aria-modal="true" aria-label={WORD(language,"cart")}>
+    <aside ref={drawerRef} className="nm-cart-drawer" role="dialog" aria-modal="true" aria-label={WORD(language,"cart")}>
       <div className="nm-drawer-top"><h2><Icon name="bag"/> {WORD(language,"cart")}</h2>
         <button className="nm-icon-btn" type="button" aria-label="Yopish" onClick={onClose}><Icon name="x"/></button>
       </div>
       {cart.length === 0 ? <div className="nm-empty-cart"><span>🛒</span><h3>{WORD(language,"emptyCart")}</h3>
-        <button className="nm-primary" type="button" onClick={onClose}>{WORD(language,"browse")}</button></div> :
+        <button className="nm-primary" type="button" onClick={onBrowse}>{WORD(language,"browse")}</button></div> :
         <>
           <div className="nm-cart-items">{cart.map(item => {
             const product = byId.get(String(item.id)) || item;
@@ -452,7 +454,9 @@ function CartPanel({ language, cart, products, onClose, onQty, onRemove, onCheck
                 <div className="nm-stepper">
                   <button type="button" onClick={() => onQty(item.id, -1)} aria-label="Kamaytirish"><Icon name="minus" size={15}/></button>
                   <span>{item.quantity}</span>
-                  <button type="button" onClick={() => onQty(item.id, 1)} aria-label="Ko‘paytirish"><Icon name="plus" size={15}/></button>
+                  <button type="button" onClick={() => onQty(item.id, 1)}
+                     disabled={item.quantity >= Number(product.stock ?? 0)}
+                     aria-label="Ko‘paytirish"><Icon name="plus" size={15}/></button>
                 </div>
               </div>
               <button className="nm-remove" type="button" aria-label="O‘chirish" onClick={() => onRemove(item.id)}><Icon name="trash" size={19}/></button>
@@ -516,9 +520,9 @@ function ProductPanel({ product, language, onClose, onAdd, favorite, onFavorite 
         <span className={canBuy ? "nm-stock" : "nm-stock nm-out"}><i/>{WORD(language, canBuy ? "available" : "unavailable")} {canBuy ? "· " + stock + " dona" : ""}</span>
         <div className="nm-detail-actions">
           <div className="nm-stepper nm-stepper-large">
-            <button type="button" onClick={() => setQuantity(n => Math.max(1,n - 1))}><Icon name="minus"/></button>
+            <button type="button" disabled={quantity <= 1} onClick={() => setQuantity(n => Math.max(1,n - 1))}><Icon name="minus"/></button>
             <span>{quantity}</span>
-            <button type="button" onClick={() => setQuantity(n => Math.min(stock, n + 1))} disabled={!canBuy}><Icon name="plus"/></button>
+            <button type="button" onClick={() => setQuantity(n => Math.min(stock, n + 1))} disabled={!canBuy || quantity >= stock}><Icon name="plus"/></button>
           </div>
           <button className="nm-primary" type="button" disabled={!canBuy}
             onClick={() => { if (onAdd(product, quantity)) onClose(); }}><Icon name="bag" size={19}/>{WORD(language, "add")}</button>
@@ -867,9 +871,13 @@ export default function AppNext() {
     setDialog("");
     document.getElementById("categories")?.scrollIntoView({behavior:reducedMotion()?"auto":"smooth",block:"start"});
   }
-  function goCatalog(nextCategory = "") {
+  function goCatalog(nextCategory = "", preserveSearch = false) {
     setFavoritesOnly(false);
     setCategory(nextCategory);
+    if (!preserveSearch) {
+      setQuery(""); setMinPrice(""); setMaxPrice(""); setOnlyAvailable(false);
+    }
+    setSearchFocused(false);
     setDialog("");
     requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"
@@ -885,7 +893,8 @@ export default function AppNext() {
     if (!Number.isFinite(stock) || remaining <= 0) {
       notify("Mahsulot miqdori omborda yetarli emas", "error"); return false;
     }
-    const actualQuantity = Math.max(1, Math.min(Math.floor(quantity), remaining));
+    if (!Number.isSafeInteger(quantity) || quantity < 1) return false;
+    const actualQuantity = Math.max(1, Math.min(quantity, remaining));
     setCart(prev => {
       const old = prev.find(x => String(x.id) === String(product.id));
       if (old) return prev.map(x => String(x.id) === String(product.id) ?
@@ -894,7 +903,7 @@ export default function AppNext() {
         quantity: actualQuantity, category: product.category,
         image_url: product.image_url, stock: product.stock }];
     });
-    notify("Savatchaga qo‘shildi");
+    notify(language === "en" ? "Added to cart" : language === "ru" ? "Добавлено в корзину" : "Savatchaga qo‘shildi");
     return true;
   }
   function changeQuantity(id, change) {
@@ -933,7 +942,7 @@ export default function AppNext() {
     notify(WORD(language,"successOrder") + order.id);
   }
   function refreshProducts() { setRefreshKey(x => x + 1); }
-  function favoritesClick() { setFavoritesOnly(x => !x); setCategory(""); setDialog(""); requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({behavior:reducedMotion()?"auto":"smooth",block:"start"})); }
+  function favoritesClick() { setFavoritesOnly(x => !x); setCategory(""); setQuery(""); setMinPrice(""); setMaxPrice(""); setOnlyAvailable(false); setDialog(""); requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({behavior:reducedMotion()?"auto":"smooth",block:"start"})); }
   const searchSuggestions = query.trim() ? searchProducts.slice(0, 5) : [];
 
   return <div className="nm-app" translate="no" lang={language}>
@@ -953,10 +962,10 @@ export default function AppNext() {
             autoComplete="off"
             onKeyDown={event => {
               if (event.key === "Escape") setSearchFocused(false);
-              if (event.key === "Enter") { setSearchFocused(false); goCatalog(category); }
+              if (event.key === "Enter") { setSearchFocused(false); goCatalog(category, true); }
             }}/>
           {query && <button className="nm-search-clear" type="button" onClick={() => { setQuery(""); setSearchFocused(false); }} aria-label="Tozalash"><Icon name="x" size={17}/></button>}
-          <button type="button" className="nm-search-btn" onClick={() => { setSearchFocused(false); goCatalog(category); }} aria-label="Qidirish"><Icon name="search" size={19}/></button>
+          <button type="button" className="nm-search-btn" onClick={() => { setSearchFocused(false); goCatalog(category, true); }} aria-label="Qidirish"><Icon name="search" size={19}/></button>
           {searchFocused && query.trim() && <div className="mm-search-suggestions" role="region" aria-label="Qidiruv natijalari">
             <div className="mm-suggestion-label">{WORD(language, "search")}</div>
             {searchSuggestions.length ? searchSuggestions.map(item => <button type="button" className="mm-search-suggestion"
