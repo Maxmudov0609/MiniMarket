@@ -714,6 +714,7 @@ export default function AppNext() {
   const [maxPrice, setMaxPrice] = useState("");
   const [visibleCount, setVisibleCount] = useState(12);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [favorites, setFavorites] = useState(() => readJSON("minimarket_favorites", []));
   const [cart, setCart] = useState(() => {
     const oldCart = readJSON("minimarket_cart", []);
@@ -903,7 +904,7 @@ export default function AppNext() {
   function refreshProducts() { setRefreshKey(x => x + 1); }
   function favoritesClick() { setFavoritesOnly(x => !x); setCategory(""); setDialog(""); requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth",block:"start"})); }
   const searchSuggestions = query.trim() ? searchProducts.slice(0, 5) : [];
-  const [onlyAvailable, setOnlyAvailable] = useState(false);
+
   return <div className="nm-app" translate="no" lang={language}>
     <div className="nm-topline"><div className="nm-wrap"><span><Icon name="shield" size={15}/> {WORD(language,"realPrices")}</span><span><Icon name="truck" size={16}/> {WORD(language,"delivery")}</span></div></div>
     <header className="nm-header">
