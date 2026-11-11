@@ -226,19 +226,21 @@ function Icon({ name, size = 21, strokeWidth = 1.9 }) {
     {paths[name] || paths.spark}
   </svg>;
 }
-function ProductPicture({ product, className = "" }) {
+function ProductPicture({ product, className = "", eager = false }) {
   const url = productImage(product);
   const [broken, setBroken] = useState(false);
   useEffect(() => setBroken(false), [url]);
   if (!url || broken) {
-    return <div className={"nm-art " + className} aria-label={product.name}>
-      <span aria-hidden="true">{CATEGORY_PICTURES[product.category] || "🛍️"}</span>
-      <small>MiniMarket</small>
+    return <div className={"nm-art mm-image-fallback " + className} role="img"
+      aria-label={product.name + " uchun rasm hozircha mavjud emas"}>
+      <div className="mm-fallback-graphic"><Icon name="bag" size={38} strokeWidth={1.35}/></div>
+      <small>MINIMARKET</small>
+      <span>Rasm tayyorlanmoqda</span>
     </div>;
   }
   return <div className={"nm-product-image " + className}>
-    <img loading="lazy" decoding="async" src={url} alt={product.name}
-      onError={() => setBroken(true)} />
+    <img loading={eager ? "eager" : "lazy"} decoding="async" src={url}
+      alt={product.name} onError={() => setBroken(true)} />
   </div>;
 }
 function Modal({ title, onClose, children, wide = false }) {
@@ -263,37 +265,43 @@ function ProductCard({ product, language, onAdd, onFavorite, favorite, onOpen })
   const price = Number(product.price);
   const discount = old > price ? Math.round((1 - price / old) * 100) : 0;
   const recent = product.created_at && Date.now() - new Date(product.created_at).getTime() < 14 * 86400000;
-  return <article className="nm-card">
-    <div className="nm-card-photo" onClick={() => onOpen(product)} role="button" tabIndex={0}
-      onKeyDown={event => { if (event.key === "Enter") onOpen(product); }} aria-label={product.name}>
-      <ProductPicture product={product}/>
+  return <article className="nm-card mm-product-card">
+    <div className="nm-card-photo mm-card-media">
+      <button type="button" className="mm-card-image-trigger"
+        onClick={() => onOpen(product)} aria-label={product.name + " — batafsil"}>
+        <ProductPicture product={product}/>
+      </button>
       <div className="nm-card-badges">
         {discount > 0 && <span className="nm-sale-tag">-{discount}%</span>}
         {recent && <span className="nm-new-tag">NEW</span>}
       </div>
       <button type="button" className={"nm-love " + (favorite ? "active" : "")}
-        onClick={event => { event.stopPropagation(); onFavorite(product.id); }}
-        aria-label={favorite ? "Sevimlilardan olib tashlash" : "Sevimlilarga qo‘shish"} aria-pressed={favorite}>
+        onClick={() => onFavorite(product.id)}
+        aria-label={favorite ? "Sevimlilardan olib tashlash" : "Sevimlilarga qo‘shish"}
+        aria-pressed={favorite}>
         <Icon name="heart" size={19}/>
       </button>
+      <button type="button" className="mm-quick-look" onClick={() => onOpen(product)}>
+        <Icon name="eye" size={16}/> {language === "ru" ? "Подробнее" : language === "en" ? "Quick view" : "Batafsil"}
+      </button>
     </div>
-    <div className="nm-card-body">
+    <div className="nm-card-body mm-card-body">
       <p className="nm-card-category">{product.category}</p>
       <button type="button" className="nm-card-title" onClick={() => onOpen(product)}>{product.name}</button>
-      <p className="nm-card-seller">{product.seller_name ? "Sotuvchi: " + product.seller_name : "MiniMarket"}</p>
+      <div className="mm-product-meta">
+        <span className={out ? "nm-stock nm-out" : "nm-stock"}>
+          <i/>{WORD(language, out ? "unavailable" : "available")}
+        </span>
+        {product.seller_name && <span className="mm-seller-label">{product.seller_name}</span>}
+      </div>
       <div className="nm-card-prices">
         <strong>{money(price)}</strong>
         {discount > 0 && <s>{money(old)}</s>}
       </div>
-      <div className="nm-card-bottom">
-        <span className={out ? "nm-stock nm-out" : "nm-stock"}>
-          <i/> {WORD(language, out ? "unavailable" : "available")}
-        </span>
-        <button type="button" className="nm-add-btn" onClick={() => onAdd(product)}
-          disabled={out} aria-label={WORD(language, "add") + ": " + product.name}>
-          <Icon name="plus" size={20}/><span>{WORD(language, "add")}</span>
-        </button>
-      </div>
+      <button type="button" className="nm-add-btn mm-card-add" onClick={() => onAdd(product)}
+        disabled={out} aria-label={WORD(language, "add") + ": " + product.name}>
+        <span>{WORD(language, "add")}</span><Icon name="plus" size={18}/>
+      </button>
     </div>
   </article>;
 }
