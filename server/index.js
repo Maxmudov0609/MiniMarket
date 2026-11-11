@@ -52,12 +52,17 @@ const wrap = fn => (req, res, next) => {
 };
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 10,
+  limit: 15,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
-  message: {
-    error: "Juda ko'p kirish urinishi. 15 daqiqadan keyin qayta urinib ko'ring."
-  }
+  message: { error: "Juda ko'p urinish. 15 daqiqadan keyin qayta urinib ko'ring." }
+});
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 12,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: "Ro'yxatdan o'tish uchun juda ko'p urinish. Keyinroq qayta urinib ko'ring." }
 });
 const tokenFor=u=>jwt.sign({id:u.id,role:u.role},process.env.JWT_SECRET,{expiresIn:'7d'});
 const auth = (role) => wrap(async (req, res, next) => {
@@ -103,8 +108,18 @@ const categories = [
   "Sport",
   "Boshqalar"
 ];
-const validProduct=b=>typeof b.name==='string'&&b.name.trim().length>0&&typeof b.description==='string'&&Number.isSafeInteger(b.price)&&b.price>0&&categories.includes(b.category)&&Number.isSafeInteger(b.stock)&&b.stock>=0&&(!b.image_url||typeof b.image_url==='string');
-app.post('/api/auth/register', wrap(async (req, res) => {
+const validProduct = b =>
+  b && typeof b === 'object' && typeof b.name === 'string' &&
+  b.name.trim().length > 0 && b.name.trim().length <= 180 &&
+  typeof b.description === 'string' && b.description.trim().length <= 4000 &&
+  Number.isSafeInteger(b.price) && b.price > 0 &&
+  categories.includes(b.category) &&
+  Number.isSafeInteger(b.stock) && b.stock >= 0 &&
+  (!b.image_url || (
+    typeof b.image_url === 'string' && b.image_url.length <= 2048 &&
+    /^https?:\/\//i.test(b.image_url)
+  ));
+app.post('/api/auth/register', registerLimiter, wrap(async (req, res) => {
   const { name, email, password, role } = req.body;
 
   if (
@@ -171,17 +186,22 @@ app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
     token: tokenFor(user)
   });
 }));
-app.post('/api/auth/google', wrap(async (req, res) => {
+app.post('/api/auth/google', loginLimiter, wrap(async (req, res) => {
   const { credential } = req.body;
 
   if (!credential || typeof credential !== 'string') {
     return res.status(400).json({ error: 'Google token yuborilmadi' });
   }
 
-  const ticket = await googleClient.verifyIdToken({
-    idToken: credential,
-    audience: process.env.GOOGLE_CLIENT_ID,
-  });
+  let ticket;
+  try {
+    ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+  } catch {
+    return res.status(401).json({ error: 'Google tasdiqlash tokeni yaroqsiz yoki muddati tugagan' });
+  }
 
   const payload = ticket.getPayload();
 
@@ -230,6 +250,45 @@ app.post('/api/auth/google', wrap(async (req, res) => {
     user: safeUser,
     token: tokenFor(safeUser)
   });
+}));
+// A Google identity can be linked only from an already authenticated account.
+// Matching a verified email is not sufficient to bypass password authentication.
+app.post('/api/auth/google/link', loginLimiter, auth(), wrap(async (req, res) => {
+  const credential = req.body?.credential;
+  if (typeof credential !== 'string' || !credential) {
+    return res.status(400).json({ error: 'Google tasdiqlash tokeni yuborilmadi' });
+  }
+
+  let ticket;
+  try {
+    ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+  } catch {
+    return res.status(401).json({ error: 'Google tasdiqlash tokeni yaroqsiz' });
+  }
+  const payload = ticket.getPayload();
+  if (!payload?.email_verified || !payload?.sub || !payload?.email) {
+    return res.status(401).json({ error: 'Google email tasdiqlanmagan' });
+  }
+  if (payload.email.trim().toLowerCase() !== req.user.email.trim().toLowerCase()) {
+    return res.status(403).json({ error: 'Google email hozirgi akkaunt emailiga mos emas' });
+  }
+
+  // The unique google_id index blocks links to other users even during races.
+  const result = await db.query(
+    `UPDATE users SET google_id = $1
+     WHERE id = $2 AND email = $3
+       AND (google_id IS NULL OR google_id = $1)
+       AND NOT EXISTS (SELECT 1 FROM users WHERE google_id = $1 AND id <> $2)
+     RETURNING id, name, email, role`,
+    [payload.sub, req.user.id, req.user.email]
+  );
+  if (!result.rows.length) {
+    return res.status(409).json({ error: 'Bu Google akkaunti boshqa hisobga bog‘langan yoki boshqa Google allaqachon bog‘langan' });
+  }
+  res.json({ linked: true, user: result.rows[0] });
 }));
 app.get('/api/auth/me',auth(),(req,res)=>res.json(req.user));
 app.get('/api/categories',(req,res)=>res.json(categories));
@@ -289,6 +348,7 @@ console.log(
   `[PERFORMANCE] /api/products: ${duration.toFixed(2)} ms, mahsulotlar: ${result.rows.length}`
 );
 
+  res.set('Cache-Control', 'public, max-age=10, s-maxage=20, stale-while-revalidate=45');
   res.json(result.rows);
 }));
 app.get('/api/products/:id', wrap(async (req, res) => {
@@ -450,7 +510,8 @@ const checkout = async (buyer, b) => {
     let total = 0;
     const lines = [];
 
-    for (const item of b.items) {
+    // Lock rows in stable order to reduce deadlocks when buyers check out simultaneously.
+    for (const item of [...b.items].sort((a, b) => a.product_id - b.product_id)) {
       if (
         !Number.isSafeInteger(item.product_id) ||
         !Number.isSafeInteger(item.quantity) ||
@@ -526,7 +587,17 @@ const checkout = async (buyer, b) => {
 };
 app.post('/api/orders', auth('buyer'), wrap(async (req, res) => {
  const b=req.body;
- if(!b||typeof b.customer_name!=='string'||!b.customer_name.trim()||typeof b.phone!=='string'||!b.phone.trim()||typeof b.address!=='string'||!b.address.trim()||!Array.isArray(b.items)||b.items.length===0||b.items.length>100||b.items.some(x=>!x||typeof x!=='object')||new Set(b.items.map(x=>x.product_id)).size!==b.items.length|| (b.note!=null&&typeof b.note!=='string'))return res.status(400).json({error:'Buyurtma ma’lumotlari xato'});
+  if (!b || typeof b !== 'object' ||
+      typeof b.customer_name !== 'string' || !b.customer_name.trim() || b.customer_name.length > 120 ||
+      typeof b.phone !== 'string' || b.phone.trim().length < 9 || b.phone.length > 35 ||
+      !/^[+()0-9\\s-]+$/.test(b.phone.trim()) ||
+      typeof b.address !== 'string' || b.address.trim().length < 5 || b.address.length > 500 ||
+      (b.note != null && (typeof b.note !== 'string' || b.note.length > 500)) ||
+      !Array.isArray(b.items) || b.items.length === 0 || b.items.length > 100 ||
+      b.items.some(x => !x || typeof x !== 'object') ||
+      new Set(b.items.map(x => x.product_id)).size !== b.items.length) {
+    return res.status(400).json({error:'Buyurtma ma’lumotlarini tekshiring'});
+  }
  const result = await checkout(req.user, b);
 res.status(201).json(result);
 }));
@@ -606,5 +677,14 @@ app.patch(
     res.json({ ok: true });
   })
 );
-app.use((err,req,res,next)=>{console.error(err);res.status(err.status||500).json({error:err.status?err.message:'Server xatosi'})});
+app.use((err, req, res, next) => {
+  console.error('[API]', req.method, req.path, err);
+  if (res.headersSent) return next(err);
+  if (err.code === '23505') {
+    return res.status(409).json({ error: 'Bunday ma’lumot boshqa akkauntda allaqachon mavjud' });
+  }
+  const status = Number.isInteger(err.status) && err.status >= 400 && err.status < 500
+    ? err.status : 500;
+  res.status(status).json({ error: status === 500 ? 'Server xatosi' : err.message });
+});
 app.listen(Number(process.env.PORT)||4000,()=>console.log('API http://localhost:'+(process.env.PORT||4000)));
