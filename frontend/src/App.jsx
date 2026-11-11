@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import "./App.css";
+import "./Premium2026.css";
 import { useTranslation } from "react-i18next";
 
 const translations = {
@@ -161,12 +162,36 @@ function App() {
   const [showProducts, setShowProducts] = useState(() => {
     return localStorage.getItem("minimarket_showProducts") === "true";
   });
+  const [catalogNavTick, setCatalogNavTick] = useState(0);
+  const [infoToast, setInfoToast] = useState("");
+
   useEffect(() => {
-    localStorage.setItem(
-      "minimarket_showProducts",
-      String(showProducts)
-    );
+    localStorage.setItem("minimarket_showProducts", String(showProducts));
   }, [showProducts]);
+
+  // React katalogni ekranga chiqargandan keyingina silliq aylantiramiz.
+  useEffect(() => {
+    if (!showProducts || catalogNavTick === 0) return undefined;
+    let secondFrame;
+    const firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => {
+        const target = document.getElementById("products");
+        if (!target) return;
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        target.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+      });
+    });
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      if (secondFrame !== undefined) cancelAnimationFrame(secondFrame);
+    };
+  }, [catalogNavTick, showProducts]);
+
+  useEffect(() => {
+    if (!infoToast) return undefined;
+    const timeout = setTimeout(() => setInfoToast(""), 4500);
+    return () => clearTimeout(timeout);
+  }, [infoToast]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productQuantity, setProductQuantity] = useState(1);
   const [favorites, setFavorites] = useState(() => {
@@ -204,9 +229,11 @@ function App() {
   localStorage.getItem("minimarket_products_cache_time")
 );
 
-const cacheMaxAge = 5 * 60 * 1000;
+// Oldingi katalogni 30 kun davomida darhol ko'rsatamiz;
+// har safar server javobi kelganda kesh yangilanadi.
+const cacheMaxAge = 30 * 24 * 60 * 60 * 1000;
 
-if (!cacheTime || Date.now() - cacheTime > cacheMaxAge) {
+if (!cacheTime || cacheTime > Date.now() || Date.now() - cacheTime > cacheMaxAge) {
   return [];
 }
 
@@ -221,6 +248,8 @@ if (!cacheTime || Date.now() - cacheTime > cacheMaxAge) {
   }
 });
   const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState("");
+  const [productsRetryKey, setProductsRetryKey] = useState(0);
   const [editingProduct, setEditingProduct] = useState(null);
   const [deleteProductId, setDeleteProductId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -232,6 +261,7 @@ useEffect(() => {
   async function loadProducts() {
     try {
       setProductsLoading(true);
+      setProductsError("");
 
       const response = await fetch(
         "https://minimarket-backend-r4co.onrender.com/api/products",
@@ -239,7 +269,7 @@ useEffect(() => {
       );
 
       if (!response.ok) {
-        throw new Error("Mahsulotlarni yuklashda xatolik");
+        throw new Error(`Server javob bermadi (HTTP ${response.status}).`);
       }
 
       const data = await response.json();
@@ -249,22 +279,22 @@ useEffect(() => {
       }
 
 if (!controller.signal.aborted) {
-  setDbProducts(data);
-localStorage.setItem(
-  "minimarket_products_cache",
-  JSON.stringify(data)
-);
-
-localStorage.setItem(
-  "minimarket_products_cache_time",
-  String(Date.now())
-);
-
-  console.log("Yuklangan mahsulotlar:", data.length);
-}
+          setDbProducts(data);
+          try {
+            localStorage.setItem("minimarket_products_cache", JSON.stringify(data));
+            localStorage.setItem("minimarket_products_cache_time", String(Date.now()));
+          } catch (cacheError) {
+            // Xotira to'lsa ham API ma'lumotlarini ko'rsatish davom etadi.
+            console.warn("Mahsulotlar keshini saqlab bo'lmadi:", cacheError);
+          }
+          console.log("Yuklangan mahsulotlar:", data.length);
+        }
     } catch (error) {
       if (error.name !== "AbortError") {
         console.error("Mahsulotlarni yuklash xatosi:", error);
+        if (!controller.signal.aborted) {
+          setProductsError("Server bilan bog‘lanib bo‘lmadi. Internet ulanishini tekshiring yoki qayta urinib ko‘ring.");
+        }
       }
     } finally {
       if (!controller.signal.aborted) {
@@ -276,7 +306,7 @@ localStorage.setItem(
   loadProducts();
 
   return () => controller.abort();
-}, []);
+}, [productsRetryKey]);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Barchasi");
@@ -371,8 +401,13 @@ callback: async (response) => {
       throw new Error(data.error || data.message || "Google orqali kirishda xatolik");
     }
 
-    console.log("Google login natijasi:", data);
-    alert("Google orqali kirish muvaffaqiyatli!");
+    if (!data.user || !data.token) {
+      throw new Error("Google login javobi to‘liq emas");
+    }
+    setUser(data.user);
+    setToken(data.token);
+    setShowLogin(false);
+    setInfoToast("✅ Google orqali tizimga kirdingiz");
   } catch (error) {
     console.error("Google login xatosi:", error);
     alert(error.message);
@@ -507,7 +542,7 @@ async function handlePlaceOrder(e) {
     customer_name: form.elements.customer_name.value,
     phone: form.elements.phone.value,
     address: form.elements.address.value,
-    note: "",
+    note: form.elements.comment?.value?.trim() || "",
     items: cart.map((item) => ({
       product_id: Number(item.id),
       quantity: item.quantity,
@@ -608,6 +643,18 @@ async function handlePlaceOrder(e) {
   if (sort === "expensive") return Number(b.price) - Number(a.price);
   return Number(b.id) - Number(a.id);
 });
+
+  const showCatalog = (selectedCategory = null) => {
+    if (selectedCategory !== null) setCategory(selectedCategory);
+    setShowProducts(true);
+    setCatalogNavTick((tick) => tick + 1);
+  };
+
+  const isRecentlyAdded = (createdAt) => {
+    const created = Date.parse(createdAt);
+    return Number.isFinite(created) && created <= Date.now() &&
+      Date.now() - created <= 14 * 24 * 60 * 60 * 1000;
+  };
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -748,15 +795,7 @@ setTimeout(() => notification.remove(), 3000);
   } catch (error) {
     const notification = document.createElement("div");
 
-notification.innerHTML = `
-  <div style="font-size:30px; margin-bottom:10px;">⚠️</div>
-  <div style="font-size:17px; font-weight:700; margin-bottom:6px;">
-    Xatolik yuz berdi
-  </div>
-  <div style="font-size:14px; opacity:0.85;">
-    ${error.message}
-  </div>
-`;
+notification.textContent = "⚠️ Xatolik yuz berdi: " + (error?.message || "Noma’lum xatolik");
 
 Object.assign(notification.style, {
   position: "fixed",
@@ -904,7 +943,12 @@ const handleUpdateProduct = async (e) => {
     type="text"
     placeholder={t.search}
     value={search}
-    onChange={(e) => setSearch(e.target.value)}
+    onChange={(e) => {
+      const value = e.target.value;
+      setSearch(value);
+      if (value.trim() && !showProducts) showCatalog();
+    }}
+    aria-label={language === "ru" ? "Поиск товаров" : language === "en" ? "Search products" : "Mahsulotlarni qidirish"}
   />
           <div className="nav-actions">
           {!user ? (
@@ -1021,6 +1065,7 @@ const handleUpdateProduct = async (e) => {
 <section className="hero-slider">
 <div className="slider-banner">
   <img
+    key={bannerSlides[activeSlide].id}
     className="slider-product-image"
     src={bannerSlides[activeSlide].image}
     alt={bannerSlides[activeSlide].title}
@@ -1048,16 +1093,15 @@ const handleUpdateProduct = async (e) => {
 >
   ❯
 </button> 
-    <div className="slider-text">
+    <div className="slider-text" key={bannerSlides[activeSlide].id}>
       <h2>{bannerSlides[activeSlide].title}</h2>
       <p>{bannerSlides[activeSlide].description}</p>
 
       <button
         type="button"
-onClick={() => {
-  setShowProducts(true);
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}}
+onClick={() => showCatalog()}
+        aria-controls="products"
+        aria-expanded={showProducts}
       >
         Mahsulotlarni ko‘rish →
       </button>
@@ -1091,11 +1135,7 @@ onClick={() => {
     : "Eng yaxshi takliflar shu yerda!"}
 </p>
           <button
-            onClick={() =>
-              document.getElementById("products")?.scrollIntoView({
-                behavior: "smooth",
-              })
-            }
+            onClick={() => showCatalog()}
           >
             {language === "ru" ? "Смотреть" : language === "en" ? "View" : "Ko‘rish"} →
           </button>
@@ -1118,9 +1158,13 @@ onClick={() => {
     : "Toshkent bo‘ylab tez va ishonchli yetkazib berish"}
 </p>
           <button
-            onClick={() =>
-              alert("Yetkazib berish xizmati haqida ma'lumot tez orada!")
-            }
+            onClick={() => setInfoToast(
+              language === "ru"
+                ? "Подробности о доставке появятся скоро."
+                : language === "en"
+                  ? "Delivery details will be available soon."
+                  : "Yetkazib berish tafsilotlari tez orada qo‘shiladi."
+            )}
           >
             {language === "ru" ? "Подробнее" : language === "en" ? "Learn more" : "Batafsil"} →
           </button>
@@ -1142,12 +1186,7 @@ onClick={() => {
             key={item.name}
             type="button"
             className="category-strip-item"
-            onClick={() => {
-              setCategory(item.name);
-              document.getElementById("products")?.scrollIntoView({
-                behavior: "smooth",
-              });
-            }}
+            onClick={() => showCatalog(item.name)}
           >
             <span className="category-strip-icon">
               <img src={item.image} alt={item.name} />
@@ -1184,7 +1223,7 @@ onClick={() => {
 
 <main
   id="products"
-  className="container products-page"
+  className={showProducts ? "container products-page mm-catalog-visible" : "container products-page"}
   style={{ display: showProducts ? "block" : "none" }}
 >
   <div className="products-page-header">
@@ -1258,32 +1297,73 @@ onClick={() => {
     <option value="expensive">Qimmatidan arzoniga</option>
   </select>
 </div>
+<div className="catalog-toolbar" aria-live="polite">
+  <span className="catalog-count">
+    {productsLoading && dbProducts.length === 0
+      ? (language === "ru" ? "Загружаем товары..." : language === "en" ? "Loading products..." : "Mahsulotlar yuklanmoqda...")
+      : <><strong>{filteredProducts.length}</strong> {language === "ru" ? "товаров найдено" : language === "en" ? "products found" : "ta mahsulot topildi"}</>}
+  </span>
+  {productsLoading && dbProducts.length > 0 && (
+    <span className="catalog-refreshing" role="status">
+      ⟳ {language === "ru" ? "Обновляем список..." : language === "en" ? "Refreshing products..." : "Ro‘yxat yangilanmoqda..."}
+    </span>
+  )}
+  {(category !== "Barchasi" || search.trim() || minPrice !== "" || maxPrice !== "" || sort !== "newest") && (
+    <button
+      type="button"
+      className="catalog-reset"
+      onClick={() => {
+        setCategory("Barchasi");
+        setSearch("");
+        setMinPrice("");
+        setMaxPrice("");
+        setSort("newest");
+      }}
+    >
+      ✕ {language === "ru" ? "Сбросить фильтры" : language === "en" ? "Clear filters" : "Filtrlarni tozalash"}
+    </button>
+  )}
+</div>
 
         <div className="products">
-          
-          {productsLoading && dbProducts.length === 0 && (
-            <div style={{
-              gridColumn: "1 / -1",
-              textAlign: "center",
-              padding: "60px 20px",
-              fontSize: "20px",
-              fontWeight: "bold",
-              color: "#6938ef"
-            }}>
-              ⏳ Mahsulotlar yuklanmoqda, iltimos kuting...
+          {productsError && (
+            <div className={dbProducts.length > 0 ? "products-error products-error-cached" : "products-error"} role="alert">
+              <strong>{dbProducts.length > 0 ? "ℹ️ Avvalgi mahsulotlar ko‘rsatilmoqda" : "⚠️ Mahsulotlarni yuklab bo‘lmadi"}</strong>
+              <p>{dbProducts.length > 0
+                ? "Yangi ma’lumotlar olinmadi. Serverga qayta ulanish uchun tugmani bosing."
+                : productsError}</p>
+              <button type="button" onClick={() => setProductsRetryKey((key) => key + 1)}>
+                🔄 Qayta yuklash
+              </button>
             </div>
           )}
-      {(!productsLoading || dbProducts.length > 0) && (
+          
+          {productsLoading && dbProducts.length === 0 && !productsError && (
+            <div className="catalog-loading" role="status" aria-live="polite">
+              <p>⏳ Mahsulotlar yuklanmoqda. Birinchi tashrifda server uyg‘onishi biroz vaqt olishi mumkin.</p>
+              <div className="catalog-skeleton-grid" aria-hidden="true">
+                {Array.from({ length: 8 }, (_, index) => (
+                  <div className="catalog-skeleton-card" key={index}>
+                    <span className="catalog-skeleton-image" />
+                    <span className="catalog-skeleton-line" />
+                    <span className="catalog-skeleton-line short" />
+                    <span className="catalog-skeleton-button" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+      {(!productsLoading || dbProducts.length > 0) && !(productsError && dbProducts.length === 0) && (
         filteredProducts.length === 0 ? (
           <div className="empty-products">
             <div className="empty-products-icon">📦</div>
 
-            <h2>Hozircha mahsulotlar mavjud emas</h2>
+            <h2>{dbProducts.length === 0 ? "Hozircha mahsulotlar mavjud emas" : "Mos mahsulot topilmadi"}</h2>
 
             <p>
-              Ushbu kategoriyaga hali mahsulot qo‘shilmagan.
-              <br />
-              Tez orada yangi mahsulotlar paydo bo‘ladi!
+              {dbProducts.length === 0
+                ? "Hozircha faol mahsulotlar ro‘yxati bo‘sh."
+                : "Tanlangan kategoriya yoki qidiruv filtrlariga mos mahsulot topilmadi."}
             </p>
 
             <button
@@ -1306,14 +1386,16 @@ onClick={() => {
               onClick={() => setSelectedProduct(product)}
               style={{ cursor: "pointer" }}
             >
-              <span className="product-new-badge">✨ Tavsiya etiladi</span>
+              {isRecentlyAdded(product.created_at) && (
+                <span className="product-new-badge">{language === "ru" ? "Новинка" : language === "en" ? "New arrival" : "✨ Yangi"}</span>
+              )}
 <img
   src={
     productImages[product.name] ||
     product.image_url ||
     "/no-image.svg"
   }
-  alt=""
+  alt={product.name}
   className="product-image"
   loading="lazy"
   onError={(e) => {
@@ -1357,6 +1439,8 @@ onClick={() => {
                 <button
                   type="button"
                   className="favorite-btn"
+                  aria-label={favorites.includes(product.id) ? "Sevimlilardan o‘chirish" : "Sevimlilarga qo‘shish"}
+                  aria-pressed={favorites.includes(product.id)}
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleFavorite(product.id);
@@ -1386,14 +1470,24 @@ onClick={() => {
                     })} so‘m
                   </h3>
                 </div>
-                
+                <span className={Number(product.stock) <= 0 ? "stock-status out-of-stock" : "stock-status"}>
+                  {Number(product.stock) <= 0
+                    ? (language === "ru" ? "Нет в наличии" : language === "en" ? "Out of stock" : "Sotuvda yo‘q")
+                    : (language === "ru" ? "В наличии" : language === "en" ? "In stock" : "Omborda mavjud")}
+                </span>
                 <button
+                  type="button"
+                  disabled={Number(product.stock) <= 0}
                   onClick={(e) => {
                     e.stopPropagation();
                     addToCart(product);
                   }}
                 >
-                  Savatchaga qo'shish
+                  {Number(product.stock) <= 0
+                    ? (language === "ru" ? "Нет в наличии" : language === "en" ? "Unavailable" : "Sotuvda yo‘q")
+                    : cart.some((item) => String(item.id) === String(product.id))
+                    ? (language === "ru" ? "➕ Добавить ещё" : language === "en" ? "➕ Add another" : "✓ Savatchada · Yana qo‘shish")
+                    : (language === "ru" ? "В корзину" : language === "en" ? "Add to cart" : "Savatchaga qo‘shish")}
                 </button>
 
               </div>
@@ -1489,8 +1583,7 @@ onClick={() => {
             )}
 
           <div className="pm-rating">
-            <span className="pm-stars">★★★★★</span>
-            <span>Mahsulot haqida ma'lumot</span>
+            <span>📋 Mahsulot haqida ma'lumot</span>
           </div>
 
           <div className="pm-price-row">
@@ -1999,16 +2092,11 @@ onClick={() => {
     💳 Karta orqali (yetkazib berilganda)
   </option>
 
-  <option value="click">
-    📱 Click orqali onlayn to‘lov
-  </option>
 
-  <option value="payme">
-    💳 Payme orqali onlayn to‘lov
-  </option>
 </select>
                     </div>
 
+                    <p className="mm-checkout-note">To‘lov yetkazib berilganda amalga oshiriladi. Hozircha saytda onlayn to‘lov ulanmagan.</p>
                     <div className="checkout-summary">
                       <span>💰 Jami to'lov:</span>
 
@@ -2691,6 +2779,13 @@ setShowOrderForm(true);
 )}
       
       </main>
+      {infoToast && (
+        <div className="mm-toast" role="status" aria-live="polite">
+          <span aria-hidden="true">ℹ️</span>
+          <span>{infoToast}</span>
+          <button type="button" onClick={() => setInfoToast("")} aria-label="Xabarni yopish">✕</button>
+        </div>
+      )}
     </div>
   );
 }
