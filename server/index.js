@@ -18,6 +18,7 @@ app.use(cors({
     "http://localhost:5174",
     "http://localhost:5175",
     "https://minimarket-uz.vercel.app",
+    "https://mini-market-git-design-premium-refresh-2026-11-maxmudov0609.vercel.app",
     "https://market-mj.uz",
     "https://www.market-mj.uz"
   ]
