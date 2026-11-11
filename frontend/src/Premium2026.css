@@ -374,3 +374,16 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .product-card, .promo-card, .category-strip-item, .hero-slider button { transition: none !important; }
   .product-card:hover, .promo-card:hover, .category-strip-item:hover { transform: none !important; }
 }
+/* API connectivity feedback for the product catalog */
+.products .products-error {
+  grid-column: 1 / -1;
+  padding: 28px;
+  border: 1px solid #f2d6b4;
+  border-radius: 20px;
+  background: #fffaf3;
+  color: #6c4716;
+  text-align: center;
+}
+.products-error p { margin: 10px 0 20px; line-height: 1.5; }
+.products-error button { padding: 12px 22px; border: 0; border-radius: 12px; color: #fff; background: #6543ef; cursor: pointer; }
+.products-error button:focus-visible { outline: 3px solid #9b85fc; outline-offset: 3px; }
