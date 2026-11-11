@@ -47,7 +47,9 @@ app.get('/api/db-check', async (req, res) => {
 });
 
 app.use(express.json({limit:'100kb'}));
-const wrap=fn=>(req,res,next)=>{try{fn(req,res,next)}catch(e){next(e)}};
+const wrap = fn => (req, res, next) => {
+  Promise.resolve().then(() => fn(req, res, next)).catch(next);
+};
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
@@ -156,14 +158,14 @@ app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
 
   const u = result.rows[0];
 
-  if (!u || !bcrypt.compareSync(password, u.password_hash)) {
+  if (!u || !u.password_hash || !bcrypt.compareSync(password, u.password_hash)) {
     return res.status(401).json({
       error: 'Email yoki parol xato'
     });
   }
 
-  const { password_hash, ...user } = u;
--
+  const { password_hash, google_id, ...user } = u;
+
   res.json({
     user,
     token: tokenFor(user)
