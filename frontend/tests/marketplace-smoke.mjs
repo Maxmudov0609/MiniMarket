@@ -57,6 +57,10 @@ async function runDesktop() {
   await page.locator('.mm-product-card').first().waitFor({timeout:15000});
   assert.equal(await page.locator('.mm-product-card').count(),3,'Catalog should show all three mocked products');
   assert.equal(await page.locator('.mm-v3-hero').count(),1,'New hero should render');
+  await page.waitForFunction(() => {
+    const photo = document.querySelector('.mm-product-card img[src="/nivea.webp"]');
+    return photo && photo.complete && photo.naturalWidth > 0;
+  }, null, {timeout:12000});
   const broken=await page.locator('img').evaluateAll(nodes=>nodes.filter(img=>img.complete && img.naturalWidth===0).map(img=>img.src));
   assert.deepEqual(broken,[],'No broken product images on initial load');
   await page.locator('.mm-v3-hero .mm-button-dark').click();
@@ -113,6 +117,66 @@ async function runDesktop() {
   assert.deepEqual(errors,[],'Frontend must not produce JavaScript runtime errors');
   await context.close();
 }
+
+async function runSeller() {
+  const context=await browser.newContext({viewport:{width:1360,height:820},reducedMotion:'reduce'});
+  const page=await context.newPage();
+  page.setDefaultTimeout(12000);
+  const errors=[];page.on('pageerror',err=>errors.push(err.message));
+  await useMockData(page);
+  await page.route('**/api/auth/login', route=>route.fulfill({
+    status:200,contentType:'application/json',body:JSON.stringify({
+      token:'seller-token',user:{id:998,name:'Test Seller',email:'seller@example.test',role:'seller'}
+    })
+  }));
+  await page.route('**/api/seller/**', route=>{
+    const path=new URL(route.request().url()).pathname;
+    const body=path==='/api/seller/products' ? inventory : [];
+    route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
+  });
+  await page.route('**/api/products/**', route=>route.fulfill({
+    status:200,contentType:'application/json',body:JSON.stringify({ok:true})
+  }));
+  await page.route('**/api/products', route=>{
+    const method=route.request().method();
+    route.fulfill({status:method==='POST'?201:200,contentType:'application/json',
+      body:JSON.stringify(method==='POST'?{id:10004}:inventory)});
+  });
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.locator('.mm-product-card').first().waitFor();
+  await page.locator('.nm-signin').click();
+  await page.locator('.nm-dialog form input[name=email]').fill('seller@example.test');
+  await page.locator('.nm-dialog form input[name=password]').fill('password123');
+  await page.locator('.nm-dialog form button[type=submit]').click();
+  await page.locator('.nm-dialog').waitFor({state:'detached'});
+  await page.locator('.nm-account-trigger').click();
+  const modal=page.locator('.nm-dialog');
+  await modal.waitFor();
+  await modal.locator('.nm-seller-tabs button').nth(1).click();
+  assert.ok(await modal.getByText('Hozircha buyurtmalar yo‘q.').isVisible(),'Seller orders tab should open');
+  await modal.locator('.nm-seller-tabs button').first().click();
+  await modal.locator('.nm-add-product').click();
+  const form=modal.locator('form.nm-product-form');
+  await form.locator('[name=name]').fill('Test new product');
+  await form.locator('[name=description]').fill('Test product description');
+  await form.locator('[name=price]').fill('5000');
+  await form.locator('[name=stock]').fill('6');
+  await form.locator('button[type=submit]').click();
+  await modal.locator('.nm-add-product').waitFor();
+  assert.ok(await page.getByText('Mahsulot saqlandi').count()>0,'Seller product save should succeed');
+  await modal.locator('.nm-manage-item button[aria-label="Tahrirlash"]').first().click();
+  await modal.locator('form.nm-product-form [name=price]').fill('6000');
+  await modal.locator('form.nm-product-form button[type=submit]').click();
+  await modal.locator('.nm-add-product').waitFor();
+  page.on('dialog',confirm=>confirm.accept());
+  await modal.locator('.nm-manage-item button[aria-label="O‘chirish"]').first().click();
+  assert.ok(await page.getByText('Mahsulot o‘chirildi').count()>0,'Seller delete button should call backend');
+  await modal.locator('.nm-dialog-heading .nm-icon-btn').click();
+  assert.equal(await modal.count(),0,'Seller dashboard should close');
+  assert.deepEqual(errors,[],'Seller controls must not produce JS runtime errors');
+  await context.close();
+}
+
 async function runMobile() {
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
   const page=await context.newPage();
@@ -141,6 +205,8 @@ try {
   browser = await chromium.launch({headless:true,args:['--no-sandbox']});
   await runDesktop();
   console.log('PASS desktop: catalog, search, categories, favorites, filters, detail, cart, checkout');
+  await runSeller();
+  console.log('PASS seller: sign-in, order tab, product creation, editing and deletion');
   await runMobile();
   console.log('PASS mobile: catalog, card, cart, tab navigation');
 } catch (error) {
