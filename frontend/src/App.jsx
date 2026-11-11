@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import "./App.css";
+import "./Premium2026.css";
 import { useTranslation } from "react-i18next";
 
 const translations = {
