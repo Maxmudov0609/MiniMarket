@@ -28,3 +28,9 @@
 .mm-search-suggestion-name{font-size:11px}
 .mm-search-suggestion>strong{font-size:10px}
 }
+
+.mm-card-add.mm-added{background:#1f8065;color:#fff;animation:mm-add-pop .36s cubic-bezier(.2,1.2,.3,1)}
+.mm-card-add.mm-added svg{animation:mm-check-enter .36s ease both}
+@keyframes mm-add-pop{0%{transform:scale(1)}35%{transform:scale(.97)}75%{transform:scale(1.045)}100%{transform:scale(1)}}
+@keyframes mm-check-enter{from{transform:rotate(-45deg) scale(.5);opacity:0}to{transform:rotate(0) scale(1);opacity:1}}
+@media(prefers-reduced-motion:reduce){.mm-card-add.mm-added,.mm-card-add.mm-added svg{animation:none!important}}
