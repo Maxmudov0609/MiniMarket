@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./AppNext.css";
+import "./MarketEditorial.css";
+import "./MarketSearch.css";
 
 const GOOGLE_CLIENT_ID = "957838455109-tsmj5fstgcncsjj19qo29sfkoe9i3kfa.apps.googleusercontent.com";
 const CATEGORIES = [
@@ -158,7 +160,11 @@ async function api(path, { method = "GET", data, token, signal } = {}) {
     const body = contentType.includes("application/json")
       ? await response.json()
       : { error: "Serverdan kutilmagan javob keldi" };
-    if (!response.ok) throw new Error(body.error || "HTTP " + response.status);
+    if (!response.ok) {
+      const error = new Error(body.error || "HTTP " + response.status);
+      error.status = response.status;
+      throw error;
+    }
     return body;
   } catch (error) {
     if (error.name === "AbortError" && !signal?.aborted) {
@@ -226,19 +232,21 @@ function Icon({ name, size = 21, strokeWidth = 1.9 }) {
     {paths[name] || paths.spark}
   </svg>;
 }
-function ProductPicture({ product, className = "" }) {
+function ProductPicture({ product, className = "", eager = false }) {
   const url = productImage(product);
   const [broken, setBroken] = useState(false);
   useEffect(() => setBroken(false), [url]);
   if (!url || broken) {
-    return <div className={"nm-art " + className} aria-label={product.name}>
-      <span aria-hidden="true">{CATEGORY_PICTURES[product.category] || "🛍️"}</span>
-      <small>MiniMarket</small>
+    return <div className={"nm-art mm-image-fallback " + className} role="img"
+      aria-label={product.name + " uchun rasm hozircha mavjud emas"}>
+      <div className="mm-fallback-graphic"><Icon name="bag" size={38} strokeWidth={1.35}/></div>
+      <small>MINIMARKET</small>
+      <span>Rasm tayyorlanmoqda</span>
     </div>;
   }
   return <div className={"nm-product-image " + className}>
-    <img loading="lazy" decoding="async" src={url} alt={product.name}
-      onError={() => setBroken(true)} />
+    <img loading={eager ? "eager" : "lazy"} decoding="async" src={url}
+      alt={product.name} onError={() => setBroken(true)} />
   </div>;
 }
 function Modal({ title, onClose, children, wide = false }) {
@@ -258,42 +266,56 @@ function Modal({ title, onClose, children, wide = false }) {
   </div>;
 }
 function ProductCard({ product, language, onAdd, onFavorite, favorite, onOpen }) {
+  const [added, setAdded] = useState(false);
+  useEffect(() => {
+    if (!added) return undefined;
+    const timer = setTimeout(() => setAdded(false), 1100);
+    return () => clearTimeout(timer);
+  }, [added]);
   const out = Number(product.stock) <= 0;
   const old = Number(product.old_price);
   const price = Number(product.price);
   const discount = old > price ? Math.round((1 - price / old) * 100) : 0;
   const recent = product.created_at && Date.now() - new Date(product.created_at).getTime() < 14 * 86400000;
-  return <article className="nm-card">
-    <div className="nm-card-photo" onClick={() => onOpen(product)} role="button" tabIndex={0}
-      onKeyDown={event => { if (event.key === "Enter") onOpen(product); }} aria-label={product.name}>
-      <ProductPicture product={product}/>
+  return <article className="nm-card mm-product-card">
+    <div className="nm-card-photo mm-card-media">
+      <button type="button" className="mm-card-image-trigger"
+        onClick={() => onOpen(product)} aria-label={product.name + " — batafsil"}>
+        <ProductPicture product={product}/>
+      </button>
       <div className="nm-card-badges">
         {discount > 0 && <span className="nm-sale-tag">-{discount}%</span>}
         {recent && <span className="nm-new-tag">NEW</span>}
       </div>
       <button type="button" className={"nm-love " + (favorite ? "active" : "")}
-        onClick={event => { event.stopPropagation(); onFavorite(product.id); }}
-        aria-label={favorite ? "Sevimlilardan olib tashlash" : "Sevimlilarga qo‘shish"} aria-pressed={favorite}>
+        onClick={() => onFavorite(product.id)}
+        aria-label={favorite ? "Sevimlilardan olib tashlash" : "Sevimlilarga qo‘shish"}
+        aria-pressed={favorite}>
         <Icon name="heart" size={19}/>
       </button>
+      <button type="button" className="mm-quick-look" onClick={() => onOpen(product)}>
+        <Icon name="eye" size={16}/> {language === "ru" ? "Подробнее" : language === "en" ? "Quick view" : "Batafsil"}
+      </button>
     </div>
-    <div className="nm-card-body">
+    <div className="nm-card-body mm-card-body">
       <p className="nm-card-category">{product.category}</p>
       <button type="button" className="nm-card-title" onClick={() => onOpen(product)}>{product.name}</button>
-      <p className="nm-card-seller">{product.seller_name ? "Sotuvchi: " + product.seller_name : "MiniMarket"}</p>
+      <div className="mm-product-meta">
+        <span className={out ? "nm-stock nm-out" : "nm-stock"}>
+          <i/>{WORD(language, out ? "unavailable" : "available")}
+        </span>
+        {product.seller_name && <span className="mm-seller-label">{product.seller_name}</span>}
+      </div>
       <div className="nm-card-prices">
         <strong>{money(price)}</strong>
         {discount > 0 && <s>{money(old)}</s>}
       </div>
-      <div className="nm-card-bottom">
-        <span className={out ? "nm-stock nm-out" : "nm-stock"}>
-          <i/> {WORD(language, out ? "unavailable" : "available")}
-        </span>
-        <button type="button" className="nm-add-btn" onClick={() => onAdd(product)}
-          disabled={out} aria-label={WORD(language, "add") + ": " + product.name}>
-          <Icon name="plus" size={20}/><span>{WORD(language, "add")}</span>
-        </button>
-      </div>
+      <button type="button" className={"nm-add-btn mm-card-add " + (added ? "mm-added" : "")}
+        onClick={() => { if (onAdd(product)) setAdded(true); }}
+        disabled={out} aria-label={WORD(language, "add") + ": " + product.name}>
+        <span>{added ? (language === "ru" ? "Добавлено" : language === "en" ? "Added" : "Qo‘shildi") : WORD(language, "add")}</span>
+        <Icon name={added ? "check" : "plus"} size={18}/>
+      </button>
     </div>
   </article>;
 }
@@ -634,6 +656,7 @@ export default function AppNext() {
     catch { return ""; }
   });
   const [dialog, setDialog] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [toast, setToast] = useState(null);
   const notify = useCallback((message, type = "success") => setToast({ message, type, id: Date.now() }), []);
@@ -660,7 +683,11 @@ export default function AppNext() {
     if (!token) return undefined;
     let alive = true;
     api("/auth/me", { token }).then(current => { if (alive) setUser(current); })
-      .catch(() => { if (alive) { setUser(null); setToken(""); } });
+      .catch(error => {
+        if (alive && (error.status === 401 || error.status === 403)) {
+          setUser(null); setToken("");
+        }
+      });
     return () => { alive = false; };
   }, [token]);
   useEffect(() => {
@@ -703,7 +730,14 @@ export default function AppNext() {
     else rows.sort((a,b) => Number(b.id) - Number(a.id));
     return rows;
   }, [products, query, category, minPrice, maxPrice, favoritesOnly, favorites, sort]);
-  const showcased = useMemo(() => products.filter(p => p.is_active !== false && Number(p.stock) > 0 && Number(p.price) > 0).slice(0,3), [products]);
+  const showcased = useMemo(() => products
+    .filter(p => p.is_active !== false && Number(p.stock) > 0 && Number(p.price) > 0 && productImage(p))
+    .sort((a,b) => {
+      const pick = p => /nivea|choco.?pie|fairy|persil|grechka/i.test(p.name) ? 0 : 1;
+      return pick(a) - pick(b);
+    }).slice(0,3), [products]);
+  const featured = showcased[0];
+  const catalogCount = products.filter(p => p.is_active !== false && Number(p.price) > 0).length;
   const count = cart.reduce((sum,p) => sum + p.quantity, 0);
   function goCatalog(nextCategory = "") {
     setFavoritesOnly(false);
@@ -718,16 +752,22 @@ export default function AppNext() {
   }
   function addToCart(product, quantity = 1) {
     const stock = Number(product.stock);
-    if (stock <= 0) { notify("Bu mahsulot omborda qolmagan", "error"); return; }
+    const existing = cart.find(x => String(x.id) === String(product.id));
+    const remaining = stock - (existing?.quantity || 0);
+    if (!Number.isFinite(stock) || remaining <= 0) {
+      notify("Mahsulot miqdori omborda yetarli emas", "error"); return false;
+    }
+    const actualQuantity = Math.max(1, Math.min(Math.floor(quantity), remaining));
     setCart(prev => {
       const old = prev.find(x => String(x.id) === String(product.id));
-      const allowed = Number.isFinite(stock) ? Math.max(0, stock - (old?.quantity || 0)) : quantity;
-      const add = Math.max(0, Math.min(quantity, allowed));
-      if (add === 0) { notify("Omborda bundan ortiq mahsulot yo‘q", "error"); return prev; }
-      if (old) return prev.map(x => String(x.id) === String(product.id) ? { ...x, quantity: x.quantity + add } : x);
-      return [...prev,{ id: product.id, name: product.name, price: product.price, quantity: add, category: product.category, image_url: product.image_url, stock: product.stock }];
+      if (old) return prev.map(x => String(x.id) === String(product.id) ?
+        { ...x, quantity: Math.min(stock, x.quantity + actualQuantity), price: product.price } : x);
+      return [...prev, { id: product.id, name: product.name, price: product.price,
+        quantity: actualQuantity, category: product.category,
+        image_url: product.image_url, stock: product.stock }];
     });
     notify("Savatchaga qo‘shildi");
+    return true;
   }
   function changeQuantity(id, change) {
     setCart(prev => prev.map(item => {
@@ -738,6 +778,10 @@ export default function AppNext() {
     }).filter(item => item.quantity > 0));
   }
   function openCheckout() {
+    if (loadStatus === "error") {
+      notify("Buyurtma berish uchun serverga ulanish kerak. Qayta urinib ko‘ring.", "error");
+      return;
+    }
     if (!user || !token) { setDialog("auth"); notify(WORD(language, "loginFirst"), "error"); return; }
     if (user.role === "seller") { notify(WORD(language, "loginFirst"), "error"); return; }
     setDialog("checkout");
@@ -753,6 +797,7 @@ export default function AppNext() {
   }
   function refreshProducts() { setRefreshKey(x => x + 1); }
   function favoritesClick() { setFavoritesOnly(x => !x); setCategory(""); setDialog(""); requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth",block:"start"})); }
+  const searchSuggestions = query.trim() ? searchProducts.slice(0, 5) : [];
   return <div className="nm-app">
     <div className="nm-topline"><div className="nm-wrap"><span><Icon name="shield" size={15}/> {WORD(language,"realPrices")}</span><span><Icon name="truck" size={16}/> {WORD(language,"delivery")}</span></div></div>
     <header className="nm-header">
@@ -761,13 +806,31 @@ export default function AppNext() {
           <span className="nm-logo-mark"><Icon name="bag" size={23}/></span>
           <span>Mini<span>Market</span><small>ONLINE STORE</small></span>
         </button>
-        <div className="nm-search">
+        <div className="nm-search mm-live-search" onBlur={event => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setSearchFocused(false);
+        }}>
           <Icon name="search" size={21}/>
-          <input value={query} onChange={event => setQuery(event.target.value)}
+          <input value={query} onFocus={() => setSearchFocused(true)} onChange={event => { setQuery(event.target.value); setSearchFocused(true); }}
             placeholder={WORD(language, "search")} aria-label={WORD(language,"search")}
-            onKeyDown={event => { if (event.key === "Enter") goCatalog(category); }}/>
-          {query && <button className="nm-search-clear" type="button" onClick={() => setQuery("")} aria-label="Tozalash"><Icon name="x" size={17}/></button>}
-          <button type="button" className="nm-search-btn" onClick={() => goCatalog(category)} aria-label="Qidirish"><Icon name="search" size={19}/></button>
+            autoComplete="off"
+            onKeyDown={event => {
+              if (event.key === "Escape") setSearchFocused(false);
+              if (event.key === "Enter") { setSearchFocused(false); goCatalog(category); }
+            }}/>
+          {query && <button className="nm-search-clear" type="button" onClick={() => { setQuery(""); setSearchFocused(false); }} aria-label="Tozalash"><Icon name="x" size={17}/></button>}
+          <button type="button" className="nm-search-btn" onClick={() => { setSearchFocused(false); goCatalog(category); }} aria-label="Qidirish"><Icon name="search" size={19}/></button>
+          {searchFocused && query.trim() && <div className="mm-search-suggestions" role="region" aria-label="Qidiruv natijalari">
+            <div className="mm-suggestion-label">{WORD(language, "search")}</div>
+            {searchSuggestions.length ? searchSuggestions.map(item => <button type="button" className="mm-search-suggestion"
+              key={item.id} onClick={() => { setSearchFocused(false); setSelectedProduct(item); setDialog("product"); }}>
+              <span className="mm-search-suggestion-art"><ProductPicture product={item}/></span>
+              <span className="mm-search-suggestion-name">{item.name}<small>{item.category}</small></span>
+              <strong>{money(item.price)}</strong>
+            </button>) : <p className="mm-suggestion-empty">{WORD(language, "noResults")}</p>}
+            <button type="button" className="mm-suggestion-all" onClick={() => { setSearchFocused(false); goCatalog(category); }}>
+              {WORD(language, "browse")} <Icon name="arrow" size={16}/>
+            </button>
+          </div>}
         </div>
         <div className="nm-header-actions">
           <select className="nm-lang" aria-label={WORD(language,"changeLang")} value={language} onChange={event => setLanguage(event.target.value)}>
@@ -795,29 +858,44 @@ export default function AppNext() {
     </header>
 
     <main>
-      <section className="nm-wrap nm-hero-layout">
-        <div className="nm-hero">
-          <div className="nm-hero-copy">
-            <div className="nm-hero-overline"><span className="nm-pulse"/> MINI MARKETPLACE · 2026</div>
-            <h1>{WORD(language,"heroTitle")}</h1>
-            <p>{WORD(language,"heroText")}</p>
-            <div className="nm-hero-buttons">
-              <button className="nm-hero-primary" type="button" onClick={() => goCatalog("")}>{WORD(language,"explore")} <Icon name="arrow"/></button>
-              <span><Icon name="check" size={18}/> {WORD(language,"realPrices")}</span>
+      <section className="mm-home-hero nm-wrap nm-hero-layout" aria-label={WORD(language, "heroTitle")}>
+        <div className="mm-hero-stage">
+          <div className="mm-hero-copy">
+            <span className="mm-kicker"><span className="mm-kicker-dot"/> MINI MARKET · NEW EXPERIENCE</span>
+            <h1>{language === "ru" ? <>Ваши любимые товары. <em>Проще, чем когда-либо.</em></> :
+              language === "en" ? <>Everything you need. <em>A little more extraordinary.</em></> :
+              <>Har kuni kerakli narsalar. <em>Endi yanada oson.</em></>}</h1>
+            <p>{WORD(language, "heroText")}</p>
+            <div className="mm-hero-actions">
+              <button type="button" className="mm-button-dark" onClick={() => goCatalog("")}>
+                {WORD(language, "explore")} <Icon name="arrow" size={19}/>
+              </button>
+              <button type="button" className="mm-link-arrow" onClick={() => document.getElementById("categories")?.scrollIntoView({behavior:"smooth",block:"start"})}>
+                {WORD(language, "categories")} <Icon name="chevron" size={18}/>
+              </button>
+            </div>
+            <div className="mm-hero-footnote">
+              <span><Icon name="shield" size={16}/> {language === "en" ? "Live catalog" : language === "ru" ? "Актуальный каталог" : "Haqiqiy katalog"}</span>
+              <span><Icon name="bag" size={16}/> {catalogCount} {WORD(language, "found")}</span>
             </div>
           </div>
-          <div className="nm-hero-art" aria-hidden="true">
-            <div className="nm-hero-orbit"/>
-            {showcased.length ? showcased.map((p,i) => <div className={"nm-hero-product nm-hero-product-" + i} key={p.id}>
-              <ProductPicture product={p}/><div><span>{p.category}</span><strong>{money(p.price)}</strong></div>
-            </div>) : <div className="nm-hero-empty-art"><span>🛍️</span><span>🥤</span><span>🎧</span></div>}
-            <div className="nm-floating-label"><Icon name="spark" size={15}/> {WORD(language,"newItems")}</div>
+          <div className="mm-hero-visual">
+            <div className="mm-visual-orbit mm-visual-orbit-one"/>
+            <div className="mm-visual-orbit mm-visual-orbit-two"/>
+            <div className="mm-visual-glow"/>
+            <div className="mm-hero-image-stage">
+              {featured ? <ProductPicture product={featured} eager className="mm-hero-feature-picture"/> :
+                <div className="mm-hero-generic" aria-hidden="true"><Icon name="bag" size={114} strokeWidth={1.1}/></div>}
+            </div>
+            {featured && <div className="mm-feature-caption"><span>{featured.category}</span><strong>{featured.name}</strong><small>{money(featured.price)}</small></div>}
+            <div className="mm-float-icon mm-float-icon-one"><Icon name="spark" size={22}/></div>
+            <div className="mm-float-icon mm-float-icon-two"><Icon name="heart" size={20}/></div>
           </div>
         </div>
-        <div className="nm-hero-stats">
-          <div><span className="nm-stat-icon orange"><Icon name="package"/></span><strong>{products.length > 0 ? products.length + "+" : "MiniMarket"}</strong><small>{WORD(language,"catalog")}</small></div>
-          <div><span className="nm-stat-icon mint"><Icon name="shield"/></span><strong>{WORD(language,"realPrices")}</strong><small>{WORD(language,"notice")}</small></div>
-          <div><span className="nm-stat-icon lavender"><Icon name="truck"/></span><strong>{WORD(language,"delivery")}</strong><small>{WORD(language,"payment")}</small></div>
+        <div className="mm-value-bar" aria-label="Marketplace information">
+          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="search" size={22}/></span><div><strong>{language === "ru" ? "Быстрый поиск" : language === "en" ? "Find it faster" : "Tez va qulay qidiruv"}</strong><small>{WORD(language,"productsText")}</small></div></div>
+          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="shield" size={22}/></span><div><strong>{language === "ru" ? "Прозрачные цены" : language === "en" ? "Clear product pricing" : "Aniq ko‘rsatilgan narxlar"}</strong><small>{WORD(language,"notice")}</small></div></div>
+          <div className="mm-value-cell"><span className="mm-value-icon"><Icon name="truck" size={22}/></span><div><strong>{language === "ru" ? "Удобное оформление" : language === "en" ? "Simple checkout" : "Oson buyurtma berish"}</strong><small>{WORD(language,"payment")}</small></div></div>
         </div>
       </section>
 
@@ -826,12 +904,17 @@ export default function AppNext() {
           <div><span className="nm-eyebrow">{WORD(language,"categories")}</span><h2>{WORD(language,"categoriesTitle")}</h2></div>
           <button className="nm-text-link" type="button" onClick={() => goCatalog("")}>{WORD(language,"catalog")} <Icon name="arrow" size={18}/></button>
         </div>
-        <div className="nm-categories-grid">{CATEGORIES.map(([name,emoji],index) => (
-          <button key={name} className={"nm-category-tile nm-cat-color-" + (index % 6)} type="button" onClick={() => goCatalog(name)}>
-            <span className="nm-category-emoji" aria-hidden="true">{emoji}</span>
-            <span>{name}</span><Icon name="chevron" size={17}/>
-          </button>
-        ))}</div>
+        <div className="nm-categories-grid mm-categories-grid">{CATEGORIES.map(([name],index) => {
+          const categoryProduct = products.find(p => p.category === name && Number(p.stock) > 0 && productImage(p));
+          return <button key={name} className={"nm-category-tile mm-category-tile mm-cat-" + (index % 6)}
+            type="button" onClick={() => goCatalog(name)}>
+            <span className="mm-category-number">{String(index+1).padStart(2,"0")}</span>
+            <span className="mm-category-media">
+              {categoryProduct ? <ProductPicture product={categoryProduct}/> : <Icon name={index % 3 === 0 ? "bag" : index % 3 === 1 ? "package" : "spark"} size={43} strokeWidth={1.1}/>}
+            </span>
+            <span className="mm-category-title">{name}</span><span className="mm-category-arrow"><Icon name="arrow" size={17}/></span>
+          </button>;
+        })}</div>
       </section>
 
       <section className="nm-wrap nm-section nm-products-section" id="catalog">
