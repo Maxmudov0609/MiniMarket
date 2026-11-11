@@ -472,7 +472,8 @@ function CartPanel({ language, cart, products, onClose, onBrowse, onQty, onRemov
           <div className="nm-cart-footer">
             <p className="nm-total"><span>{WORD(language,"total")}</span><strong>{money(total)}</strong></p>
             <small>{WORD(language,"notice")}</small>
-            <button className="nm-primary nm-full" type="button" onClick={onCheckout}>{WORD(language,"buy")} <Icon name="arrow" size={18}/></button>
+            {hasUnavailable && <p className="mm-cart-warning" role="status">{language === "en" ? "Review unavailable items before checkout." : language === "ru" ? "Проверьте недоступные товары перед заказом." : "Buyurtmadan oldin mavjud bo‘lmagan mahsulotlarni tekshiring."}</p>}
+            <button className="nm-primary nm-full" type="button" disabled={hasUnavailable} onClick={onCheckout}>{WORD(language,"buy")} <Icon name="arrow" size={18}/></button>
           </div>
         </>}
     </aside>
