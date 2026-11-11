@@ -401,8 +401,13 @@ callback: async (response) => {
       throw new Error(data.error || data.message || "Google orqali kirishda xatolik");
     }
 
-    console.log("Google login natijasi:", data);
-    alert("Google orqali kirish muvaffaqiyatli!");
+    if (!data.user || !data.token) {
+      throw new Error("Google login javobi to‘liq emas");
+    }
+    setUser(data.user);
+    setToken(data.token);
+    setShowLogin(false);
+    setInfoToast("✅ Google orqali tizimga kirdingiz");
   } catch (error) {
     console.error("Google login xatosi:", error);
     alert(error.message);
@@ -537,7 +542,7 @@ async function handlePlaceOrder(e) {
     customer_name: form.elements.customer_name.value,
     phone: form.elements.phone.value,
     address: form.elements.address.value,
-    note: "",
+    note: form.elements.comment?.value?.trim() || "",
     items: cart.map((item) => ({
       product_id: Number(item.id),
       quantity: item.quantity,
@@ -790,15 +795,7 @@ setTimeout(() => notification.remove(), 3000);
   } catch (error) {
     const notification = document.createElement("div");
 
-notification.innerHTML = `
-  <div style="font-size:30px; margin-bottom:10px;">⚠️</div>
-  <div style="font-size:17px; font-weight:700; margin-bottom:6px;">
-    Xatolik yuz berdi
-  </div>
-  <div style="font-size:14px; opacity:0.85;">
-    ${error.message}
-  </div>
-`;
+notification.textContent = "⚠️ Xatolik yuz berdi: " + (error?.message || "Noma’lum xatolik");
 
 Object.assign(notification.style, {
   position: "fixed",
@@ -2095,16 +2092,11 @@ onClick={() => {
     💳 Karta orqali (yetkazib berilganda)
   </option>
 
-  <option value="click">
-    📱 Click orqali onlayn to‘lov
-  </option>
 
-  <option value="payme">
-    💳 Payme orqali onlayn to‘lov
-  </option>
 </select>
                     </div>
 
+                    <p className="mm-checkout-note">To‘lov yetkazib berilganda amalga oshiriladi. Hozircha saytda onlayn to‘lov ulanmagan.</p>
                     <div className="checkout-summary">
                       <span>💰 Jami to'lov:</span>
 
