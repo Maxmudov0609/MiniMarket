@@ -66,7 +66,7 @@ async function runDesktop() {
   const search=page.locator('.nm-search input');
   await search.fill('Fanta');
   await page.locator('.nm-search-btn').click();
-  assert.equal(await page.locator('.mm-product-card').count(),0,'Active category combined with search should filter');
+  assert.equal(await page.locator('.mm-product-card').count(),1,'Global search should clear selected category');
   // Clicking the catalog navigation must reset previous category/search filters.
   await page.locator('.nm-all-nav').click();
   assert.equal(await page.locator('.mm-product-card').count(),3,'All-products navigation should reset filters');
@@ -83,7 +83,7 @@ async function runDesktop() {
   await page.locator('.mm-product-card').filter({hasText:'Nivea'}).locator('.mm-card-image-trigger').click();
   const detail=page.locator('.nm-dialog[role=dialog]');
   await detail.waitFor();
-  assert.ok(await detail.getByText('Nivea dus geli 250 ml').isVisible(),'Product detail should open');
+  assert.ok(await detail.getByRole('heading',{name:'Nivea dus geli 250 ml'}).first().isVisible(),'Product detail should open');
   await detail.locator('.nm-detail-actions .nm-primary').click();
   assert.equal(await detail.count(),0,'Product detail should close on valid add');
   await page.locator('.nm-header-icon[aria-label="Savatcha"]').click();
