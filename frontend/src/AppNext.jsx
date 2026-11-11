@@ -183,9 +183,14 @@ function productImage(product) {
   const mappings = [
     [/nivea/, "/nivea.webp"], [/fairy/, "/fairy.jpg"],
     [/grechka|гречк/, "/grechka.jpg"], [/persil/, "/persil.jpg"],
-    [/hydrolife/, "/hydrolife.png"], [/plastilin|пластилин/, "/plastilin.png"],
-    [/dezodorant|deodorant/, "/dezodorant.jpg"],
-    [/choco.?pie/, "/chocopie.jpg"], [/koptok|futbol to/, "/koptok.jpg"]
+    [/hydrolife/, "/hydrolife.jpg"], [/plastilin|пластилин/, "/plastilin.jpg"],
+    [/dezodorant|deodorant/, "/dezodorant.jpg"], [/sovun|совун/, "/sovun.jpg"],
+    [/hdmi/, "/hdmi.jpg"], [/bluetooth|karnay/, "/images/bluetooth-karnay.jpg"],
+    [/fanta/, "/images/fanta.png"], [/fuse.?tea/, "/images/fuse-tea.png"],
+    [/sprite/, "/images/sprite.png"], [/coca.?cola/, "/images/coca-cola.png"],
+    [/pepsi/, "/images/pepsi.png"], [/nestle/, "/images/nestle.png"],
+    [/lipton/, "/images/lipton.png"], [/choco.?pie/, "/chocopie.jpg"],
+    [/koptok|futbol to/, "/koptok.jpg"]
   ];
   const match = mappings.find(([pattern]) => pattern.test(name));
   return match ? match[1] : null;
@@ -598,7 +603,10 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged }) {
   </Modal>;
 }
 export default function AppNext() {
-  const [language, setLanguage] = useState(() => localStorage.getItem("minimarket_language") || "uz");
+  const [language, setLanguage] = useState(() => {
+    try { return localStorage.getItem("minimarket_language") || "uz"; }
+    catch { return "uz"; }
+  });
   const [products, setProducts] = useState(() => {
     const saved = readJSON("minimarket_products_cache", []);
     return Array.isArray(saved) ? saved : [];
@@ -621,11 +629,13 @@ export default function AppNext() {
       : [];
   });
   const [user, setUser] = useState(() => readJSON("minimarket_user", null));
-  const [token, setToken] = useState(() => localStorage.getItem("minimarket_token") || "");
+  const [token, setToken] = useState(() => {
+    try { return localStorage.getItem("minimarket_token") || ""; }
+    catch { return ""; }
+  });
   const [dialog, setDialog] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [toast, setToast] = useState(null);
-  const searchInput = useRef(null);
   const notify = useCallback((message, type = "success") => setToast({ message, type, id: Date.now() }), []);
   useEffect(() => {
     if (!toast) return undefined;
@@ -695,10 +705,6 @@ export default function AppNext() {
   }, [products, query, category, minPrice, maxPrice, favoritesOnly, favorites, sort]);
   const showcased = useMemo(() => products.filter(p => p.is_active !== false && Number(p.stock) > 0 && Number(p.price) > 0).slice(0,3), [products]);
   const count = cart.reduce((sum,p) => sum + p.quantity, 0);
-  const total = cart.reduce((sum,item) => {
-    const product = products.find(p => String(p.id) === String(item.id));
-    return sum + Number(product?.price ?? item.price || 0) * item.quantity;
-  }, 0);
   function goCatalog(nextCategory = "") {
     setFavoritesOnly(false);
     setCategory(nextCategory);
@@ -757,7 +763,7 @@ export default function AppNext() {
         </button>
         <div className="nm-search">
           <Icon name="search" size={21}/>
-          <input ref={searchInput} value={query} onChange={event => setQuery(event.target.value)}
+          <input value={query} onChange={event => setQuery(event.target.value)}
             placeholder={WORD(language, "search")} aria-label={WORD(language,"search")}
             onKeyDown={event => { if (event.key === "Enter") goCatalog(category); }}/>
           {query && <button className="nm-search-clear" type="button" onClick={() => setQuery("")} aria-label="Tozalash"><Icon name="x" size={17}/></button>}
