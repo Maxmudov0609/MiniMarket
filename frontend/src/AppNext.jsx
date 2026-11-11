@@ -298,7 +298,7 @@ function Modal({ title, onClose, children, wide = false }) {
     </section>
   </div>;
 }
-function ProductCard({ product, language, onAdd, onFavorite, favorite, onOpen }) {
+function ProductCard({ product, language, onAdd, onFavorite, favorite, onOpen, eager = false }) {
   const [added, setAdded] = useState(false);
   useEffect(() => {
     if (!added) return undefined;
@@ -314,7 +314,7 @@ function ProductCard({ product, language, onAdd, onFavorite, favorite, onOpen })
     <div className="nm-card-photo mm-card-media">
       <button type="button" className="mm-card-image-trigger"
         onClick={() => onOpen(product)} aria-label={product.name + " — batafsil"}>
-        <ProductPicture product={product}/>
+        <ProductPicture product={product} eager={eager}/>
       </button>
       <div className="nm-card-badges">
         {discount > 0 && <span className="nm-sale-tag">-{discount}%</span>}
@@ -1121,7 +1121,7 @@ export default function AppNext() {
           <button type="button" className="nm-primary" onClick={() => { setCategory("");setQuery("");setMinPrice("");setMaxPrice("");setFavoritesOnly(false); }}>{WORD(language,"clear")}</button>
         </div> :
         <>
-          <div className="nm-grid">{searchProducts.slice(0,visibleCount).map(product => <ProductCard key={product.id} product={product} language={language}
+          <div className="nm-grid">{searchProducts.slice(0,visibleCount).map((product,index) => <ProductCard key={product.id} product={product} eager={index < 4} language={language}
             onAdd={addToCart} favorite={favorites.some(id => String(id) === String(product.id))}
             onFavorite={toggleFavorite} onOpen={p => {setSelectedProduct(p);setDialog("product");}}/>)}</div>
           {visibleCount < searchProducts.length && <div className="nm-more">
