@@ -183,25 +183,28 @@ const CATEGORY_PICTURES = {
   "Uy-ro‘zg‘or": "🏡", "Elektronika": "🎧", "Kiyim-kechak": "👟",
   "Uy jihozlari": "🛋️", "Sport": "⚽", "Boshqalar": "🛍️"
 };
+// Show bundled images only for verified, matching products. Never point to missing assets.
+const BUNDLED_PRODUCT_IMAGES = [
+  [/^nivea(?:\s|$)/i, "/nivea.webp"],
+  [/^fairy(?:\s|$)/i, "/fairy.jpg"],
+  [/^grechka(?:\s|$)/i, "/grechka.jpg"],
+  [/^persil(?:\s|$)/i, "/persil.jpg"],
+  [/^hydrolife(?:\s|$)/i, "/hydrolife.png"],
+  [/^plastilin(?:\s|$)/i, "/plastilin.png"],
+  [/^dezodorant(?:\s|$)/i, "/dezodorant.jpg"],
+  [/^sovun(?:\s|$)/i, "/sovun.jpg"],
+  [/^hdmi(?:\s|$)/i, "/hdmi.jpg"],
+  [/^bluetooth(?:\s|$)|^karnay(?:\s|$)/i, "/images/bluetooth-karnay.jpg"],
+  [/^choco.?pie(?:\s|$)/i, "/chocopie.jpg"],
+  [/^koptok(?:\s|$)/i, "/koptok.jpg"]
+];
 function productImage(product) {
   const actual = String(product?.image_url || product?.image || "").trim();
-  if (/^https?:\/\//i.test(actual) || actual.startsWith("/")) return actual;
-  const name = String(product?.name || "").toLowerCase();
-  const mappings = [
-    [/nivea/, "/nivea.webp"], [/fairy/, "/fairy.jpg"],
-    [/grechka|гречк/, "/grechka.jpg"], [/persil/, "/persil.jpg"],
-    [/hydrolife/, "/hydrolife.png"], [/plastilin|пластилин/, "/plastilin.png"],
-    [/dezodorant|deodorant/, "/dezodorant.jpg"], [/sovun|совун/, "/sovun.jpg"],
-    [/hdmi/, "/hdmi.jpg"], [/bluetooth|karnay/, "/images/bluetooth-karnay.jpg"],
-    [/fanta/, "/images/fanta.png"], [/fuse.?tea/, "/images/fuse-tea.png"],
-    [/sprite/, "/images/sprite.png"], [/coca.?cola/, "/images/coca-cola.png"],
-    [/pepsi/, "/images/pepsi.png"], [/nestle/, "/images/nestle.png"],
-    [/lipton/, "/images/lipton.png"], [/choco.?pie/, "/chocopie.jpg"],
-    [/koptok|futbol to/, "/koptok.jpg"]
-  ];
-  const match = mappings.find(([pattern]) => pattern.test(name));
-  return match ? match[1] : null;
+  if (/^https?:\/\//i.test(actual) || /^\/(?!\/)[\w./-]+$/.test(actual)) return actual;
+  const name = String(product?.name || "").trim();
+  return BUNDLED_PRODUCT_IMAGES.find(([pattern]) => pattern.test(name))?.[1] || null;
 }
+
 function Icon({ name, size = 21, strokeWidth = 1.9 }) {
   const paths = {
     search: <><circle cx="11" cy="11" r="7.5"/><path d="m17 17 4.3 4.3"/></>,
@@ -240,14 +243,14 @@ function ProductPicture({ product, className = "", eager = false }) {
   if (!url || broken) {
     return <div className={"nm-art mm-image-fallback " + className} role="img"
       aria-label={product.name + " uchun rasm hozircha mavjud emas"}>
-      <div className="mm-fallback-graphic"><Icon name="bag" size={38} strokeWidth={1.35}/></div>
+      <div className="mm-fallback-graphic"><Icon name="package" size={35} strokeWidth={1.25}/></div>
       <small>MINIMARKET</small>
-      <span>Rasm tayyorlanmoqda</span>
+      <span>Rasm mavjud emas</span>
     </div>;
   }
   return <div className={"nm-product-image " + className}>
     <img loading={eager ? "eager" : "lazy"} decoding="async" src={url}
-      alt={product.name} onError={() => setBroken(true)} />
+      alt={product.name} onError={() => setBroken(true)} referrerPolicy="no-referrer" draggable="false" />
   </div>;
 }
 function Modal({ title, onClose, children, wide = false }) {
@@ -489,7 +492,7 @@ function ProductPanel({ product, language, onClose, onAdd, favorite, onFavorite 
             <button type="button" onClick={() => setQuantity(n => Math.min(stock, n + 1))} disabled={!canBuy}><Icon name="plus"/></button>
           </div>
           <button className="nm-primary" type="button" disabled={!canBuy}
-            onClick={() => { onAdd(product, quantity); onClose(); }}><Icon name="bag" size={19}/>{WORD(language, "add")}</button>
+            onClick={() => { if (onAdd(product, quantity)) onClose(); }}><Icon name="bag" size={19}/>{WORD(language, "add")}</button>
           <button type="button" className={"nm-icon-btn nm-detail-love " + (favorite ? "active" : "")} onClick={() => onFavorite(product.id)} aria-label="Sevimli"><Icon name="heart"/></button>
         </div>
       </div>
