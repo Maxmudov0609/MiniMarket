@@ -458,7 +458,7 @@ const checkout = async (buyer, b) => {
       }
 
       const result = await client.query(
-        'SELECT * FROM products WHERE id=$1 FOR UPDATE',
+        'SELECT * FROM products WHERE id=$1 AND is_active=TRUE FOR UPDATE',
         [item.product_id]
       );
 
@@ -561,7 +561,7 @@ app.get('/api/seller/orders', auth('seller'), wrap(async (req, res) => {
        oi.product_name,
        oi.quantity,
        oi.unit_price,
-       o.status,
+       oi.status AS status,
        o.customer_name,
        o.phone,
        o.address,
