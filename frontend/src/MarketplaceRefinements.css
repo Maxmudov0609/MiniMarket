@@ -1,0 +1,69 @@
+/* MiniMarket — polished interactions, accessible shopping controls and account linking */
+.mm-stock-filter{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:17px 5px 0;
+}
+.mm-stock-filter label{display:inline-flex;align-items:center;gap:10px;cursor:pointer;color:#31594b;font-size:13px;font-weight:700}
+.mm-stock-filter input{appearance:none;width:20px;height:20px;border:1.5px solid #cbdcd0;background:white;border-radius:6px;display:grid;place-items:center;transition:background .18s,border-color .18s,box-shadow .18s;cursor:pointer}
+.mm-stock-filter input::before{content:"";width:6px;height:10px;border:solid white;border-width:0 2px 2px 0;transform:rotate(45deg) scale(0);transition:transform .17s;margin-top:-3px}
+.mm-stock-filter input:checked{background:#195d4d;border-color:#195d4d}
+.mm-stock-filter input:checked::before{transform:rotate(45deg) scale(1)}
+.mm-stock-filter input:focus-visible{outline:3px solid #a6d9ae;outline-offset:3px}
+.mm-stock-filter>span{color:#87998b;font-size:11px}
+.mm-updated{color:#377b5c!important;white-space:nowrap}
+.mm-account-tool,.mm-seller-connect{padding:0 26px 20px}
+.mm-account-tool button,.mm-seller-connect button{
+  background:#f2f8f0;color:#1e6650;border:1px solid #dbe9de;border-radius:13px;
+  padding:13px 15px;display:flex;justify-content:center;align-items:center;gap:9px;
+  font-size:12px;font-weight:800;transition:background .2s,transform .2s;
+}
+.mm-account-tool button{width:100%}
+.mm-account-tool button svg:last-child{margin-left:auto}
+.mm-account-tool button:hover,.mm-seller-connect button:hover{background:#e8f3e6;transform:translateY(-1px)}
+.mm-seller-connect{padding:14px 25px 0}
+.mm-link-google-panel{padding:27px 24px 36px;text-align:center;display:flex;align-items:center;gap:17px;flex-direction:column}
+.mm-link-google-panel>svg{color:#1a7258;background:#f0f7ef;padding:11px;box-sizing:content-box;border-radius:16px}
+.mm-link-google-panel p{max-width:340px;font-size:13px;color:#677e6e;line-height:1.75;margin:0}
+.mm-link-google-panel strong{font-size:13px;color:#224c3a;overflow-wrap:anywhere}
+.mm-link-google-panel>span{font-size:12px;color:#7c8b7e}
+.mm-link-google-panel .nm-google{min-height:46px}
+.nm-filter-bar{transition:box-shadow .2s,border-color .2s}
+.nm-filter-bar:focus-within{border-color:#b8d5bc;box-shadow:0 12px 32px #2e5f3811}
+.nm-product-image img{filter:saturate(.99)}
+.mm-product-card{will-change:auto}
+.mm-product-card:focus-within{border-color:#9bcaa4;box-shadow:0 0 0 3px #c2e1c6}
+.mm-card-add,.nm-header-icon,.nm-category-tile,.nm-mobile-tabs button,.nm-cart-item button,.nm-primary{
+  -webkit-tap-highlight-color:transparent;
+}
+.mm-card-add:active,.nm-header-icon:active,.nm-primary:active{transform:scale(.975)}
+.nm-card-price{font-variant-numeric:tabular-nums}
+.nm-cart-item{transition:background .18s}
+.nm-cart-item:hover{background:#fbfdf8}
+.nm-cart-drawer{overscroll-behavior:contain}
+.nm-dialog{overscroll-behavior:contain}
+.nm-stepper button:disabled{opacity:.35}
+.nm-hero-layout,.nm-category-section,.nm-products-section{scroll-margin-top:158px}
+.nm-product-image img[loading="lazy"]{content-visibility:auto}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+  .nm-category-tile:hover .nm-product-image img{transform:scale(1.09) rotate(-2deg)}
+  .mm-search-suggestion:hover .mm-search-suggestion-art img{transform:scale(1.06)}
+  .nm-header-icon:hover{transform:translateY(-2px)}
+}
+@media(max-width:800px){
+  .mm-stock-filter>span{display:none}
+  .mm-stock-filter{padding-top:13px}
+  .nm-hero-layout,.nm-category-section,.nm-products-section{scroll-margin-top:120px}
+}
+@media(max-width:570px){
+  .mm-stock-filter label{font-size:12px}
+  .mm-stock-filter{padding:13px 2px 0}
+  .nm-product-card .nm-card-title{line-height:1.4}
+  .nm-dialog-heading h2{overflow-wrap:anywhere}
+  .mm-link-google-panel{padding:21px 16px 28px}
+  .mm-account-tool{padding:0 17px 17px}
+  .mm-seller-connect{padding:12px 17px 0}
+}
+@media(prefers-reduced-motion:reduce){
+  .mm-stock-filter input,.mm-stock-filter input::before,.mm-account-tool button,.mm-seller-connect button,
+  .nm-filter-bar,.nm-cart-item{transition:none!important}
+}
