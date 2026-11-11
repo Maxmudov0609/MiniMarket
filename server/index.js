@@ -590,7 +590,7 @@ app.post('/api/orders', auth('buyer'), wrap(async (req, res) => {
   if (!b || typeof b !== 'object' ||
       typeof b.customer_name !== 'string' || !b.customer_name.trim() || b.customer_name.length > 120 ||
       typeof b.phone !== 'string' || b.phone.trim().length < 9 || b.phone.length > 35 ||
-      !/^[+()0-9\\s-]+$/.test(b.phone.trim()) ||
+      !/^[+()0-9\s-]+$/.test(b.phone.trim()) ||
       typeof b.address !== 'string' || b.address.trim().length < 5 || b.address.length > 500 ||
       (b.note != null && (typeof b.note !== 'string' || b.note.length > 500)) ||
       !Array.isArray(b.items) || b.items.length === 0 || b.items.length > 100 ||
