@@ -50,7 +50,8 @@ async function useMockData(page) {
 async function runDesktop() {
   const context=await browser.newContext({viewport:{width:1440,height:900}, reducedMotion:'reduce'});
   const page=await context.newPage();
-  const errors=[];page.on('pageerror',err=>errors.push(err.message));
+  page.setDefaultTimeout(12000);
+  const errors=[]page.on('pageerror',err=>errors.push(err.message));
   await useMockData(page);
   await page.goto(origin,{waitUntil:'domcontentloaded'});
   await page.locator('.mm-product-card').first().waitFor({timeout:15000});
@@ -134,14 +135,20 @@ async function runMobile() {
   assert.deepEqual(errors,[],'Mobile frontend must not produce JS runtime errors');
   await context.close();
 }
+let exitCode = 0;
 try {
   await waitForServer();
-  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+  browser = await chromium.launch({headless:true,args:['--no-sandbox']});
   await runDesktop();
   console.log('PASS desktop: catalog, search, categories, favorites, filters, detail, cart, checkout');
   await runMobile();
   console.log('PASS mobile: catalog, card, cart, tab navigation');
+} catch (error) {
+  console.error('FAIL marketplace browser test:', error);
+  exitCode = 1;
 } finally {
   await browser?.close();
   server.kill('SIGTERM');
+  // npm spawns Vite as a child; Node's inherited pipes otherwise keep CI alive.
+  process.exit(exitCode);
 }
