@@ -205,9 +205,11 @@ function App() {
   localStorage.getItem("minimarket_products_cache_time")
 );
 
-const cacheMaxAge = 5 * 60 * 1000;
+// Oldingi katalogni 30 kun davomida darhol ko'rsatamiz;
+// har safar server javobi kelganda kesh yangilanadi.
+const cacheMaxAge = 30 * 24 * 60 * 60 * 1000;
 
-if (!cacheTime || Date.now() - cacheTime > cacheMaxAge) {
+if (!cacheTime || cacheTime > Date.now() || Date.now() - cacheTime > cacheMaxAge) {
   return [];
 }
 
@@ -253,19 +255,16 @@ useEffect(() => {
       }
 
 if (!controller.signal.aborted) {
-  setDbProducts(data);
-localStorage.setItem(
-  "minimarket_products_cache",
-  JSON.stringify(data)
-);
-
-localStorage.setItem(
-  "minimarket_products_cache_time",
-  String(Date.now())
-);
-
-  console.log("Yuklangan mahsulotlar:", data.length);
-}
+          setDbProducts(data);
+          try {
+            localStorage.setItem("minimarket_products_cache", JSON.stringify(data));
+            localStorage.setItem("minimarket_products_cache_time", String(Date.now()));
+          } catch (cacheError) {
+            // Xotira to'lsa ham API ma'lumotlarini ko'rsatish davom etadi.
+            console.warn("Mahsulotlar keshini saqlab bo'lmadi:", cacheError);
+          }
+          console.log("Yuklangan mahsulotlar:", data.length);
+        }
     } catch (error) {
       if (error.name !== "AbortError") {
         console.error("Mahsulotlarni yuklash xatosi:", error);
@@ -1277,8 +1276,15 @@ onClick={() => showCatalog()}
 </div>
 <div className="catalog-toolbar" aria-live="polite">
   <span className="catalog-count">
-    <strong>{filteredProducts.length}</strong> {language === "ru" ? "товаров найдено" : language === "en" ? "products found" : "ta mahsulot topildi"}
+    {productsLoading && dbProducts.length === 0
+      ? (language === "ru" ? "Загружаем товары..." : language === "en" ? "Loading products..." : "Mahsulotlar yuklanmoqda...")
+      : <><strong>{filteredProducts.length}</strong> {language === "ru" ? "товаров найдено" : language === "en" ? "products found" : "ta mahsulot topildi"}</>}
   </span>
+  {productsLoading && dbProducts.length > 0 && (
+    <span className="catalog-refreshing" role="status">
+      ⟳ {language === "ru" ? "Обновляем список..." : language === "en" ? "Refreshing products..." : "Ro‘yxat yangilanmoqda..."}
+    </span>
+  )}
   {(category !== "Barchasi" || search.trim() || minPrice !== "" || maxPrice !== "" || sort !== "newest") && (
     <button
       type="button"
@@ -1298,25 +1304,30 @@ onClick={() => showCatalog()}
 
         <div className="products">
           {productsError && (
-            <div className="products-error" role="alert">
-              <strong>⚠️ Mahsulotlarni yuklab bo‘lmadi</strong>
-              <p>{productsError}</p>
+            <div className={dbProducts.length > 0 ? "products-error products-error-cached" : "products-error"} role="alert">
+              <strong>{dbProducts.length > 0 ? "ℹ️ Avvalgi mahsulotlar ko‘rsatilmoqda" : "⚠️ Mahsulotlarni yuklab bo‘lmadi"}</strong>
+              <p>{dbProducts.length > 0
+                ? "Yangi ma’lumotlar olinmadi. Serverga qayta ulanish uchun tugmani bosing."
+                : productsError}</p>
               <button type="button" onClick={() => setProductsRetryKey((key) => key + 1)}>
                 🔄 Qayta yuklash
               </button>
             </div>
           )}
           
-          {productsLoading && dbProducts.length === 0 && (
-            <div style={{
-              gridColumn: "1 / -1",
-              textAlign: "center",
-              padding: "60px 20px",
-              fontSize: "20px",
-              fontWeight: "bold",
-              color: "#6938ef"
-            }}>
-              ⏳ Mahsulotlar yuklanmoqda, iltimos kuting...
+          {productsLoading && dbProducts.length === 0 && !productsError && (
+            <div className="catalog-loading" role="status" aria-live="polite">
+              <p>⏳ Mahsulotlar yuklanmoqda. Birinchi tashrifda server uyg‘onishi biroz vaqt olishi mumkin.</p>
+              <div className="catalog-skeleton-grid" aria-hidden="true">
+                {Array.from({ length: 8 }, (_, index) => (
+                  <div className="catalog-skeleton-card" key={index}>
+                    <span className="catalog-skeleton-image" />
+                    <span className="catalog-skeleton-line" />
+                    <span className="catalog-skeleton-line short" />
+                    <span className="catalog-skeleton-button" />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
       {(!productsLoading || dbProducts.length > 0) && !(productsError && dbProducts.length === 0) && (
