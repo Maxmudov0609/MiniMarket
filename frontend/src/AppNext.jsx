@@ -665,7 +665,17 @@ export default function AppNext() {
     const timer = setTimeout(() => setToast(null), 4800);
     return () => clearTimeout(timer);
   }, [toast]);
-  useEffect(() => { try { localStorage.setItem("minimarket_language",language); } catch {} }, [language]);
+  useEffect(() => {
+    // Keep the browser's document language aligned with the in-app language selector.
+    // Otherwise Chrome may auto-translate an Uzbek document after EN/RU is selected.
+    document.documentElement.lang = language;
+    document.title = language === "en"
+      ? "MiniMarket — Online marketplace"
+      : language === "ru"
+        ? "MiniMarket — Интернет-магазин"
+        : "MiniMarket — Onlayn do‘kon";
+    try { localStorage.setItem("minimarket_language", language); } catch {}
+  }, [language]);
   useEffect(() => persist("minimarket_cart", cart), [cart]);
   useEffect(() => persist("minimarket_favorites", favorites), [favorites]);
   useEffect(() => {
@@ -798,7 +808,7 @@ export default function AppNext() {
   function refreshProducts() { setRefreshKey(x => x + 1); }
   function favoritesClick() { setFavoritesOnly(x => !x); setCategory(""); setDialog(""); requestAnimationFrame(() => document.getElementById("catalog")?.scrollIntoView({behavior:"smooth",block:"start"})); }
   const searchSuggestions = query.trim() ? searchProducts.slice(0, 5) : [];
-  return <div className="nm-app">
+  return <div className="nm-app" translate="no" lang={language}>
     <div className="nm-topline"><div className="nm-wrap"><span><Icon name="shield" size={15}/> {WORD(language,"realPrices")}</span><span><Icon name="truck" size={16}/> {WORD(language,"delivery")}</span></div></div>
     <header className="nm-header">
       <div className="nm-wrap nm-header-main">
