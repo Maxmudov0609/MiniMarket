@@ -51,7 +51,7 @@ async function runDesktop() {
   const context=await browser.newContext({viewport:{width:1440,height:900}, reducedMotion:'reduce'});
   const page=await context.newPage();
   page.setDefaultTimeout(12000);
-  const errors=[]page.on('pageerror',err=>errors.push(err.message));
+  const errors=[];page.on('pageerror',err=>errors.push(err.message));
   await useMockData(page);
   await page.goto(origin,{waitUntil:'domcontentloaded'});
   await page.locator('.mm-product-card').first().waitFor({timeout:15000});
