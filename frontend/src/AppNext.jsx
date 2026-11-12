@@ -4,6 +4,7 @@ import "./MarketEditorial.css";
 import "./MarketSearch.css";
 import "./MarketplaceRefinements.css";
 import "./MarketV3.css";
+import { matchedPhoto, categoryPreview } from "./productImageSources";
 
 const GOOGLE_CLIENT_ID = "957838455109-tsmj5fstgcncsjj19qo29sfkoe9i3kfa.apps.googleusercontent.com";
 const CATEGORIES = [
@@ -230,9 +231,11 @@ const BUNDLED_PRODUCT_IMAGES = [
 ];
 function productImage(product) {
   const actual = String(product?.image_url || product?.image || "").trim();
+  // Never overwrite a seller's existing product photo.
   if (/^https?:\/\//i.test(actual) || /^\/(?!\/)[\w./-]+$/.test(actual)) return actual;
   const name = String(product?.name || "").trim();
-  return BUNDLED_PRODUCT_IMAGES.find(([pattern]) => pattern.test(name))?.[1] || null;
+  return BUNDLED_PRODUCT_IMAGES.find(([pattern]) => pattern.test(name))?.[1]
+    || matchedPhoto(product)?.photo || null;
 }
 
 function Icon({ name, size = 21, strokeWidth = 1.9 }) {
@@ -277,12 +280,15 @@ function ProductPicture({ product, className = "", eager = false }) {
   const [broken, setBroken] = useState(false);
   useEffect(() => setBroken(false), [url]);
   if (!url || broken) {
+    const preview = categoryPreview(product);
     const categoryIcon = CATEGORY_PICTURES[product?.category] || "📦";
     return <div className={"nm-art mm-image-fallback mm-category-image-fallback " + className} role="img"
-      aria-label={product.name + " uchun surat kiritilmagan"}>
-      <div className="mm-category-product-icon" aria-hidden="true">{categoryIcon}</div>
-      <small>{product?.category || "MiniMarket"}</small>
-      <span>Mahsulot rasmi kutilmoqda</span>
+      aria-label={product.name + " uchun mahsulot fotosurati hali mavjud emas"}>
+      {preview ? <img src={preview} loading="lazy" className="mm-category-placeholder-photo"
+          alt="" aria-hidden="true" /> :
+        <div className="mm-category-product-icon" aria-hidden="true">{categoryIcon}</div>}
+      <small>{product?.name || product?.category || "MiniMarket"}</small>
+      <span>Namuna rasm · aniq mahsulot fotosurati emas</span>
     </div>;
   }
   return <div className={"nm-product-image " + className}>
