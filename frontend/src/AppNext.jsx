@@ -5,7 +5,7 @@ import "./MarketSearch.css";
 import "./MarketplaceRefinements.css";
 import "./MarketV3.css";
 import { matchedPhoto } from "./productImageSources";
-import { categoryKey, getCategoryCounts, getRelatedProducts, isCatalogProduct } from "./catalogCategories";
+import { categoryKey, getCategoryCounts, getRelatedProducts, isCatalogProduct, photoReferenceStatus } from "./catalogCategories";
 
 const GOOGLE_CLIENT_ID = "957838455109-tsmj5fstgcncsjj19qo29sfkoe9i3kfa.apps.googleusercontent.com";
 const CATEGORIES = [
@@ -790,8 +790,13 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
   const [reload, setReload] = useState(0);
   const [onlyMissingPhotos, setOnlyMissingPhotos] = useState(false);
   // Name-based sample image mappings are NOT proof of a seller-owned product photo.
-  const missingPhotos = products.filter(p => p.is_active !== false &&
-    !String(p.image_url || "").trim());
+  const activeSellerProducts = products.filter(p => p.is_active !== false);
+  const missingPhotos = activeSellerProducts.filter(p =>
+    ["missing", "invalid"].includes(photoReferenceStatus(p)));
+  const externalPhotos = activeSellerProducts.filter(p =>
+    photoReferenceStatus(p) === "external_unverified");
+  const uploadedPhotos = activeSellerProducts.filter(p =>
+    photoReferenceStatus(p) === "uploaded");
   const visibleSellerProducts = onlyMissingPhotos ? missingPhotos : products;
   useEffect(() => {
     let alive = true;
@@ -899,9 +904,13 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
           <div>
             <strong>{language === "en" ? "Actual product photo audit" :
               language === "ru" ? "Проверка фотографий товаров" : "Mahsulotlarning asl rasmlari"}</strong>
-            <p>{language === "en" ? `${missingPhotos.length} of ${products.filter(p => p.is_active !== false).length} active products have no uploaded or linked product photo.` :
-              language === "ru" ? `У ${missingPhotos.length} из ${products.filter(p => p.is_active !== false).length} активных товаров нет собственной фотографии.` :
-              `${products.filter(p => p.is_active !== false).length} ta faol mahsulotdan ${missingPhotos.length} tasining o‘z rasmi biriktirilmagan.`}</p>
+            <p>{language === "en" ? `${missingPhotos.length} of ${activeSellerProducts.length} active items need an image reference.` :
+              language === "ru" ? `Для ${missingPhotos.length} из ${activeSellerProducts.length} товаров требуется изображение.` :
+              `${activeSellerProducts.length} ta faol mahsulotdan ${missingPhotos.length} tasi uchun rasm kerak.`}</p>
+            <p className="mm-photo-audit-details">{language === "en" ?
+              `Uploaded: ${uploadedPhotos.length} · external to verify: ${externalPhotos.length}` :
+              language === "ru" ? `Загружено: ${uploadedPhotos.length} · внешние ссылки: ${externalPhotos.length}` :
+              `Yuklangan: ${uploadedPhotos.length} · tashqi havola (tekshirilmagan): ${externalPhotos.length}`}</p>
             <small>{language === "en" ? "Automatic sample pictures are not counted as verified photos. Existing URLs still require checking for accuracy and permission." :
               language === "ru" ? "Образцы изображений не считаются проверенными. Ссылки также требуют проверки." :
               "Namunaviy rasmlar haqiqiy mahsulot fotosurati deb hisoblanmaydi. Mavjud havolalarning ham aniqligi va ruxsati tekshirilishi kerak."}</small>
@@ -921,8 +930,13 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
           </p> : <div className="nm-management-list">
           {visibleSellerProducts.map(p => <div className="nm-manage-item" key={p.id}><ProductPicture product={p}/>
             <div><strong>{p.name}</strong><span>{money(p.price)} · {p.stock} dona · {p.is_active === false ? "Faol emas" : "Faol"}</span>
-              {!p.image_url && p.is_active !== false && <small className="mm-photo-needed">
+              {p.is_active !== false && ["missing", "invalid"].includes(photoReferenceStatus(p)) && <small className="mm-photo-needed">
                 {language === "en" ? "Actual photo required" : language === "ru" ? "Нужно фото товара" : "Asl mahsulot rasmi kerak"}
+              </small>}
+              {p.is_active !== false && photoReferenceStatus(p) === "external_unverified" && <small className="mm-photo-verify">
+                {language === "en" ? "External image: verify rights and exact packaging" :
+                  language === "ru" ? "Внешнее фото: проверьте права и упаковку" :
+                  "Tashqi surat: ruxsat va qadoqni tekshiring"}
               </small>}</div>
             <button className="nm-icon-btn" type="button" onClick={() => { setEdit(p); setEditing(true); }} aria-label="Tahrirlash"><Icon name="pencil"/></button>
             <button className="nm-icon-btn danger" type="button" disabled={busy} onClick={() => remove(p)} aria-label="O‘chirish"><Icon name="trash"/></button>
