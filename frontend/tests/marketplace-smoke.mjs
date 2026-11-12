@@ -173,6 +173,39 @@ async function runDesktop() {
 
 
 
+async function runCatalogLoadingStates() {
+  const context=await browser.newContext({viewport:{width:1100,height:800},reducedMotion:'reduce'});
+  const page=await context.newPage();
+  page.setDefaultTimeout(15000);
+  await useMockData(page);
+  await page.route('**/api/products',async route=>{
+    await new Promise(resolve=>setTimeout(resolve,1700));
+    try {await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(inventory)});}catch{}
+  });
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.locator('.mm-catalog-loading').waitFor();
+  assert.equal(await page.locator('.nm-no-results').count(),0,
+    'Loading must not look like zero search results');
+  assert.ok(await page.getByText('Mahsulotlar yuklanmoqda…').isVisible());
+  await page.locator('.mm-product-card').first().waitFor();
+  assert.equal(await page.locator('.mm-catalog-loading').count(),0);
+  await context.close();
+
+  const failedContext=await browser.newContext({viewport:{width:390,height:844},reducedMotion:'reduce'});
+  const failedPage=await failedContext.newPage();
+  failedPage.setDefaultTimeout(15000);
+  await useMockData(failedPage);
+  await failedPage.route('**/api/products',route=>route.fulfill({
+    status:503,contentType:'application/json',body:JSON.stringify({error:'Service unavailable'})
+  }));
+  await failedPage.goto(origin,{waitUntil:'domcontentloaded'});
+  await failedPage.locator('.mm-catalog-failed').waitFor();
+  assert.equal(await failedPage.locator('.nm-no-results').count(),0,
+    'API failure must show retry, not no matching search results');
+  assert.ok(await failedPage.locator('.mm-catalog-failed button').isVisible());
+  await failedContext.close();
+}
+
 async function runCategoryIntegrity() {
   const baseItems=[
     {id:3101,name:'Kichik stol lampasi',category:'Uy jihozlari',price:55000},
@@ -456,6 +489,8 @@ try {
   console.log('PASS images: four distinct real-source URLs; no cartoon image defaults');
   await runCategoryIntegrity();
   console.log('PASS category integrity: apostrophe aliases, empty sections, mobile related-product purchase');
+  await runCatalogLoadingStates();
+  console.log('PASS catalog states: slow initial load and API failure never show false empty results');
   await runSeller();
   console.log('PASS seller: ETA confirmation, product photo upload, creation, editing and deletion');
   await runMobile();
