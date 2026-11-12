@@ -1,0 +1,56 @@
+/* MiniMarket: product-specific original placeholder illustrations, not seller photos. */
+.nm-app .mm-illustrated-fallback {
+  width:100%;height:100%;min-height:0;position:relative;overflow:hidden;
+  padding:0!important;display:flex;align-items:center;justify-content:center;
+  background:transparent;border:0;box-shadow:none;
+}
+.nm-app .mm-product-illustration {
+  position:relative;width:100%;height:100%;min-height:0;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;isolation:isolate;
+  background:radial-gradient(circle at 50% 40%,#fff 0%,var(--illustration-bg) 88%);
+}
+.nm-app .mm-illustration-orbit {
+  position:absolute;width:72%;aspect-ratio:1;border-radius:50%;
+  background:linear-gradient(150deg,#fff9,transparent 70%);
+  box-shadow:inset 0 0 0 1px #fff8;
+  transform:translateY(-2%);
+}
+.nm-app .mm-product-illustration svg {
+  width:94%;height:91%;max-height:300px;
+  display:block;position:relative;z-index:1;
+  filter:drop-shadow(0 13px 15px #20264a14);
+  transition:transform .28s ease;
+}
+.nm-app .mm-card-image-trigger:hover .mm-product-illustration svg {
+  transform:translateY(-3px) scale(1.035);
+}
+.nm-app .mm-illustration-label {
+  position:absolute;z-index:3;bottom:12px;left:50%;
+  transform:translateX(-50%);white-space:nowrap;
+  max-width:calc(100% - 14px);overflow:hidden;text-overflow:ellipsis;
+  padding:6px 10px;border-radius:999px;
+  background:#fffdf5eb;color:#515e7d;
+  border:1px solid #ffffffd9;box-shadow:0 3px 15px #424a6810;
+  letter-spacing:.012em;font-size:10px;font-weight:750;
+  pointer-events:none;
+}
+.nm-app .mm-product-gallery .mm-illustrated-fallback,
+.nm-app .mm-product-hero-photo.mm-illustrated-fallback {
+  border-radius:18px;min-height:280px;
+}
+.nm-app .mm-product-gallery .mm-product-illustration svg {max-height:400px;}
+.nm-app .mm-search-suggestion-art .mm-product-illustration svg {width:100%;height:100%;}
+.nm-app .mm-search-suggestion-art .mm-illustration-label {display:none;}
+.nm-app .mm-search-suggestion-art .mm-illustrated-fallback {border-radius:8px;}
+.nm-app .mm-card-media{overflow:hidden}
+.nm-app .mm-card-body {display:flex;flex-direction:column}
+.nm-app .mm-product-card .nm-card-title{overflow-wrap:anywhere;line-height:1.45}
+.nm-app .mm-card-add{margin-top:auto}
+@media(max-width:600px){
+  .nm-app .mm-illustration-label {font-size:8px;padding:4px 7px;bottom:7px}
+  .nm-app .mm-product-gallery .mm-illustrated-fallback {min-height:220px}
+}
+@media(prefers-reduced-motion:reduce){
+  .nm-app .mm-product-illustration svg {transition:none!important}
+}
