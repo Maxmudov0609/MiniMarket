@@ -1385,18 +1385,34 @@ export default function AppNext() {
           <span>{language === "en" ? "Shop with confidence" : language === "ru" ? "Удобные покупки" : "O‘zingizga qulay mahsulotni tanlang"}</span>
         </div>
         <div className="nm-catalog-meta">
-          <p><strong>{searchProducts.length}</strong> {WORD(language,"found")}</p>
+          {loadStatus === "loading" && searchProducts.length === 0 ?
+            <p role="status">{language === "en" ? "Loading products…" : language === "ru" ? "Загрузка товаров…" : "Mahsulotlar yuklanmoqda…"}</p> :
+            <p><strong>{searchProducts.length}</strong> {WORD(language,"found")}</p>}
           {loadStatus === "loading" && <span><Icon name="refresh" size={15}/> {WORD(language,"updated")}</span>}
           {loadStatus === "ready" && lastUpdated && <span className="mm-updated"><Icon name="check" size={14}/>
             {language === "en" ? "Catalog updated" : language === "ru" ? "Каталог обновлён" : "Katalog yangilandi"}
           </span>}
         </div>
-        {loadStatus === "error" && <div className="nm-alert" role="alert">
+        {loadStatus === "error" && products.length > 0 && <div className="nm-alert" role="alert">
           <Icon name="refresh" size={19}/><span>{products.length ? WORD(language,"offline") : loadError}</span>
           <button type="button" onClick={refreshProducts}>{WORD(language,"retry")}</button>
         </div>}
-        {loadStatus === "loading" && !products.length ? <div className="nm-grid">
-          {Array.from({ length:8 },(_,i) => <div key={i} className="nm-skeleton"><div/><span/><span/><span/></div>)}
+        {loadStatus === "loading" && searchProducts.length === 0 ? <div className="mm-catalog-loading" role="status" aria-label={language === "en" ? "Loading products" : language === "ru" ? "Загрузка товаров" : "Mahsulotlar yuklanmoqda"}>
+          <div className="mm-catalog-loading-note">
+            <Icon name="refresh" size={20}/>
+            <div><strong>{language === "en" ? "Updating the catalog" : language === "ru" ? "Обновляем каталог" : "Katalog yangilanmoqda"}</strong>
+            <p>{language === "en" ? "We are checking available products. Results will appear when the server responds." :
+              language === "ru" ? "Проверяем наличие товаров. Результаты появятся после ответа сервера." :
+              "Serverdan mahsulotlar tekshirilmoqda. Javob kelgach natijalar ko‘rsatiladi."}</p></div>
+          </div>
+          <div className="nm-grid">
+            {Array.from({ length:4 },(_,i) => <div key={i} className="nm-skeleton"><div/><span/><span/><span/></div>)}
+          </div>
+        </div> : loadStatus === "error" && !products.length ? <div className="mm-catalog-failed" role="alert">
+          <Icon name="refresh" size={30}/>
+          <h3>{language === "en" ? "Could not load products" : language === "ru" ? "Не удалось загрузить товары" : "Mahsulotlar yuklanmadi"}</h3>
+          <p>{language === "en" ? "Check your connection and try again." : language === "ru" ? "Проверьте подключение и повторите попытку." : "Internet aloqasini tekshiring va yana bir bor urinib ko‘ring."}</p>
+          <button type="button" className="nm-primary" onClick={refreshProducts}>{WORD(language,"retry")}</button>
         </div> : searchProducts.length === 0 && showRelated ? <div className="mm-empty-category" data-testid="empty-category">
           <div className="mm-empty-category-intro">
             <span className="mm-empty-category-symbol" aria-hidden="true">{CATEGORIES.find(([name]) => categoryKey(name) === categoryKey(category))?.[1] || "🛍️"}</span>
