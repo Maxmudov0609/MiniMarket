@@ -237,12 +237,25 @@ const BUNDLED_PRODUCT_IMAGES = [
   [/^choco.?pie(?:\s|$)/i, "/chocopie.jpg"],
   [/^koptok(?:\s|$)/i, "/koptok.jpg"]
 ];
+// Local, brand-labelled sample renders for selected catalog products. These are not
+// verified packaging photographs; real seller uploads always take precedence.
+const LOCAL_PRODUCT_PREVIEWS = [
+  [/^ariel\s*1[.,]?5\s*kg$/i, "/product-previews/ariel-15kg.svg"],
+  [/^vanish\s*450\s*ml$/i, "/product-previews/vanish-450ml.svg"],
+  [/^domestos\s*750\s*ml$/i, "/product-previews/domestos-750ml.svg"],
+  [/^cif\s*krem\s*500\s*ml$/i, "/product-previews/cif-500ml.svg"]
+];
+function localProductPreview(product) {
+  const name = String(product?.name || "").trim();
+  return LOCAL_PRODUCT_PREVIEWS.find(([pattern]) => pattern.test(name))?.[1] || null;
+}
 function productImage(product) {
   const actual = String(product?.image_url || product?.image || "").trim();
   // Never overwrite a seller's existing product photo.
   if (/^https?:\/\//i.test(actual) || /^\/(?!\/)[\w./-]+$/.test(actual)) return actual;
   const name = String(product?.name || "").trim();
-  return BUNDLED_PRODUCT_IMAGES.find(([pattern]) => pattern.test(name))?.[1]
+  return localProductPreview(product)
+    || BUNDLED_PRODUCT_IMAGES.find(([pattern]) => pattern.test(name))?.[1]
     || matchedPhoto(product)?.photo || null;
 }
 
@@ -284,10 +297,14 @@ function Icon({ name, size = 21, strokeWidth = 1.9 }) {
   </svg>;
 }
 function ProductPicture({ product, className = "", eager = false }) {
-  const url = productImage(product);
-  const [broken, setBroken] = useState(false);
-  useEffect(() => setBroken(false), [url]);
-  if (!url || broken) {
+  const primaryUrl = productImage(product);
+  const previewUrl = localProductPreview(product);
+  const [failedUrl, setFailedUrl] = useState("");
+  useEffect(() => setFailedUrl(""), [primaryUrl, previewUrl]);
+  // Failed seller hotlinks fall back to local previews, not an unrelated picture.
+  const url = failedUrl === primaryUrl ? (previewUrl && previewUrl !== primaryUrl ? previewUrl : null)
+    : (failedUrl === previewUrl ? null : primaryUrl);
+  if (!url) {
     // Original product-type illustration, clearly labelled as not a seller photo.
     return <div className={"nm-art mm-image-fallback mm-illustrated-fallback " + className}>
       <ProductIllustration product={product}/>
@@ -297,9 +314,9 @@ function ProductPicture({ product, className = "", eager = false }) {
   return <div className={"nm-product-image " + className}>
     <img loading={eager ? "eager" : "lazy"} decoding="async" src={url}
       alt={hasSellerPhoto ? product.name : product.name + " — namunaviy surat"}
-      onError={() => setBroken(true)} referrerPolicy="no-referrer" draggable="false" />
-    {!hasSellerPhoto && <span className="mm-image-sample-caption">
-      Namuna rasm
+      onError={() => setFailedUrl(url)} referrerPolicy="no-referrer" draggable="false" />
+    {(url === previewUrl || !hasSellerPhoto) && <span className="mm-image-sample-caption">
+      {url === previewUrl ? "Namuna vizual" : "Namuna rasm"}
     </span>}
   </div>;
 }
