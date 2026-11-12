@@ -1,6 +1,21 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
+import { matchedPhoto } from '../src/productImageSources.js';
+
+// Ensure imported product matchers use real whitespace escapes (not literal slash-s).
+for (const [name, fragment] of [
+  ['Choynak 1 L', 'Teapot.jpeg'],
+  ['Elektr choynak', 'Electric kettle.jpg'],
+  ['KitKat 41 g', 'KitKat.jpg'],
+  ['Pantene shampun 400 ml', 'Pantene'],
+  ['Kir sovuni 200 g', 'Diao_Pai']
+]) {
+  const match = matchedPhoto({name});
+  assert.ok(match?.photo, 'Missing product photo for '+name);
+  assert.ok(decodeURIComponent(match.photo).toLowerCase().replaceAll('_',' ').includes(fragment.toLowerCase().replaceAll('_',' ')),
+    'Incorrect photo for '+name);
+}
 
 const origin = 'http://127.0.0.1:5173';
 const inventory = [

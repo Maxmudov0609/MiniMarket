@@ -8,12 +8,14 @@
 // the seller, and replace these with original licensed seller images.
 const commonsPhoto = filename => "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(filename);
 export const SAMPLE_PRODUCT_PHOTOS = [
-  {name:/^choynak\\s*1\\s*l$/i, photo:commonsPhoto("Teapot.jpeg"), source:"Wikimedia Commons", sample:true},
-  {name:/^elektr\\s*choynak(?:\\s|$)/i, photo:commonsPhoto("Electric kettle.jpg"), source:"Wikimedia Commons", sample:true},
-  {name:/^kitkat\\s*41\\s*g$/i, photo:commonsPhoto("KitKat.jpg"), source:"Wikimedia Commons", sample:true},
-  {name:/^pantene\\s*shampun\\s*400\\s*ml$/i, photo:commonsPhoto("Shampoo und Pflegespülung Pantene V1.jpg"), source:"Wikimedia Commons", sample:true}
+  {name:/^choynak\s*1\s*l$/i, photo:commonsPhoto("Teapot.jpeg"), source:"Wikimedia Commons", sample:true},
+  {name:/^elektr\s*choynak(?:\s|$)/i, photo:commonsPhoto("Electric kettle.jpg"), source:"Wikimedia Commons", sample:true},
+  {name:/^kitkat\s*41\s*g$/i, photo:commonsPhoto("KitKat.jpg"), source:"Wikimedia Commons", sample:true},
+  {name:/^pantene\s*shampun\s*400\s*ml$/i, photo:commonsPhoto("Shampoo und Pflegespülung Pantene V1.jpg"), source:"Wikimedia Commons", sample:true}
 ];
 export const PRODUCT_PHOTO_MATCHES = [
+  // Verified Commons photograph of a laundry-soap product type, not the seller's exact 200g bar.
+  {name:/^kir\s*sovuni?\s*200\s*g$/i, photo:commonsPhoto("Diao Pai Translucent Laundry Soap at a supermarket in Beijing (20241109165527).jpg"), source:"Wikimedia Commons", sample:true, note:"Representative laundry-soap photo; seller packaging may differ"},
   {name:/^fanta(?:\s|$)/i, photo:"https://yastatic.net/avatars/get-grocery-goods/2750890/635345e4-3f64-4a5f-aa55-20f41a9ce1cd/500x500-orig", source:"Yandex Lavka"},
   {name:/^fuse\s*tea(?:\s|$)/i, photo:"https://yastatic.net/avatars/get-grocery-goods/2888787/4e835155-82d8-481b-b8f7-04149e44508e/600x600?webp=true", source:"Yandex Lavka",note:"Example peach flavor; seller should verify actual flavor"},
   {name:/^sprite(?:\s|$)/i, photo:"https://yastatic.net/avatars/get-grocery-goods/2998515/82c53f0d-32b2-40cf-b1e0-0038da8281f8/500x500-orig", source:"Yandex Lavka"},
