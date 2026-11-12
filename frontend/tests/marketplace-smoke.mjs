@@ -46,6 +46,12 @@ async function useMockData(page) {
   });
   // The external Google login widget is not needed for our isolated smoke tests.
   await page.route('**/accounts.google.com/**',route=>route.abort());
+  // Isolated test substitute for external product photo hosts: verify the
+  // correct product-specific image URL is selected without external network calls.
+  await page.route('https://yastatic.net/**',route=>route.fulfill({
+    status:200,contentType:'image/png',
+    body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==','base64')
+  }));
 }
 async function runDesktop() {
   const context=await browser.newContext({viewport:{width:1440,height:900}, reducedMotion:'reduce'});
@@ -57,6 +63,8 @@ async function runDesktop() {
   await page.locator('.mm-product-card').first().waitFor({timeout:15000});
   assert.equal(await page.locator('.mm-product-card').count(),3,'Catalog should show all three mocked products');
   assert.equal(await page.locator('.mm-v3-hero').count(),1,'New hero should render');
+  assert.equal(await page.locator('.mm-product-card').filter({hasText:'Fanta'})
+    .locator('img[src*="yastatic.net"]').count(),1,'Specific Fanta image is used instead of the category emoji');
   await page.waitForFunction(() => {
     const photo = document.querySelector('.mm-product-card img[src="/nivea.webp"]');
     return photo && photo.complete && photo.naturalWidth > 0;

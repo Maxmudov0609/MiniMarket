@@ -327,3 +327,21 @@ body {background:#f7f8fc}
 @media(prefers-reduced-motion:reduce) {
   .nm-app .mm-category-product-icon {transition:none}
 }
+
+/* Honest visual fallback when exact seller photos are not yet available. */
+.nm-app .mm-category-image-fallback {position:relative;isolation:isolate;overflow:hidden;background:#f4f2fc}
+.nm-app .mm-category-placeholder-photo {
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  opacity:.72;filter:saturate(.75);pointer-events:none;z-index:-1;
+}
+.nm-app .mm-category-image-fallback:has(.mm-category-placeholder-photo)::before {
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(250,250,255,.35),rgba(250,250,255,.92) 75%,#f7f7ff);
+}
+.nm-app .mm-category-image-fallback:has(.mm-category-placeholder-photo)>small {
+  margin-top:auto;max-width:96%;padding:5px 10px;background:rgba(255,255,255,.93);
+  color:#4935ae;border-radius:30px;font-size:11px;letter-spacing:0;
+  font-weight:800;white-space:normal;overflow:visible;text-align:center;line-height:1.4;
+}
+.nm-app .mm-category-image-fallback>span {max-width:97%;text-align:center;font-size:9px;line-height:1.35}
+.nm-app .mm-product-card .nm-product-image img {object-fit:contain;background:#fff}
