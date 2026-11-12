@@ -95,6 +95,7 @@ const marketCategories = [
   { icon: "🧸", name: "Bolalar uchun", image: "/categories/bolalar.jpg" },
   { icon: "🏠", name: "Uy-ro‘zg‘or", image: "/categories/home.jpg" },
   { icon: "📱", name: "Elektronika", image: "/categories/electronics.jpg" },
+  { icon: "⚽", name: "Sport", image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600&auto=format&fit=crop" },
 ];
 
 
@@ -1181,6 +1182,7 @@ onClick={() => showCatalog()}
           { name: "Bolalar uchun", image: "/categories/bolalar.jpg" },
           { name: "Uy-ro‘zg‘or", image: "/categories/home.jpg" },
           { name: "Elektronika", image: "/categories/electronics.jpg" },
+          { name: "Sport", image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=600&auto=format&fit=crop" },
         ].map((item) => (
           <button
             key={item.name}
@@ -1201,7 +1203,8 @@ onClick={() => showCatalog()}
         "Gigiyena vositalari": "Средства гигиены",
         "Bolalar uchun": "Для детей",
         "Uy-ro‘zg‘or": "Товары для дома",
-        "Elektronika": "Электроника"
+        "Elektronika": "Электроника",
+        "Sport": "Спорт"
       }[item.name] || item.name)
     : language === "en"
     ? ({
@@ -1212,7 +1215,8 @@ onClick={() => showCatalog()}
         "Gigiyena vositalari": "Personal care",
         "Bolalar uchun": "Kids",
         "Uy-ro‘zg‘or": "Home goods",
-        "Elektronika": "Electronics"
+        "Elektronika": "Electronics",
+        "Sport": "Sport"
       }[item.name] || item.name)
     : item.name}
 </span>
