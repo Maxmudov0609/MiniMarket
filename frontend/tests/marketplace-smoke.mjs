@@ -218,9 +218,16 @@ async function runCategoryIntegrity() {
   ({context,page,errors}=instance);
   await page.locator('.mm-category-tile[aria-label="Sport"]').click();
   await page.locator('[data-testid=empty-category]').waitFor();
-  assert.ok(await page.getByText('Bu bo‘limga hali mahsulot qo‘shilmagan').isVisible());
+  assert.ok(await page.getByText('“Sport” bo‘limida hozircha mahsulot yo‘q').isVisible());
   assert.equal(await page.locator('.mm-related-grid .mm-product-card').count(),4);
   assert.equal(await page.locator('.nm-catalog-meta strong').innerText(),'0');
+  assert.equal(await page.locator('.mm-empty-category-links button').count(),2,
+    'Only real, non-empty categories are offered as navigation');
+  await page.locator('.mm-empty-category-links button').filter({hasText:'Uy-ro‘zg‘or'}).click();
+  assert.equal(await page.locator('.mm-product-card').count(),3,
+    'Category shortcut must open genuine household stock');
+  await page.locator('.mm-category-tile[aria-label="Sport"]').click();
+  await page.locator('[data-testid=empty-category]').waitFor();
   await page.locator('.mm-related-grid .mm-product-card').first().locator('.mm-card-add').click();
   await page.locator('.nm-mobile-tabs button').filter({hasText:'Savatcha'}).click();
   assert.ok(await page.locator('.nm-cart-item').isVisible(),'Related item can be added on mobile');
