@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
 import { matchedPhoto } from '../src/productImageSources.js';
+import { photoReferenceStatus } from '../src/catalogCategories.js';
+assert.equal(photoReferenceStatus({id:1,image_url:''}), 'missing');
+assert.equal(photoReferenceStatus({id:1,image_url:'data:image/jpeg;base64,AAA'}), 'invalid');
+assert.equal(photoReferenceStatus({id:1,image_url:'/api/product-images/2'}), 'invalid');
+assert.equal(photoReferenceStatus({id:1,image_url:'/api/product-images/1'}), 'uploaded');
+assert.equal(photoReferenceStatus({id:1,image_url:'https://example.org/photo.jpg'}), 'external_unverified');
 
 // Ensure imported product matchers use real whitespace escapes (not literal slash-s).
 for (const [name, fragment] of [

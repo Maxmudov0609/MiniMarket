@@ -47,3 +47,16 @@ export function getRelatedProducts(products, selectedCategory, limit = 6) {
   };
   return related.sort((a, b) => rank(a) - rank(b) || Number(b.id) - Number(a.id)).slice(0, limit);
 }
+
+// This reports reference provenance, not whether the picture matches the product
+// or can legally be reused. Never treat old data: URLs as valid image references.
+export function photoReferenceStatus(product) {
+  const image = typeof product?.image_url === "string" ? product.image_url.trim() : "";
+  if (!image) return "missing";
+  if (/^\/api\/product-images\/\d+$/.test(image))
+    return image === "/api/product-images/" + product.id ? "uploaded" : "invalid";
+  if (/^https?:\/\//i.test(image)) return "external_unverified";
+  if (/^\/(?!\/)[\w./-]+$/.test(image) && !image.includes(".."))
+    return "local_unverified";
+  return "invalid";
+}

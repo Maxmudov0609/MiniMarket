@@ -422,3 +422,6 @@ body {background:#f7f8fc}
   pointer-events:none;box-shadow:0 1px 6px rgba(30,40,80,.08);
 }
 .nm-app .nm-product-image{position:relative}
+
+.nm-app .mm-seller-photo-audit .mm-photo-audit-details {font-size:12px;font-weight:600;margin:7px 0;color:#516389}
+.nm-app .mm-photo-verify {display:block;margin-top:5px;color:#72529a;font-size:12px}
