@@ -565,3 +565,51 @@ body {background:#f7f8fc}
 @media(prefers-reduced-motion:reduce){
  .nm-app .mm-product-hero-photo img{transition:none!important;transform:none!important}
 }
+
+/* Friendly, actionable empty-category experience. Results always represent real stock. */
+.nm-app .mm-empty-category {gap:20px}
+.nm-app .mm-empty-category-intro {
+  display:flex;align-items:center;justify-content:center;gap:26px;
+  text-align:left;padding:clamp(23px,3vw,38px);
+}
+.nm-app .mm-empty-category-intro .mm-empty-category-symbol {
+  width:86px;height:86px;flex:0 0 86px;font-size:40px;border-radius:24px;
+}
+.nm-app .mm-empty-category-copy {width:min(100%,660px)}
+.nm-app .mm-empty-category-kicker {
+  display:inline-block;font-weight:800;color:#6450f4;font-size:11px;letter-spacing:.08em;
+}
+.nm-app .mm-empty-category-intro h3 {margin:7px 0 8px}
+.nm-app .mm-empty-category-intro p {margin:0 0 15px;max-width:600px}
+.nm-app .mm-empty-category-intro .nm-primary {min-height:43px}
+.nm-app .mm-empty-category-alternatives h4 {
+  font-size:16px;color:#283150;margin:0 0 12px;
+}
+.nm-app .mm-empty-category-links {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;
+}
+.nm-app .mm-empty-category-links button {
+  display:flex;align-items:center;gap:9px;min-height:61px;
+  padding:10px 12px;border:1px solid #e8e9f4;border-radius:14px;
+  background:#fff;text-align:left;cursor:pointer;color:#303756;
+  box-shadow:0 6px 20px rgba(34,40,75,.045);
+  transition:border-color .15s ease,transform .15s ease;
+}
+.nm-app .mm-empty-category-links button:hover {border-color:#b7aafd;transform:translateY(-2px)}
+.nm-app .mm-empty-category-links button>span {font-size:22px;flex-shrink:0}
+.nm-app .mm-empty-category-links button strong {font-size:12px;min-width:0;flex:1;overflow-wrap:anywhere}
+.nm-app .mm-empty-category-links button small {font-size:10px;color:#7e839a;white-space:nowrap}
+.nm-app .mm-empty-category-links button svg {color:#6653e8;flex-shrink:0}
+@media(max-width:570px){
+  .nm-app .mm-empty-category-intro {display:block;padding:22px 18px;text-align:center}
+  .nm-app .mm-empty-category-intro .mm-empty-category-symbol {width:61px;height:61px;display:inline-grid;font-size:30px}
+  .nm-app .mm-empty-category-links {grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .nm-app .mm-empty-category-links button {flex-wrap:wrap;gap:5px;min-height:70px}
+  .nm-app .mm-empty-category-links button strong {flex-basis:calc(100% - 42px);font-size:11px}
+  .nm-app .mm-empty-category-links button small {margin-left:0}
+  .nm-app .mm-empty-category-links button svg {margin-left:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  .nm-app .mm-empty-category-links button {transition:none}
+  .nm-app .mm-empty-category-links button:hover {transform:none}
+}
