@@ -4,7 +4,7 @@ import "./MarketEditorial.css";
 import "./MarketSearch.css";
 import "./MarketplaceRefinements.css";
 import "./MarketV3.css";
-import { matchedPhoto, categoryPreview } from "./productImageSources";
+import { matchedPhoto } from "./productImageSources";
 import { categoryKey, getCategoryCounts, getRelatedProducts, isCatalogProduct } from "./catalogCategories";
 
 const GOOGLE_CLIENT_ID = "957838455109-tsmj5fstgcncsjj19qo29sfkoe9i3kfa.apps.googleusercontent.com";
@@ -217,7 +217,11 @@ const CATEGORY_PICTURES = {
 };
 // Show bundled images only for verified, matching products. Never point to missing assets.
 const BUNDLED_PRODUCT_IMAGES = [
-  // Product-specific, locally hosted illustrations. Each grocery item has its own visual.
+  // Product-specific, locally hosted illustrations. Each item has its own visual.
+  [/^choynak\s*1\s*l$/i, "/products/teapot-1l.svg"],
+  [/^elektr\s*choynak(?:\s|$)/i, "/products/electric-kettle.svg"],
+  [/^kitkat\s*41\s*g$/i, "/products/kitkat-41g.svg"],
+  [/^pantene\s*shampun\s*400\s*ml$/i, "/products/pantene-shampoo-400ml.svg"],
   [/^un\s*2\s*kg$/i, "/products/flour-2kg.svg"],
   [/^tuxum\s*10\s*dona$/i, "/products/eggs-10.svg"],
   [/^tuz\s*1\s*kg$/i, "/products/salt-1kg.svg"],
@@ -290,15 +294,14 @@ function ProductPicture({ product, className = "", eager = false }) {
   const [broken, setBroken] = useState(false);
   useEffect(() => setBroken(false), [url]);
   if (!url || broken) {
-    const preview = categoryPreview(product);
+    // An unrelated category collage is not a truthful product photo.
+    // Show a clear, labelled placeholder until this exact item has a real picture.
     const categoryIcon = CATEGORY_PICTURES[product?.category] || "📦";
     return <div className={"nm-art mm-image-fallback mm-category-image-fallback " + className} role="img"
       aria-label={product.name + " uchun mahsulot fotosurati hali mavjud emas"}>
-      {preview ? <img src={preview} loading="lazy" className="mm-category-placeholder-photo"
-          alt="" aria-hidden="true" /> :
-        <div className="mm-category-product-icon" aria-hidden="true">{categoryIcon}</div>}
+      <div className="mm-category-product-icon" aria-hidden="true">{categoryIcon}</div>
       <small>{product?.name || product?.category || "MiniMarket"}</small>
-      <span>Namuna rasm · aniq mahsulot fotosurati emas</span>
+      <span>{broken ? "Rasm yuklanmadi" : "Mahsulot rasmi hali qo‘shilmagan"}</span>
     </div>;
   }
   return <div className={"nm-product-image " + className}>
