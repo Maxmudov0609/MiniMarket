@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import { createHash } from 'node:crypto';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -50,6 +51,35 @@ app.use(express.json({limit:'100kb'}));
 const wrap = fn => (req, res, next) => {
   Promise.resolve().then(() => fn(req, res, next)).catch(next);
 };
+// Additive, idempotent schema updates; preserve all existing orders and products.
+let deliverySchemaPromise;
+function deliverySchema() {
+  if (!deliverySchemaPromise) deliverySchemaPromise = db.query(
+    'ALTER TABLE order_items ADD COLUMN IF NOT EXISTS estimated_delivery_at TIMESTAMPTZ'
+  ).catch(error => { deliverySchemaPromise = null; throw error; });
+  return deliverySchemaPromise;
+}
+let photoSchemaPromise;
+function photoSchema() {
+  if (!photoSchemaPromise) photoSchemaPromise = db.query(
+    'CREATE TABLE IF NOT EXISTS product_images (' +
+    'product_id BIGINT PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,' +
+    'mime_type VARCHAR(32) NOT NULL, content BYTEA NOT NULL,' +
+    'updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())'
+  ).catch(error => { photoSchemaPromise = null; throw error; });
+  return photoSchemaPromise;
+}
+const photoLimiter = rateLimit({windowMs:60*60*1000,limit:35,standardHeaders:'draft-8',legacyHeaders:false,
+  message:{error:'Rasm yuklash limiti tugadi. Keyinroq urinib ko‘ring.'}});
+function validImageBytes(data, type) {
+  if (!Buffer.isBuffer(data) || data.length < 24 || data.length > 1500000) return false;
+  if (type === 'image/jpeg') return data[0]===0xff && data[1]===0xd8 && data[2]===0xff &&
+    data[data.length-2]===0xff && data[data.length-1]===0xd9;
+  if (type === 'image/png') return data.subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex'));
+  if (type === 'image/webp') return data.toString('ascii',0,4)==='RIFF' && data.toString('ascii',8,12)==='WEBP';
+  return false;
+}
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 15,
@@ -501,6 +531,49 @@ app.delete('/api/products/:id', auth('seller'), wrap(async (req, res) => {
     message: "Mahsulot muvaffaqiyatli o'chirildi"
   });
 }));
+
+// Product photos live on the same origin. No fragile hotlinks or extra credentials.
+app.put('/api/seller/products/:id/image', auth('seller'), photoLimiter,
+  express.raw({type:['image/jpeg','image/png','image/webp'],limit:'1500kb'}),
+  wrap(async (req,res) => {
+    const productId=Number(req.params.id);
+    if (!Number.isSafeInteger(productId) || productId < 1) return res.status(400).json({error:'Mahsulot identifikatori xato'});
+    const mime=String(req.headers['content-type'] || '').split(';')[0].toLowerCase();
+    if (!validImageBytes(req.body,mime)) return res.status(415).json({error:'JPEG, PNG yoki WebP rasm yuboring (1.5 MB gacha)'});
+    const owner=await db.query(
+      'SELECT id FROM products WHERE id=$1 AND (seller_id=$2 OR $3::boolean=TRUE) AND is_active=TRUE',
+      [productId,req.user.id,req.user.role==='admin']);
+    if (!owner.rows.length) return res.status(404).json({error:'Mahsulot topilmadi yoki sizga tegishli emas'});
+    await photoSchema();
+    const client=await db.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        'INSERT INTO product_images(product_id,mime_type,content,updated_at) VALUES ($1,$2,$3,NOW()) ' +
+        'ON CONFLICT(product_id) DO UPDATE SET mime_type=EXCLUDED.mime_type,content=EXCLUDED.content,updated_at=NOW()',
+        [productId,mime,req.body]);
+      const imageUrl='/api/product-images/'+productId;
+      await client.query('UPDATE products SET image_url=$1 WHERE id=$2',[imageUrl,productId]);
+      await client.query('COMMIT');
+      res.json({ok:true,image_url:imageUrl});
+    } catch(error) {await client.query('ROLLBACK');throw error;}
+    finally {client.release();}
+  })
+);
+app.get('/api/product-images/:id', wrap(async(req,res)=>{
+  const id=Number(req.params.id);
+  if(!Number.isSafeInteger(id) || id<1) return res.status(404).end();
+  await photoSchema();
+  const result=await db.query('SELECT mime_type,content FROM product_images WHERE product_id=$1',[id]);
+  const photo=result.rows[0];
+  if (!photo) return res.status(404).end();
+  const etag='"'+createHash('sha256').update(photo.content).digest('hex')+'"';
+  res.set({'Content-Type':photo.mime_type,'Cache-Control':'public, max-age=60, must-revalidate',
+    'X-Content-Type-Options':'nosniff','ETag':etag});
+  if(req.headers['if-none-match']===etag) return res.status(304).end();
+  res.send(photo.content);
+}));
+
 const checkout = async (buyer, b) => {
   const client = await db.connect();
 
