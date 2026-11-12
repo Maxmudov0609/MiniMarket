@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="KitKat 41 g qizil shokolad o‘rami illustratsiyasi"><defs>
+ <radialGradient id="bg" cx=".43" cy=".31" r=".82"><stop stop-color="#fff"/><stop offset=".74" stop-color="#f5f5ff"/><stop offset="1" stop-color="#e9eafa"/></radialGradient>
+ <linearGradient id="ceramic" x1="0" y1="0" x2=".95" y2="1"><stop stop-color="#fffdf8"/><stop offset=".38" stop-color="#fcf6ea"/><stop offset=".72" stop-color="#e8d9bf"/><stop offset="1" stop-color="#c4aa88"/></linearGradient>
+ <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".22" stop-color="#d9e8f3"/><stop offset=".49" stop-color="#aab9ca"/><stop offset=".72" stop-color="#f1f7fa"/><stop offset="1" stop-color="#667e95"/></linearGradient>
+ <linearGradient id="red" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff3a40"/><stop offset=".5" stop-color="#db1426"/><stop offset="1" stop-color="#a3081a"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#fff5cb"/><stop offset=".4" stop-color="#e8c16b"/><stop offset=".72" stop-color="#be8e36"/><stop offset="1" stop-color="#8c621d"/></linearGradient>
+ <linearGradient id="choc" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8c4d2c"/><stop offset=".5" stop-color="#60311e"/><stop offset="1" stop-color="#37190f"/></linearGradient>
+ <filter id="shadow" x="-45%" y="-45%" width="190%" height="210%"><feDropShadow dx="0" dy="20" stdDeviation="19" flood-color="#424373" flood-opacity=".22"/></filter>
+</defs><rect width="640" height="640" fill="url(#bg)"/><ellipse cx="320" cy="551" rx="205" ry="22" fill="#49426a" opacity=".10"/><circle cx="506" cy="160" r="164" fill="#c9c0f8" opacity=".16"/><circle cx="100" cy="505" r="116" fill="#ddd5ff" opacity=".19"/>
+<g filter="url(#shadow)" transform="rotate(-8 325 329)">
+ <path d="M92 238 L154 204 L480 204 L551 232 L536 425 L460 447 L150 442 L88 408Z" fill="url(#red)" stroke="#b10819" stroke-width="7"/>
+ <path d="M92 238 L133 262 L139 414 L88 408Z" fill="#d72a33"/>
+ <path d="M480 204 L551 232 L536 425 L477 408Z" fill="#e55b5a"/>
+ <path d="M110 230 L531 230" stroke="#ff8383" stroke-width="6" opacity=".55"/>
+ <path d="M132 265 L505 264 L502 398 L136 397Z" fill="#ce0921" opacity=".75"/>
+ <ellipse cx="311" cy="332" rx="148" ry="71" fill="#fff9ed" stroke="#fce7d9" stroke-width="7"/>
+ <text x="310" y="342" fill="#ce0d24" font-size="66" font-family="Arial Black, Arial, sans-serif" font-weight="900" text-anchor="middle">KitKat</text>
+ <path d="M201 367 Q311 388 417 367" fill="none" stroke="#d6182b" stroke-width="8" stroke-linecap="round"/>
+ <text x="464" y="410" fill="#fff" font-family="Arial, sans-serif" font-size="24" font-weight="700" text-anchor="middle">41 g</text>
+</g>
+<g filter="url(#shadow)" transform="rotate(17 378 478)">
+ <rect x="290" y="438" width="186" height="57" rx="24" fill="url(#choc)" stroke="#4a281c" stroke-width="5"/>
+ <path d="M317 443 Q371 430 434 440" stroke="#bc865b" stroke-width="7" stroke-linecap="round" fill="none"/>
+ <path d="M432 441 L462 446 Q479 469 459 491 L435 493 L423 466Z" fill="#f2d19b" stroke="#8e573c" stroke-width="4"/>
+ <path d="M436 449 Q446 459 435 469 L451 473 Q461 481 444 488" fill="none" stroke="#b37d50" stroke-width="6"/>
+</g>
+<text x="320" y="585" fill="#806779" font-size="22" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700">SHOKOLAD · 41 g</text></svg>

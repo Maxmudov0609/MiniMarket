@@ -190,6 +190,54 @@ async function runCategoryIntegrity() {
   await context.close();
 }
 
+
+async function runSpecificProductImages() {
+  const cases=[
+    ['Choynak 1 L','Uy-ro‘zg‘or','teapot-1l.svg'],
+    ['Elektr choynak','Uy-ro‘zg‘or','electric-kettle.svg'],
+    ['KitKat 41 g','Shirinliklar','kitkat-41g.svg'],
+    ['Pantene shampun 400 ml','Gigiyena vositalari','pantene-shampoo-400ml.svg']
+  ];
+  const catalog=cases.map(([name,category],i)=>({
+    id:25000+i,name,category,price:22000,stock:7,image_url:'',
+    description:'Rasm sinovi',is_active:true,seller_name:'MiniMarket',
+    created_at:'2026-11-01T00:00:00Z'
+  }));
+  catalog.push({id:25009,name:'Yangi noma’lum mahsulot',category:'Uy-ro‘zg‘or',
+    price:20000,stock:3,image_url:'',description:'Rasm mavjud emas',
+    is_active:true,seller_name:'MiniMarket',created_at:'2026-11-01T00:00:00Z'});
+  const context=await browser.newContext({viewport:{width:1280,height:840},reducedMotion:'reduce'});
+  const page=await context.newPage();
+  await useMockData(page);
+  await page.route('**/api/products',route=>route.fulfill({
+    status:200,contentType:'application/json',body:JSON.stringify(catalog)
+  }));
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.locator('.mm-product-card').first().waitFor({timeout:15000});
+  assert.equal(await page.locator('.mm-product-card').count(),5);
+  const seen=new Set();
+  for(const [name,,filename] of cases) {
+    const card=page.locator('.mm-product-card').filter({hasText:name});
+    const img=card.locator('img[src$="/products/'+filename+'"]');
+    assert.equal(await img.count(),1,'Correct image on card for '+name);
+    await img.scrollIntoViewIfNeeded();
+    await img.evaluate(el=>new Promise((resolve,reject)=>{
+      if(el.complete) return el.naturalWidth>0 ? resolve() : reject(Error('Image failed: '+el.src));
+      el.addEventListener('load',resolve,{once:true});
+      el.addEventListener('error',()=>reject(Error('Image failed: '+el.src)),{once:true});
+    }));
+    seen.add(await img.getAttribute('src'));
+  }
+  assert.equal(seen.size,4,'All four products must have unique local art');
+  const missing=page.locator('.mm-product-card').filter({hasText:'Yangi noma’lum mahsulot'});
+  assert.equal(await missing.locator('.mm-category-placeholder-photo').count(),0,
+    'Do not show misleading shared category collage');
+  assert.equal(await missing.locator('.mm-category-product-icon').count(),1,
+    'Unknown product has an honest icon placeholder');
+  await page.screenshot({path:'smoke-unique-product-images.png',fullPage:true});
+  await context.close();
+}
+
 async function runGroceryImages() {
   const groceries=[
     ['Un 2 kg','flour-2kg.svg'],['Tuxum 10 dona','eggs-10.svg'],
@@ -395,6 +443,8 @@ try {
   console.log('PASS desktop: catalog, search, categories, favorites, filters, detail, cart, checkout');
   await runGroceryImages();
   console.log('PASS groceries: all eight distinct locally hosted SVG images load');
+  await runSpecificProductImages();
+  console.log('PASS product images: distinct teapot, kettle, KitKat and Pantene art; no generic collages');
   await runCategoryIntegrity();
   console.log('PASS category integrity: apostrophe aliases, empty sections, mobile related-product purchase');
   await runSeller();
