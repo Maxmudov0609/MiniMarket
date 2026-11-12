@@ -40,6 +40,10 @@ jobs:
           node --check server/catalogFilters.js
       - name: Test backend catalog validation
         run: node --test server/tests/*.test.js
+      - name: Test catalog photo audit report and validate its script
+        run: |
+          node --check scripts/audit-catalog-photos.mjs
+          node --test tests/catalog-photo-audit.test.mjs
 
   browser-smoke:
     runs-on: ubuntu-latest
