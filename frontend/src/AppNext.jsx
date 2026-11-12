@@ -1124,6 +1124,10 @@ export default function AppNext() {
     !favoritesOnly && !onlyAvailable && loadStatus === "ready";
   const relatedProducts = useMemo(() => showRelated
     ? getRelatedProducts(products, category, 6) : [], [products, category, showRelated]);
+  const availableCategories = CATEGORIES.map(([name, emoji]) => ({
+    name, emoji, count: categoryCounts.get(categoryKey(name)) || 0
+  })).filter(item => item.count > 0 && categoryKey(item.name) !== categoryKey(category))
+    .sort((a,b) => b.count - a.count).slice(0,5);
 
   const searchProducts = useMemo(() => {
     let rows = products.filter(isCatalogProduct);
@@ -1395,20 +1399,38 @@ export default function AppNext() {
           {Array.from({ length:8 },(_,i) => <div key={i} className="nm-skeleton"><div/><span/><span/><span/></div>)}
         </div> : searchProducts.length === 0 && showRelated ? <div className="mm-empty-category" data-testid="empty-category">
           <div className="mm-empty-category-intro">
-            <span className="mm-empty-category-symbol" aria-hidden="true">🏡</span>
-            <h3>{language === "en" ? "No products in this category yet" :
-              language === "ru" ? "В этой категории пока нет товаров" : "Bu bo‘limga hali mahsulot qo‘shilmagan"}</h3>
-            <p>{language === "en" ? "These are real products from other categories, not household goods." :
-              language === "ru" ? "Ниже настоящие товары из других разделов, а не из этой категории." :
-              "Quyida boshqa bo‘limlarda mavjud haqiqiy mahsulotlarni ko‘rishingiz mumkin."}</p>
-            <button type="button" className="nm-primary" onClick={() => goCatalog("")}>
-              {WORD(language,"catalog")} <Icon name="arrow" size={17}/>
-            </button>
+            <span className="mm-empty-category-symbol" aria-hidden="true">{CATEGORIES.find(([name]) => categoryKey(name) === categoryKey(category))?.[1] || "🛍️"}</span>
+            <div className="mm-empty-category-copy">
+              <span className="mm-empty-category-kicker">{language === "en" ? "No listings yet" :
+                language === "ru" ? "Товаров пока нет" : "Hozircha mahsulot yo‘q"}</span>
+              <h3>{language === "en" ? `No products in “${category}” yet` :
+                language === "ru" ? `В категории «${category}» пока нет товаров` :
+                `“${category}” bo‘limida hozircha mahsulot yo‘q`}</h3>
+              <p>{language === "en" ? "Choose a category that already has real products or browse the full catalog." :
+                language === "ru" ? "Выберите раздел с товарами или откройте весь каталог." :
+                "Mahsulotlari bor boshqa bo‘limni tanlang yoki barcha mahsulotlarni ko‘ring."}</p>
+              <button type="button" className="nm-primary" onClick={() => goCatalog("")}>
+                {WORD(language,"catalog")} <Icon name="arrow" size={17}/>
+              </button>
+            </div>
           </div>
+          {availableCategories.length > 0 && <div className="mm-empty-category-alternatives">
+            <h4>{language === "en" ? "Browse available categories" :
+              language === "ru" ? "Разделы с товарами" : "Mahsulotlari bor bo‘limlar"}</h4>
+            <div className="mm-empty-category-links">
+              {availableCategories.map(item => <button key={item.name} type="button"
+                onClick={() => goCatalog(item.name)}>
+                <span aria-hidden="true">{item.emoji}</span>
+                <strong>{item.name}</strong>
+                <small>{item.count} {WORD(language,"found")}</small>
+                <Icon name="arrow" size={16}/>
+              </button>)}
+            </div>
+          </div>}
           {relatedProducts.length > 0 && <>
-            <h4 className="mm-related-heading">{language === "en" ? "You may also like — other categories" :
-              language === "ru" ? "Возможно, вас заинтересует — другие категории" :
-              "Boshqa kategoriyalardagi tavsiyalar"}</h4>
+            <h4 className="mm-related-heading">{language === "en" ? "Products from other categories" :
+              language === "ru" ? "Товары из других разделов" :
+              "Boshqa bo‘limlardagi mahsulotlar"}</h4>
             <div className="nm-grid mm-related-grid">
               {relatedProducts.map((product,index) => <ProductCard key={product.id} product={product}
                 eager={index < 2} language={language} onAdd={addToCart}
