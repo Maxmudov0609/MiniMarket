@@ -191,91 +191,45 @@ async function runCategoryIntegrity() {
 }
 
 
-async function runSpecificProductImages() {
+async function runRealProductPhotos() {
   const cases=[
-    ['Choynak 1 L','Uy-ro‘zg‘or','teapot-1l.svg'],
-    ['Elektr choynak','Uy-ro‘zg‘or','electric-kettle.svg'],
-    ['KitKat 41 g','Shirinliklar','kitkat-41g.svg'],
-    ['Pantene shampun 400 ml','Gigiyena vositalari','pantene-shampoo-400ml.svg']
+    ['Choynak 1 L','Uy-ro‘zg‘or','Porcelain_Teapot.jpg'],
+    ['Elektr choynak','Uy-ro‘zg‘or','Electric-kettle.jpg'],
+    ['KitKat 41 g','Shirinliklar','KitKat.jpg'],
+    ['Pantene shampun 400 ml','Gigiyena vositalari','Shampoo_und_Pflegesp%C3%BClung_Pantene_V1.jpg']
   ];
-  const catalog=cases.map(([name,category],i)=>({
+  const products=cases.map(([name,category],i)=>({
     id:25000+i,name,category,price:22000,stock:7,image_url:'',
     description:'Rasm sinovi',is_active:true,seller_name:'MiniMarket',
     created_at:'2026-11-01T00:00:00Z'
   }));
-  catalog.push({id:25009,name:'Yangi noma’lum mahsulot',category:'Uy-ro‘zg‘or',
-    price:20000,stock:3,image_url:'',description:'Rasm mavjud emas',
-    is_active:true,seller_name:'MiniMarket',created_at:'2026-11-01T00:00:00Z'});
+  products.push({id:25020,name:'Un 2 kg',category:'Oziq-ovqat mahsulotlari',
+    price:12000,stock:10,image_url:'',is_active:true,seller_name:'MiniMarket'});
   const context=await browser.newContext({viewport:{width:1280,height:840},reducedMotion:'reduce'});
   const page=await context.newPage();
   await useMockData(page);
-  await page.route('**/api/products',route=>route.fulfill({
-    status:200,contentType:'application/json',body:JSON.stringify(catalog)
-  }));
-  await page.goto(origin,{waitUntil:'domcontentloaded'});
-  await page.locator('.mm-product-card').first().waitFor({timeout:15000});
-  assert.equal(await page.locator('.mm-product-card').count(),5);
-  const seen=new Set();
-  for(const [name,,filename] of cases) {
-    const card=page.locator('.mm-product-card').filter({hasText:name});
-    const img=card.locator('img[src$="/products/'+filename+'"]');
-    assert.equal(await img.count(),1,'Correct image on card for '+name);
-    await img.scrollIntoViewIfNeeded();
-    await img.evaluate(el=>new Promise((resolve,reject)=>{
-      if(el.complete) return el.naturalWidth>0 ? resolve() : reject(Error('Image failed: '+el.src));
-      el.addEventListener('load',resolve,{once:true});
-      el.addEventListener('error',()=>reject(Error('Image failed: '+el.src)),{once:true});
-    }));
-    seen.add(await img.getAttribute('src'));
-  }
-  assert.equal(seen.size,4,'All four products must have unique local art');
-  const missing=page.locator('.mm-product-card').filter({hasText:'Yangi noma’lum mahsulot'});
-  assert.equal(await missing.locator('.mm-category-placeholder-photo').count(),0,
-    'Do not show misleading shared category collage');
-  assert.equal(await missing.locator('.mm-category-product-icon').count(),1,
-    'Unknown product has an honest icon placeholder');
-  await page.screenshot({path:'smoke-unique-product-images.png',fullPage:true});
-  await context.close();
-}
-
-async function runGroceryImages() {
-  const groceries=[
-    ['Un 2 kg','flour-2kg.svg'],['Tuxum 10 dona','eggs-10.svg'],
-    ['Tuz 1 kg','salt-1kg.svg'],['Kungaboqar yog‘i 1 L','sunflower-oil-1l.svg'],
-    ['Makaron 500 g','pasta-500g.svg'],['Sut 1 L','milk-1l.svg'],
-    ['Sariyog‘ 200 g','butter-200g.svg'],['Shakar 1 kg','sugar-1kg.svg']
-  ];
-  const context=await browser.newContext({viewport:{width:1440,height:900},reducedMotion:'reduce'});
-  const page=await context.newPage();
-  await useMockData(page);
-  const products=groceries.map(([name],i)=>({
-    id:20000+i,name,description:'Test grocery',price:12000,category:'Oziq-ovqat mahsulotlari',
-    stock:10,image_url:'',is_active:true,seller_name:'MiniMarket',
-    created_at:'2026-11-01T00:00:00Z'
-  }));
-  await page.route('**/api/products',route=>route.fulfill({
+  await page.route('**/api/products', route=>route.fulfill({
     status:200,contentType:'application/json',body:JSON.stringify(products)
   }));
   await page.goto(origin,{waitUntil:'domcontentloaded'});
   await page.locator('.mm-product-card').first().waitFor({timeout:15000});
-  assert.equal(await page.locator('.mm-product-card').count(),8,'All eight grocery cards are visible');
-  for (const [name,filename] of groceries) {
+  assert.equal(await page.locator('.mm-product-card').count(),5);
+  const distinct = new Set();
+  for(const [name,,fileName] of cases) {
     const card=page.locator('.mm-product-card').filter({hasText:name});
-    const img=card.locator('img[src$="/products/'+filename+'"]');
-    assert.equal(await img.count(),1,'Correct distinct image for '+name);
-    await img.scrollIntoViewIfNeeded();
-    await img.evaluate(async el => {
-      if (!el.complete) await new Promise((resolve,reject)=>{
-        el.addEventListener('load',resolve,{once:true});
-        el.addEventListener('error',()=>reject(new Error('Failed to load '+el.src)),{once:true});
-      });
-    });
-    assert.ok(await img.evaluate(el=>el.naturalWidth>0),'SVG image must load: '+name);
+    const img=card.locator('img');
+    assert.equal(await img.count(),1,'Real photo URL for '+name);
+    const url=await img.getAttribute('src');
+    assert.ok(url.includes('commons.wikimedia.org/wiki/Special:Redirect/file/'),
+      'Use photo source, not cartoon illustration: '+name);
+    assert.ok(url.includes(fileName),'Source filename must match '+name);
+    assert.ok(!url.includes('.svg'),'No cartoon illustration');
+    distinct.add(url);
   }
-  const srcs=await page.locator('.mm-product-card img[src*="/products/"]').evaluateAll(
-    items=>items.map(item=>item.getAttribute('src')));
-  assert.equal(new Set(srcs).size,8,'No grocery item should reuse another grocery image');
-  await page.screenshot({path:'smoke-grocery-images.png',fullPage:true});
+  assert.equal(distinct.size,4,'Every item uses a different real photo source');
+  const missing=page.locator('.mm-product-card').filter({hasText:'Un 2 kg'});
+  assert.equal(await missing.locator('img[src*="/products/"]').count(),0,
+    'Old generated grocery cartoons must not be presented as photos');
   await context.close();
 }
 
@@ -441,10 +395,8 @@ try {
   browser = await chromium.launch({headless:true,args:['--no-sandbox']});
   await runDesktop();
   console.log('PASS desktop: catalog, search, categories, favorites, filters, detail, cart, checkout');
-  await runGroceryImages();
-  console.log('PASS groceries: all eight distinct locally hosted SVG images load');
-  await runSpecificProductImages();
-  console.log('PASS product images: distinct teapot, kettle, KitKat and Pantene art; no generic collages');
+  await runRealProductPhotos();
+  console.log('PASS images: four distinct real-source URLs; no cartoon image defaults');
   await runCategoryIntegrity();
   console.log('PASS category integrity: apostrophe aliases, empty sections, mobile related-product purchase');
   await runSeller();
