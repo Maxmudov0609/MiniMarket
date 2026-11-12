@@ -113,6 +113,15 @@ async function runDesktop() {
   await page.locator('.nm-dialog').waitFor({state:'detached'});
   await page.locator('.nm-header-icon[aria-label="Savatcha"]').click();
   assert.ok(await page.locator('.nm-empty-cart').isVisible(),'Cart should empty after successful order');
+  await page.locator('.nm-drawer-top .nm-icon-btn').click();
+  await page.route('**/api/orders/mine',route=>route.fulfill({status:200,contentType:'application/json',
+    body:JSON.stringify([{id:501,created_at:new Date().toISOString(),total_amount:32000,
+      items:[{id:1,product_name:'Nivea dus geli 250 ml',quantity:1,status:'Jarayonda',
+        estimated_delivery_at:new Date(Date.now()+86400000).toISOString()}]}])}));
+  await page.locator('.nm-account-trigger').click();
+  await page.locator('.nm-dialog').getByText('Taxminiy yetkazish').waitFor();
+  assert.ok(await page.locator('.mm-order-delivery').first().isVisible(),'Buyer should see ETA after acceptance');
+  await page.locator('.nm-dialog-heading .nm-icon-btn').click();
   await page.screenshot({path:'smoke-desktop.png',fullPage:true});
   assert.deepEqual(errors,[],'Frontend must not produce JavaScript runtime errors');
   await context.close();
@@ -133,10 +142,31 @@ async function runSeller() {
     status:200,contentType:'application/json',
     body:JSON.stringify({id:998,name:'Test Seller',email:'seller@example.test',role:'seller'})
   }));
+  const sellerOrders=[{item_id:725,order_id:400,product_name:'Fanta 1.5 L',quantity:1,
+    unit_price:16000,customer_name:'Test Buyer',phone:'+998 90 123 45 67',
+    address:'Tashkent',status:'Yangi',estimated_delivery_at:null}];
+  let savedEta=null;
   await page.route('**/api/seller/**', route=>{
     const path=new URL(route.request().url()).pathname;
-    const body=path==='/api/seller/products' ? inventory : [];
+    if(path==='/api/seller/orders/725' && route.request().method()==='PATCH') {
+      const data=route.request().postDataJSON();
+      assert.equal(data.status,'Jarayonda','Seller should accept order');
+      assert.ok(Date.parse(data.estimated_delivery_at)>Date.now(),'Seller ETA must be future');
+      savedEta=data.estimated_delivery_at;
+      sellerOrders[0].status='Jarayonda';sellerOrders[0].estimated_delivery_at=savedEta;
+      return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,item:sellerOrders[0]})});
+    }
+    const body=path==='/api/seller/products' ? inventory :
+      path==='/api/seller/orders' ? sellerOrders : [];
     route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
+  });
+  let photoUploaded=false;
+  await page.route('**/api/seller/products/*/image',route=>{
+    photoUploaded=true;
+    assert.equal(route.request().method(),'PUT');
+    assert.equal(route.request().headers()['content-type'],'image/png');
+    route.fulfill({status:200,contentType:'application/json',
+      body:JSON.stringify({ok:true,image_url:'/api/product-images/10004'})});
   });
   await page.route('**/api/products/**', route=>route.fulfill({
     status:200,contentType:'application/json',body:JSON.stringify({ok:true})
@@ -157,7 +187,15 @@ async function runSeller() {
   const modal=page.locator('.nm-dialog');
   await modal.waitFor();
   await modal.locator('.nm-seller-tabs button').nth(1).click();
-  assert.ok(await modal.getByText('Hozircha buyurtmalar yo‘q.').isVisible(),'Seller orders tab should open');
+  const orderRow=modal.locator('.mm-seller-order');
+  await orderRow.waitFor();
+  await orderRow.locator('select').selectOption('Jarayonda');
+  assert.ok(await orderRow.locator('.mm-eta-validation').isVisible(),'Seller must set delivery date before accepting');
+  const etaInput=new Date(Date.now()+48*3600000+5*3600000).toISOString().slice(0,16);
+  await orderRow.locator('input[type=datetime-local]').fill(etaInput);
+  await orderRow.locator('.mm-order-save').click();
+  await page.getByText('Buyurtma holati va yetkazish vaqti saqlandi').waitFor();
+  assert.ok(savedEta,'Confirmed ETA should reach API');
   await modal.locator('.nm-seller-tabs button').first().click();
   await modal.locator('.nm-add-product').click();
   const form=modal.locator('form.nm-product-form');
@@ -165,16 +203,22 @@ async function runSeller() {
   await form.locator('[name=description]').fill('Test product description');
   await form.locator('[name=price]').fill('5000');
   await form.locator('[name=stock]').fill('6');
+  await form.locator('input[name=photo]').setInputFiles({
+    name:'sample-product.png',mimeType:'image/png',
+    buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==','base64')
+  });
   await form.locator('button[type=submit]').click();
   await modal.locator('.nm-add-product').waitFor();
   assert.ok(await page.getByText('Mahsulot saqlandi').count()>0,'Seller product save should succeed');
+  assert.ok(photoUploaded,'Seller product image should be uploaded after product creation');
   await modal.locator('.nm-manage-item button[aria-label="Tahrirlash"]').first().click();
   await modal.locator('form.nm-product-form [name=price]').fill('6000');
   await modal.locator('form.nm-product-form button[type=submit]').click();
   await modal.locator('.nm-add-product').waitFor();
   page.on('dialog',confirm=>confirm.accept());
   await modal.locator('.nm-manage-item button[aria-label="O‘chirish"]').first().click();
-  assert.ok(await page.getByText('Mahsulot o‘chirildi').count()>0,'Seller delete button should call backend');
+  await page.getByText('Mahsulot o‘chirildi').waitFor({timeout:12000});
+  assert.ok(await page.getByText('Mahsulot o‘chirildi').isVisible(),'Seller delete button should call backend');
   await modal.locator('.nm-dialog-heading .nm-icon-btn').click();
   assert.equal(await modal.count(),0,'Seller dashboard should close');
   assert.deepEqual(errors,[],'Seller controls must not produce JS runtime errors');
@@ -210,7 +254,7 @@ try {
   await runDesktop();
   console.log('PASS desktop: catalog, search, categories, favorites, filters, detail, cart, checkout');
   await runSeller();
-  console.log('PASS seller: sign-in, order tab, product creation, editing and deletion');
+  console.log('PASS seller: ETA confirmation, product photo upload, creation, editing and deletion');
   await runMobile();
   console.log('PASS mobile: catalog, card, cart, tab navigation');
 } catch (error) {
