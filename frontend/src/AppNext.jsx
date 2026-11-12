@@ -217,10 +217,11 @@ const CATEGORY_PICTURES = {
 };
 // Show bundled images only for verified, matching products. Never point to missing assets.
 // Real photographs only. Seller-supplied images always take priority.
-// Commons files are photo examples; sellers must supply an exact product image.
+// Wikimedia photographs are product-type examples, not guaranteed exact packages.
+// Sellers should upload their own precise product photos. Artwork is not reused.
 const BUNDLED_PRODUCT_IMAGES = [
   [/^choynak\s*1\s*l$/i, "https://commons.wikimedia.org/wiki/Special:Redirect/file/Porcelain_Teapot.jpg?width=640"],
-  [/^elektr\s*choynak(?:\s|$)/i, "https://commons.wikimedia.org/wiki/Special:Redirect/file/Electric_kettle.jpg?width=640"],
+  [/^elektr\s*choynak(?:\s|$)/i, "https://commons.wikimedia.org/wiki/Special:Redirect/file/Electric-kettle.jpg?width=640"],
   [/^kitkat\s*41\s*g$/i, "https://commons.wikimedia.org/wiki/Special:Redirect/file/KitKat.jpg?width=640"],
   [/^pantene\s*shampun\s*400\s*ml$/i, "https://commons.wikimedia.org/wiki/Special:Redirect/file/Shampoo_und_Pflegesp%C3%BClung_Pantene_V1.jpg?width=640"],
   [/^nivea(?:\s|$)/i, "/nivea.webp"],
