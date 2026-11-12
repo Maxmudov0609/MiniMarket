@@ -77,6 +77,8 @@ async function runDesktop() {
   await page.goto(origin,{waitUntil:'domcontentloaded'});
   await page.locator('.mm-product-card').first().waitFor({timeout:15000});
   assert.equal(await page.locator('.mm-product-card').count(),3,'Catalog should show all three mocked products');
+  assert.ok(await page.locator('.mm-product-card').filter({hasText:'Fanta'}).getByText('Namuna rasm').isVisible(),
+    'Third-party fallback must be visibly labelled as an unverified sample');
   assert.equal(await page.locator('.mm-v3-hero').count(),1,'New hero should render');
   assert.equal(await page.locator('.mm-product-card').filter({hasText:'Fanta'})
     .locator('img[src*="yastatic.net"]').count(),1,'Specific Fanta image is used instead of the category emoji');
@@ -320,6 +322,15 @@ async function runSeller() {
   await page.getByText('Buyurtma holati va yetkazish vaqti saqlandi').waitFor();
   assert.ok(savedEta,'Confirmed ETA should reach API');
   await modal.locator('.nm-seller-tabs button').first().click();
+  await modal.locator('.mm-seller-photo-audit').waitFor();
+  assert.ok((await modal.locator('.mm-seller-photo-audit').innerText()).includes('3 ta faol mahsulotdan 3 tasi'),
+    'Seller sees number of listings without first-party photo references');
+  assert.equal(await modal.locator('.nm-manage-item .mm-photo-needed').count(),3,
+    'Every listing without its own photo must be flagged');
+  await modal.locator('.mm-seller-missing-toggle').click();
+  assert.equal(await modal.locator('.nm-manage-item').count(),3,
+    'Missing-photo filter shows the right products');
+  await modal.locator('.mm-seller-missing-toggle').click();
   await modal.locator('.nm-add-product').click();
   const form=modal.locator('form.nm-product-form');
   await form.locator('[name=name]').fill('Test new product');
