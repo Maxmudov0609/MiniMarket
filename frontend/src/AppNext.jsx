@@ -297,9 +297,15 @@ function ProductPicture({ product, className = "", eager = false }) {
       <span>{broken ? "Rasm yuklanmadi" : "Mahsulot rasmi hali qo‘shilmagan"}</span>
     </div>;
   }
+  const hasSellerPhoto = /^https?:\\/\\//i.test(String(product?.image_url || product?.image || "").trim()) ||
+    /^\\/(?!\\/)[\\w./-]+$/.test(String(product?.image_url || product?.image || "").trim());
   return <div className={"nm-product-image " + className}>
     <img loading={eager ? "eager" : "lazy"} decoding="async" src={url}
-      alt={product.name} onError={() => setBroken(true)} referrerPolicy="no-referrer" draggable="false" />
+      alt={hasSellerPhoto ? product.name : product.name + " — namunaviy surat"}
+      onError={() => setBroken(true)} referrerPolicy="no-referrer" draggable="false" />
+    {!hasSellerPhoto && <span className="mm-image-sample-caption">
+      Namuna rasm
+    </span>}
   </div>;
 }
 function useDialogFocus(ref, onClose) {
