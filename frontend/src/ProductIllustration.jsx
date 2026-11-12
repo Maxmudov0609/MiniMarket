@@ -92,8 +92,17 @@ function Drawing({ type, color, light }) {
 }
 export default function ProductIllustration({ product }) {
   const type = classify(product);
-  const [bg, color, light] = themes[type] || themes.package;
-  return <div className="mm-product-illustration" style={{"--illustration-bg":bg,"--illustration-color":color}}>
+  const [baseBg, baseColor, baseLight] = themes[type] || themes.package;
+  // Each catalog item gets a stable color variation; this keeps repeated
+  // package shapes recognizable while preventing identical neighboring cards.
+  const label = String(product?.name || "").trim();
+  const hash = Array.from(label).reduce((n, ch) => (n * 31 + ch.codePointAt(0)) >>> 0, 7);
+  const tint = (hash % 5) - 2;
+  const hueRotation = tint * 7;
+  const bg = baseBg;
+  const color = baseColor;
+  const light = baseLight;
+  return <div className="mm-product-illustration" style={{"--illustration-bg":bg,"--illustration-color":color,"--illustration-hue":hueRotation+"deg"}}>
     <div className="mm-illustration-orbit" aria-hidden="true"/>
     <svg viewBox="0 0 280 240" role="img" aria-label={String(product?.name||"Mahsulot")+" — namuna illustratsiya"} preserveAspectRatio="xMidYMid meet">
       <circle cx="140" cy="129" r="106" fill="#fff" opacity=".25"/>
