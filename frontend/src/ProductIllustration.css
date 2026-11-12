@@ -19,7 +19,7 @@
 .nm-app .mm-product-illustration svg {
   width:94%;height:91%;max-height:300px;
   display:block;position:relative;z-index:1;
-  filter:drop-shadow(0 13px 15px #20264a14);
+  filter:drop-shadow(0 13px 15px #20264a14) hue-rotate(var(--illustration-hue, 0deg));
   transition:transform .28s ease;
 }
 .nm-app .mm-card-image-trigger:hover .mm-product-illustration svg {
