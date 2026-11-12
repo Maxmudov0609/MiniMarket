@@ -425,3 +425,143 @@ body {background:#f7f8fc}
 
 .nm-app .mm-seller-photo-audit .mm-photo-audit-details {font-size:12px;font-weight:600;margin:7px 0;color:#516389}
 .nm-app .mm-photo-verify {display:block;margin-top:5px;color:#72529a;font-size:12px}
+
+/* 2026 product detail redesign. Scoped to the product dialog. */
+.nm-app .mm-product-modal{
+  width:min(1080px,calc(100vw - 36px));max-height:min(94dvh,900px);
+  border-radius:26px;overflow:auto;background:#fff;
+  box-shadow:0 34px 110px rgba(22,24,62,.26);
+}
+.nm-app .mm-product-modal>.nm-dialog-heading{
+  padding:17px 30px;border-bottom:1px solid #eef0f8;
+}
+.nm-app .mm-product-modal>.nm-dialog-heading h2{
+  font-size:15px;letter-spacing:-.01em;color:#626988;font-family:inherit;
+}
+.nm-app .mm-product-detail{
+  display:grid;grid-template-columns:minmax(0,1.06fr) minmax(0,1fr);
+  gap:0;align-items:stretch;min-width:0;
+}
+.nm-app .mm-product-gallery{
+  position:relative;background:linear-gradient(155deg,#f9f8ff,#f2f4fc 72%,#f3f2ff);
+  border-radius:0 0 0 26px;
+  padding:27px 24px 20px;display:flex;flex-direction:column;min-width:0;
+}
+.nm-app .mm-product-gallery-top,.nm-app .mm-product-gallery-bottom{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.nm-app .mm-product-gallery-top{position:relative;z-index:2}
+.nm-app .mm-product-gallery-label{display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;font-weight:700;color:#67668e}
+.nm-app .mm-product-gallery-fav{
+  width:46px;height:46px;display:grid;place-items:center;border-radius:14px;
+  background:#fff;border:1px solid #e7e5f8;color:#747a9c;
+  box-shadow:0 6px 18px rgba(38,37,70,.07);cursor:pointer;
+}
+.nm-app .mm-product-gallery-fav.active{color:#e34d79;background:#fff0f5;border-color:#ffd1df}
+.nm-app .mm-product-hero-photo{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  width:100%;height:clamp(280px,36vw,455px)!important;min-height:280px;
+  background:transparent;border-radius:20px;overflow:hidden;margin:0!important;
+}
+.nm-app .mm-product-hero-photo img{
+  display:block;width:100%;height:100%;object-fit:contain;
+  mix-blend-mode:multiply;transition:transform .3s ease;
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+  .nm-app .mm-product-hero-photo:hover img{transform:scale(1.035)}
+}
+.nm-app .mm-product-gallery-bottom{padding-top:15px;border-top:1px solid #e9e7f8;
+  color:#8b8cab;font-size:11px;font-weight:700}
+.nm-app .mm-product-details-column{
+  display:flex;flex-direction:column;gap:21px;padding:33px 35px 31px;min-width:0;
+}
+.nm-app .mm-product-identity{display:flex;flex-direction:column;align-items:flex-start;gap:13px}
+.nm-app .mm-product-category{
+  display:inline-flex;max-width:100%;padding:7px 12px;background:#f1eeff;color:#5e48df;
+  font-size:10px;line-height:1.4;text-transform:uppercase;letter-spacing:.12em;
+  font-weight:800;border-radius:999px
+}
+.nm-app .mm-product-identity h2{
+  margin:0;font-family:'Space Grotesk',system-ui,sans-serif;
+  font-size:clamp(25px,3vw,35px);letter-spacing:-.045em;line-height:1.15;
+  color:#1d2545;overflow-wrap:anywhere;
+}
+.nm-app .mm-product-availability{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nm-app .mm-product-stock-pill{display:inline-flex;align-items:center;gap:8px;
+  padding:7px 11px;color:#147d58;background:#e6f7ef;border-radius:999px;
+  font-size:11px;font-weight:750;}
+.nm-app .mm-product-stock-pill i{width:7px;height:7px;background:#23b47c;border-radius:50%}
+.nm-app .mm-product-sold-out{color:#ae5160;background:#fff0f0}
+.nm-app .mm-product-sold-out i{background:#d46570}
+.nm-app .mm-product-remaining{font-size:12px;color:#778098;font-weight:600}
+.nm-app .mm-product-pricing{display:flex;align-items:flex-start;flex-direction:column;gap:5px;
+  background:#fafaff;border:1px solid #f0effa;padding:16px 19px;border-radius:16px}
+.nm-app .mm-product-price-kicker{font-size:11px;color:#8990a4;font-weight:700}
+.nm-app .mm-product-price-row{display:flex;align-items:center;flex-wrap:wrap;gap:11px}
+.nm-app .mm-product-current-price{font-family:'Space Grotesk',system-ui,sans-serif;
+  font-size:clamp(27px,3vw,34px);letter-spacing:-.05em;line-height:1.2;color:#5945ed}
+.nm-app .mm-product-discount{padding:5px 8px;border-radius:8px;
+  font-size:12px;font-weight:800;background:#fff0ee;color:#db5e55}
+.nm-app .mm-product-old-price{color:#9499a9;font-size:13px}
+.nm-app .mm-product-description h3{margin:0 0 8px;font-size:13px;color:#26304c;letter-spacing:0;font-family:inherit}
+.nm-app .mm-product-description p{margin:0;color:#737c95;font-size:13px;line-height:1.75;
+  overflow-wrap:anywhere}
+.nm-app .mm-product-seller{display:flex;gap:10px;align-items:center;
+  padding:12px;border:1px solid #eceffa;border-radius:14px}
+.nm-app .mm-product-seller-avatar{width:36px;height:36px;border-radius:12px;
+  background:#eeeaff;color:#624dfa;display:grid;place-items:center;font-weight:800}
+.nm-app .mm-product-seller>span:nth-child(2){display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.nm-app .mm-product-seller small{font-size:10px;color:#969db1}
+.nm-app .mm-product-seller strong{font-size:12px;color:#303b5b;overflow-wrap:anywhere}
+.nm-app .mm-product-seller>svg{color:#42ad82}
+.nm-app .mm-product-image-note{display:flex;gap:8px;color:#80748e;font-size:11px;
+  line-height:1.5;margin:0;align-items:flex-start}
+.nm-app .mm-product-image-note svg{flex-shrink:0}
+.nm-app .mm-product-purchase{margin-top:auto;padding-top:15px;border-top:1px solid #eceffa}
+.nm-app .mm-product-purchase-top{display:flex;align-items:center;gap:13px;margin-bottom:14px}
+.nm-app .mm-product-purchase-top>label{font-size:12px;color:#7b8197;font-weight:650}
+.nm-app .mm-product-quantity{display:flex;align-items:center;border:1px solid #e7e9f4;
+  background:#f8f9fd;border-radius:12px;padding:2px;gap:0}
+.nm-app .mm-product-quantity button{border:0;background:transparent;color:#544f71;min-width:35px;width:35px;height:37px;display:grid;place-items:center}
+.nm-app .mm-product-quantity button:disabled{opacity:.35}
+.nm-app .mm-product-quantity output{min-width:32px;text-align:center;font-weight:800;font-size:14px;color:#202944}
+.nm-app .mm-product-total{margin-left:auto;display:flex;flex-direction:column;gap:2px;align-items:flex-end}
+.nm-app .mm-product-total small{font-size:11px;color:#8991a7}
+.nm-app .mm-product-total strong{font-size:16px;color:#222b4d;letter-spacing:-.03em}
+.nm-app .mm-product-purchase-actions{margin:0}
+.nm-app .mm-product-purchase-actions .nm-primary{
+  width:100%;min-height:54px;display:flex;align-items:center;justify-content:center;
+  gap:12px;border-radius:14px;font-size:13px;font-weight:750;white-space:normal;
+  background:#604bfa;box-shadow:0 10px 22px rgba(96,75,250,.18);
+}
+.nm-app .mm-product-purchase-actions .nm-primary svg:last-child{margin-left:auto}
+.nm-app .mm-product-purchase-actions .nm-primary svg:first-child{margin-left:auto}
+.nm-app .mm-product-purchase-actions .nm-primary:disabled{opacity:.5;box-shadow:none}
+@media(max-width:800px){
+ .nm-app .mm-product-modal{max-height:94dvh;width:min(620px,calc(100vw - 22px));border-radius:23px}
+ .nm-app .mm-product-detail{grid-template-columns:1fr}
+ .nm-app .mm-product-gallery{border-radius:0;padding:13px 20px 15px}
+ .nm-app .mm-product-hero-photo{height:clamp(210px,42vw,310px)!important;min-height:200px}
+ .nm-app .mm-product-details-column{gap:15px;padding:22px}
+ .nm-app .mm-product-identity h2{font-size:26px}
+ .nm-app .mm-product-pricing{padding:12px 15px}
+}
+@media(max-width:440px){
+ .nm-app .nm-overlay:has(.mm-product-modal){padding:6px}
+ .nm-app .mm-product-modal{width:100%;max-height:96dvh;border-radius:17px}
+ .nm-app .mm-product-modal>.nm-dialog-heading{padding:12px 17px}
+ .nm-app .mm-product-gallery{padding:10px 16px 12px}
+ .nm-app .mm-product-hero-photo{height:195px!important;min-height:195px}
+ .nm-app .mm-product-gallery-bottom{padding-top:7px}
+ .nm-app .mm-product-details-column{padding:16px;gap:13px}
+ .nm-app .mm-product-identity{gap:9px}
+ .nm-app .mm-product-identity h2{font-size:23px}
+ .nm-app .mm-product-price-row strong{font-size:26px}
+ .nm-app .mm-product-purchase-top{gap:7px}
+ .nm-app .mm-product-purchase-top>label{font-size:11px}
+ .nm-app .mm-product-total strong{font-size:14px}
+}
+@media(prefers-reduced-motion:reduce){
+ .nm-app .mm-product-hero-photo img{transition:none!important;transform:none!important}
+}

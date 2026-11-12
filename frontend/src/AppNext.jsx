@@ -332,11 +332,11 @@ function useDialogFocus(ref, onClose) {
     return () => { document.removeEventListener("keydown", handler); previousFocus?.focus?.(); };
   }, [ref]);
 }
-function Modal({ title, onClose, children, wide = false }) {
+function Modal({ title, onClose, children, wide = false, className = "" }) {
   const ref = useRef(null);
   useDialogFocus(ref, onClose);
   return <div className="nm-overlay" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <section ref={ref} className={"nm-dialog " + (wide ? "nm-dialog-wide" : "")}
+    <section ref={ref} className={"nm-dialog " + (wide ? "nm-dialog-wide " : "") + className}
       role="dialog" aria-modal="true" aria-label={title}>
       <div className="nm-dialog-heading">
         <h2>{title}</h2><button type="button" className="nm-icon-btn" aria-label="Yopish" onClick={onClose}><Icon name="x"/></button>
@@ -562,29 +562,86 @@ function CheckoutPanel({ language, user, cart, onClose, onSuccess, notify }) {
     </form>
   </Modal>;
 }
+
 function ProductPanel({ product, language, onClose, onAdd, favorite, onFavorite }) {
   const [quantity, setQuantity] = useState(1);
-  const stock = Math.max(0, Number(product.stock) || 0);
+  const stock = Math.max(0, Math.floor(Number(product.stock) || 0));
   const canBuy = stock > 0;
-  return <Modal title={product.name} onClose={onClose} wide>
-    <div className="nm-detail-grid">
-      <ProductPicture product={product} className="nm-detail-picture"/>
-      <div className="nm-detail-info">
-        <span className="nm-eyebrow">{product.category}</span>
-        <h2>{product.name}</h2>
-        <p>{product.description || "Mahsulot haqida qo‘shimcha ma’lumot kiritilmagan."}</p>
-        {product.seller_name && <p className="nm-detail-seller">Sotuvchi: {product.seller_name}</p>}
-        <strong className="nm-detail-price">{money(product.price)}</strong>
-        <span className={canBuy ? "nm-stock" : "nm-stock nm-out"}><i/>{WORD(language, canBuy ? "available" : "unavailable")} {canBuy ? "· " + stock + " dona" : ""}</span>
-        <div className="nm-detail-actions">
-          <div className="nm-stepper nm-stepper-large">
-            <button type="button" disabled={quantity <= 1} onClick={() => setQuantity(n => Math.max(1,n - 1))}><Icon name="minus"/></button>
-            <span>{quantity}</span>
-            <button type="button" onClick={() => setQuantity(n => Math.min(stock, n + 1))} disabled={!canBuy || quantity >= stock}><Icon name="plus"/></button>
+  const unitPrice = Number(product.price) || 0;
+  const oldPrice = Number(product.old_price);
+  const discount = oldPrice > unitPrice ? Math.round((1 - unitPrice / oldPrice) * 100) : 0;
+  const detailText = {
+    uz: { title:"Mahsulot haqida", photo:"Mahsulot rasmi", code:"Mahsulot kodi", description:"Tavsif", emptyDescription:"Mahsulot haqida batafsil tavsif hali kiritilmagan.", seller:"Sotuvchi", stock:"Omborda", pieces:"dona", total:"Jami", qty:"Miqdor", add:"Savatchaga qo‘shish", available:"Sotuvda mavjud", unavailable:"Hozircha mavjud emas", favorite:"Sevimlilarga qo‘shish", unfavorite:"Sevimlilardan olib tashlash", disclaimer:"Rasm va qadoq ma’lumotlarini sotuvchi bilan aniqlashtiring." },
+    ru: { title:"О товаре", photo:"Фото товара", code:"Код товара", description:"Описание", emptyDescription:"Подробное описание товара пока не добавлено.", seller:"Продавец", stock:"В наличии", pieces:"шт.", total:"Итого", qty:"Количество", add:"В корзину", available:"В наличии", unavailable:"Нет в наличии", favorite:"В избранное", unfavorite:"Убрать из избранного", disclaimer:"Уточняйте изображение и упаковку у продавца." },
+    en: { title:"Product details", photo:"Product image", code:"Product ID", description:"Description", emptyDescription:"A detailed product description has not been added yet.", seller:"Seller", stock:"In stock", pieces:"pcs", total:"Total", qty:"Quantity", add:"Add to cart", available:"In stock", unavailable:"Out of stock", favorite:"Add to favorites", unfavorite:"Remove from favorites", disclaimer:"Please confirm packaging and product image with the seller." }
+  }[language] || {};
+  const verifiedUrl = photoReferenceStatus(product) === "uploaded";
+  const hasSellerImage = !!String(product.image_url || "").trim();
+  return <Modal title={detailText.title} onClose={onClose} wide className="mm-product-modal">
+    <div className="mm-product-detail">
+      <div className="mm-product-gallery">
+        <div className="mm-product-gallery-top">
+          <span className="mm-product-gallery-label"><Icon name="bag" size={15}/>{detailText.photo}</span>
+          <button type="button" className={"mm-product-gallery-fav " + (favorite ? "active" : "")}
+            onClick={() => onFavorite(product.id)} aria-pressed={favorite}
+            aria-label={favorite ? detailText.unfavorite : detailText.favorite}>
+            <Icon name="heart" size={20}/>
+          </button>
+        </div>
+        <ProductPicture product={product} className="nm-detail-picture mm-product-hero-photo" eager/>
+        <div className="mm-product-gallery-bottom">
+          <span>MiniMarket</span><span>{detailText.code}: #{product.id}</span>
+        </div>
+      </div>
+      <div className="mm-product-details-column">
+        <div className="mm-product-identity">
+          <span className="mm-product-category">{product.category}</span>
+          <h2>{product.name}</h2>
+          <div className="mm-product-availability">
+            <span className={canBuy ? "mm-product-stock-pill" : "mm-product-stock-pill mm-product-sold-out"}>
+              <i/>{canBuy ? detailText.available : detailText.unavailable}
+            </span>
+            {canBuy && <span className="mm-product-remaining">{detailText.stock}: {stock} {detailText.pieces}</span>}
           </div>
-          <button className="nm-primary" type="button" disabled={!canBuy}
-            onClick={() => { if (onAdd(product, quantity)) onClose(); }}><Icon name="bag" size={19}/>{WORD(language, "add")}</button>
-          <button type="button" className={"nm-icon-btn nm-detail-love " + (favorite ? "active" : "")} onClick={() => onFavorite(product.id)} aria-label="Sevimli"><Icon name="heart"/></button>
+        </div>
+        <div className="mm-product-pricing">
+          <span className="mm-product-price-kicker">{language === "en" ? "Price" : language === "ru" ? "Цена" : "Narxi"}</span>
+          <div className="mm-product-price-row">
+            <strong className="mm-product-current-price">{money(unitPrice)}</strong>
+            {discount > 0 && <span className="mm-product-discount">-{discount}%</span>}
+          </div>
+          {discount > 0 && <del className="mm-product-old-price">{money(oldPrice)}</del>}
+        </div>
+        <section className="mm-product-description" aria-label={detailText.description}>
+          <h3>{detailText.description}</h3>
+          <p>{product.description?.trim() || detailText.emptyDescription}</p>
+        </section>
+        {product.seller_name && <div className="mm-product-seller">
+          <span className="mm-product-seller-avatar" aria-hidden="true">{product.seller_name.charAt(0).toUpperCase()}</span>
+          <span><small>{detailText.seller}</small><strong>{product.seller_name}</strong></span>
+          <Icon name="check" size={17}/>
+        </div>}
+        {hasSellerImage && !verifiedUrl && <p className="mm-product-image-note">
+          <Icon name="shield" size={16}/>{detailText.disclaimer}
+        </p>}
+        <div className="mm-product-purchase">
+          <div className="mm-product-purchase-top">
+            <label id="mm-product-quantity-label">{detailText.qty}</label>
+            <div className="nm-stepper nm-stepper-large mm-product-quantity" aria-labelledby="mm-product-quantity-label">
+              <button type="button" aria-label="−" disabled={!canBuy || quantity <= 1}
+                onClick={() => setQuantity(n => Math.max(1, n - 1))}><Icon name="minus" size={19}/></button>
+              <output aria-live="polite">{quantity}</output>
+              <button type="button" aria-label="+" disabled={!canBuy || quantity >= stock}
+                onClick={() => setQuantity(n => Math.min(stock, n + 1))}><Icon name="plus" size={19}/></button>
+            </div>
+            <div className="mm-product-total"><small>{detailText.total}</small><strong>{money(unitPrice * quantity)}</strong></div>
+          </div>
+          <div className="nm-detail-actions mm-product-purchase-actions">
+            <button className="nm-primary" type="button" disabled={!canBuy}
+              onClick={() => { if (onAdd(product, quantity)) onClose(); }}>
+              <Icon name="bag" size={19}/>{detailText.add}<Icon name="arrow" size={18}/>
+            </button>
+          </div>
         </div>
       </div>
     </div>
