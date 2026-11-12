@@ -783,6 +783,11 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
+  const [onlyMissingPhotos, setOnlyMissingPhotos] = useState(false);
+  // Name-based sample image mappings are NOT proof of a seller-owned product photo.
+  const missingPhotos = products.filter(p => p.is_active !== false &&
+    !String(p.image_url || "").trim());
+  const visibleSellerProducts = onlyMissingPhotos ? missingPhotos : products;
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -885,9 +890,35 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
       </form> :
       <div className="nm-seller-content">
         <button className="nm-primary nm-add-product" type="button" onClick={() => { setEdit(null); setEditing(true); }}><Icon name="plus"/>{WORD(language,"newProduct")}</button>
-        {products.length === 0 ? <p>Hozircha mahsulotlaringiz yo‘q.</p> : <div className="nm-management-list">
-          {products.map(p => <div className="nm-manage-item" key={p.id}><ProductPicture product={p}/>
-            <div><strong>{p.name}</strong><span>{money(p.price)} · {p.stock} dona · {p.is_active === false ? "Faol emas" : "Faol"}</span></div>
+        <div className="mm-seller-photo-audit" role="status">
+          <div>
+            <strong>{language === "en" ? "Actual product photo audit" :
+              language === "ru" ? "Проверка фотографий товаров" : "Mahsulotlarning asl rasmlari"}</strong>
+            <p>{language === "en" ? `${missingPhotos.length} of ${products.filter(p => p.is_active !== false).length} active products have no uploaded or linked product photo.` :
+              language === "ru" ? `У ${missingPhotos.length} из ${products.filter(p => p.is_active !== false).length} активных товаров нет собственной фотографии.` :
+              `${products.filter(p => p.is_active !== false).length} ta faol mahsulotdan ${missingPhotos.length} tasining o‘z rasmi biriktirilmagan.`}</p>
+            <small>{language === "en" ? "Automatic sample pictures are not counted as verified photos. Existing URLs still require checking for accuracy and permission." :
+              language === "ru" ? "Образцы изображений не считаются проверенными. Ссылки также требуют проверки." :
+              "Namunaviy rasmlar haqiqiy mahsulot fotosurati deb hisoblanmaydi. Mavjud havolalarning ham aniqligi va ruxsati tekshirilishi kerak."}</small>
+          </div>
+          <button type="button" className="mm-seller-missing-toggle"
+            aria-pressed={onlyMissingPhotos} onClick={() => setOnlyMissingPhotos(value => !value)}>
+            {onlyMissingPhotos ?
+              (language === "en" ? "Show all" : language === "ru" ? "Показать все" : "Barchasini ko‘rsatish") :
+              (language === "en" ? "Show without photos" : language === "ru" ? "Без фотографий" : "Rasmsizlarni ko‘rsatish")}
+          </button>
+        </div>
+        {products.length === 0 ? <p>Hozircha mahsulotlaringiz yo‘q.</p> :
+          visibleSellerProducts.length === 0 ? <p className="mm-photo-audit-complete">
+            {language === "en" ? "No products without image references in this list." :
+              language === "ru" ? "В этом списке нет товаров без ссылок на изображения." :
+              "Bu ro‘yxatda rasm havolasi biriktirilmagan mahsulot yo‘q."}
+          </p> : <div className="nm-management-list">
+          {visibleSellerProducts.map(p => <div className="nm-manage-item" key={p.id}><ProductPicture product={p}/>
+            <div><strong>{p.name}</strong><span>{money(p.price)} · {p.stock} dona · {p.is_active === false ? "Faol emas" : "Faol"}</span>
+              {!p.image_url && p.is_active !== false && <small className="mm-photo-needed">
+                {language === "en" ? "Actual photo required" : language === "ru" ? "Нужно фото товара" : "Asl mahsulot rasmi kerak"}
+              </small>}</div>
             <button className="nm-icon-btn" type="button" onClick={() => { setEdit(p); setEditing(true); }} aria-label="Tahrirlash"><Icon name="pencil"/></button>
             <button className="nm-icon-btn danger" type="button" disabled={busy} onClick={() => remove(p)} aria-label="O‘chirish"><Icon name="trash"/></button>
           </div>)}
