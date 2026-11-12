@@ -120,6 +120,18 @@ async function runDesktop() {
   const detail=page.locator('.nm-dialog[role=dialog]');
   await detail.waitFor();
   assert.ok(await detail.getByRole('heading',{name:'Nivea dus geli 250 ml'}).first().isVisible(),'Product detail should open');
+  assert.equal(await detail.locator('.mm-product-gallery').count(),1,'Premium gallery must render');
+  assert.equal(await detail.locator('.mm-product-pricing').count(),1,'Prominent pricing section must render');
+  assert.equal(await detail.locator('.mm-product-seller').count(),1,'Seller details must appear');
+  assert.ok(await detail.locator('.mm-product-stock-pill').isVisible(),'Stock chip must appear');
+  assert.ok((await detail.locator('.mm-product-total strong').innerText()).includes('32,000'),
+    'Total begins at one unit price');
+  await detail.locator('.mm-product-quantity button[aria-label="+"]').click();
+  assert.equal(await detail.locator('.mm-product-quantity output').innerText(),'2','Quantity selector works');
+  assert.ok((await detail.locator('.mm-product-total strong').innerText()).includes('64,000'),
+    'Total reflects chosen quantity');
+  await detail.locator('.mm-product-quantity button[aria-label="−"]').click();
+  assert.equal(await detail.locator('.mm-product-quantity output').innerText(),'1');
   await detail.locator('.nm-detail-actions .nm-primary').click();
   assert.equal(await detail.count(),0,'Product detail should close on valid add');
   await page.locator('.nm-header-icon[aria-label="Savatcha"]').click();
@@ -414,6 +426,10 @@ async function runMobile() {
   await page.locator('.nm-empty-cart .nm-primary').click();
   await page.locator('.mm-product-card').filter({hasText:'Fanta'}).locator('.mm-card-image-trigger').click();
   assert.ok(await page.locator('.nm-dialog').isVisible(),'Mobile product quick view must work');
+  assert.ok(await page.locator('.nm-dialog .mm-product-gallery').isVisible(),'Mobile product gallery must appear');
+  assert.ok(await page.locator('.nm-dialog .mm-product-purchase').isVisible(),'Mobile purchase controls must appear');
+  assert.equal(await page.locator('.nm-dialog').evaluate(el=>el.scrollWidth <= el.clientWidth + 3),true,
+    'Product detail on mobile must not overflow horizontally');
   await page.locator('.nm-dialog .nm-detail-actions .nm-primary').click();
   await page.locator('.nm-mobile-tabs button').filter({hasText:'Savatcha'}).click();
   assert.ok(await page.locator('.nm-cart-item').isVisible(),'Mobile add-to-cart should work');
