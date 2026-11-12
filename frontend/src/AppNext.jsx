@@ -5,6 +5,7 @@ import "./MarketSearch.css";
 import "./MarketplaceRefinements.css";
 import "./MarketV3.css";
 import { matchedPhoto } from "./productImageSources";
+import ProductIllustration from "./ProductIllustration.jsx";
 import { categoryKey, getCategoryCounts, getRelatedProducts, isCatalogProduct, photoReferenceStatus } from "./catalogCategories";
 
 const GOOGLE_CLIENT_ID = "957838455109-tsmj5fstgcncsjj19qo29sfkoe9i3kfa.apps.googleusercontent.com";
@@ -287,14 +288,9 @@ function ProductPicture({ product, className = "", eager = false }) {
   const [broken, setBroken] = useState(false);
   useEffect(() => setBroken(false), [url]);
   if (!url || broken) {
-    // An unrelated category collage is not a truthful product photo.
-    // Show a clear, labelled placeholder until this exact item has a real picture.
-    const categoryIcon = CATEGORY_PICTURES[product?.category] || "📦";
-    return <div className={"nm-art mm-image-fallback mm-category-image-fallback " + className} role="img"
-      aria-label={product.name + " uchun mahsulot fotosurati hali mavjud emas"}>
-      <div className="mm-category-product-icon" aria-hidden="true">{categoryIcon}</div>
-      <small>{product?.name || product?.category || "MiniMarket"}</small>
-      <span>{broken ? "Rasm yuklanmadi" : "Mahsulot rasmi hali qo‘shilmagan"}</span>
+    // Original product-type illustration, clearly labelled as not a seller photo.
+    return <div className={"nm-art mm-image-fallback mm-illustrated-fallback " + className}>
+      <ProductIllustration product={product}/>
     </div>;
   }
   const hasSellerPhoto = Boolean(String(product?.image_url || product?.image || "").trim());
