@@ -13,7 +13,7 @@ for (const [name, fragment] of [
 ]) {
   const match = matchedPhoto({name});
   assert.ok(match?.photo, 'Missing product photo for '+name);
-  assert.ok(decodeURIComponent(match.photo).toLowerCase().includes(fragment.toLowerCase().replaceAll(' ','_')),
+  assert.ok(decodeURIComponent(match.photo).toLowerCase().replaceAll('_',' ').includes(fragment.toLowerCase().replaceAll('_',' ')),
     'Incorrect photo for '+name);
 }
 
