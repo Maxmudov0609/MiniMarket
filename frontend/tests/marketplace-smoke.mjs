@@ -136,6 +136,60 @@ async function runDesktop() {
 }
 
 
+
+async function runCategoryIntegrity() {
+  const baseItems=[
+    {id:3101,name:'Kichik stol lampasi',category:'Uy jihozlari',price:55000},
+    {id:3102,name:'Fairy idish yuvish vositasi',category:'Maishiy kimyo',price:24000}
+  ].map(p=>({description:'Test',stock:5,image_url:'',is_active:true,seller_name:'MiniMarket',
+    created_at:'2026-11-01T00:00:00Z',...p}));
+  async function pageFor(items,viewport) {
+    const context=await browser.newContext({viewport,reducedMotion:'reduce'});
+    const page=await context.newPage();
+    page.setDefaultTimeout(15000);
+    const errors=[];
+    page.on('pageerror',error=>errors.push(error.message));
+    await useMockData(page);
+    await page.route('**/api/products',route=>route.fulfill({
+      status:200,contentType:'application/json',body:JSON.stringify(items)
+    }));
+    await page.goto(origin,{waitUntil:'domcontentloaded'});
+    await page.locator('.nm-category-tile').first().waitFor();
+    await page.getByText('Katalog yangilandi').first().waitFor();
+    return {context,page,errors};
+  }
+
+  // Previously category filtering required exact apostrophe characters.
+  const variant={...baseItems[0],id:3103,name:'Choynak 1 L',category:"Uy-roʻzgʻor"};
+  let instance=await pageFor([...baseItems,variant],{width:1280,height:850});
+  let {context,page,errors}=instance;
+  await page.locator('.mm-category-tile[aria-label="Uy-ro‘zg‘or"]').click();
+  assert.equal(await page.locator('.mm-product-card').count(),1,
+    'Equivalent Uzbek apostrophe variants belong to the same category');
+  assert.ok(await page.getByText('Choynak 1 L').first().isVisible());
+  assert.equal(await page.locator('[data-testid=empty-category]').count(),0);
+  assert.deepEqual(errors,[],'No runtime errors when category names differ in apostrophes');
+  await context.close();
+
+  // Empty categories should not pretend to contain unrelated items.
+  instance=await pageFor(baseItems,{width:390,height:844});
+  ({context,page,errors}=instance);
+  await page.locator('.mm-category-tile[aria-label="Uy-ro‘zg‘or"]').click();
+  await page.locator('[data-testid=empty-category]').waitFor();
+  assert.ok(await page.getByText('Bu bo‘limga hali mahsulot qo‘shilmagan').isVisible(),
+    'Empty category must be described honestly');
+  assert.equal(await page.locator('.mm-related-grid .mm-product-card').count(),2,
+    'Related products should show actual items from other categories');
+  assert.equal(await page.locator('.nm-catalog-meta strong').innerText(),'0',
+    'Original empty category count must remain zero');
+  await page.locator('.mm-related-grid .mm-product-card').first().locator('.mm-card-add').click();
+  await page.locator('.nm-mobile-tabs button').filter({hasText:'Savatcha'}).click();
+  assert.ok(await page.locator('.nm-cart-item').isVisible(),'Related product adds to cart on mobile');
+  await page.screenshot({path:'smoke-empty-category-mobile.png',fullPage:true});
+  assert.deepEqual(errors,[],'No mobile runtime errors on empty categories');
+  await context.close();
+}
+
 async function runGroceryImages() {
   const groceries=[
     ['Un 2 kg','flour-2kg.svg'],['Tuxum 10 dona','eggs-10.svg'],
@@ -305,6 +359,8 @@ try {
   console.log('PASS desktop: catalog, search, categories, favorites, filters, detail, cart, checkout');
   await runGroceryImages();
   console.log('PASS groceries: all eight distinct locally hosted SVG images load');
+  await runCategoryIntegrity();
+  console.log('PASS category integrity: apostrophe aliases, empty sections, mobile related-product purchase');
   await runSeller();
   console.log('PASS seller: ETA confirmation, product photo upload, creation, editing and deletion');
   await runMobile();
