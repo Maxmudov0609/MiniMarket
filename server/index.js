@@ -675,6 +675,7 @@ app.post('/api/orders', auth('buyer'), wrap(async (req, res) => {
 res.status(201).json(result);
 }));
 app.get('/api/orders/mine', auth('buyer'), wrap(async (req, res) => {
+  await deliverySchema();
   const ordersResult = await db.query(
     'SELECT * FROM orders WHERE buyer_id=$1 ORDER BY id DESC',
     [req.user.id]
@@ -685,7 +686,7 @@ app.get('/api/orders/mine', auth('buyer'), wrap(async (req, res) => {
   for (const order of ordersResult.rows) {
     const itemsResult = await db.query(
       `SELECT id, order_id, product_id, product_name,
-              quantity, unit_price, status
+              quantity, unit_price, status, estimated_delivery_at
        FROM order_items
        WHERE order_id=$1`,
       [order.id]
@@ -700,6 +701,7 @@ app.get('/api/orders/mine', auth('buyer'), wrap(async (req, res) => {
   res.json(orders);
 }));
 app.get('/api/seller/orders', auth('seller'), wrap(async (req, res) => {
+  await deliverySchema();
   const result = await db.query(
     `SELECT
        oi.id AS item_id,
@@ -708,6 +710,7 @@ app.get('/api/seller/orders', auth('seller'), wrap(async (req, res) => {
        oi.quantity,
        oi.unit_price,
        oi.status AS status,
+       oi.estimated_delivery_at,
        o.customer_name,
        o.phone,
        o.address,
@@ -725,39 +728,47 @@ app.patch(
   '/api/seller/orders/:itemId',
   auth('seller'),
   wrap(async (req, res) => {
-    const { status } = req.body;
-
-    if (!['Yangi', 'Jarayonda', 'Yetkazilgan'].includes(status)) {
-      return res.status(400).json({
-        error: 'Holat xato'
-      });
+    const { status, estimated_delivery_at } = req.body || {};
+    if (!['Yangi','Jarayonda','Yetkazilgan'].includes(status)) return res.status(400).json({error:'Buyurtma holati xato'});
+    const hasEtaField = Object.prototype.hasOwnProperty.call(req.body || {}, 'estimated_delivery_at');
+    let eta = null;
+    if (estimated_delivery_at != null && estimated_delivery_at !== '') {
+      if (typeof estimated_delivery_at !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?Z$/.test(estimated_delivery_at)) {
+        return res.status(400).json({error:'Yetkazish sanasi ISO UTC formatida bo‘lishi kerak'});
+      }
+      const date=new Date(estimated_delivery_at);
+      if(Number.isNaN(date.getTime()) || date.getTime() > Date.now()+90*86400000) return res.status(400).json({error:'Yetkazish sanasi noto‘g‘ri'});
+      eta=date.toISOString();
     }
-
-    const result = await db.query(
-      `UPDATE order_items
-       SET status = $1
-       WHERE id = $2 AND seller_id = $3
-       RETURNING id`,
-      [status, req.params.itemId, req.user.id]
+    await deliverySchema();
+    // Preserve an already confirmed ETA on status-only updates.
+    const result=await db.query(
+      'UPDATE order_items SET status=$1, ' +
+      'estimated_delivery_at=CASE WHEN $4::boolean THEN $2::timestamptz ELSE estimated_delivery_at END ' +
+      'WHERE id=$3 AND seller_id=$5 ' +
+      "AND ($1 <> 'Jarayonda' OR " +
+      "COALESCE(CASE WHEN $4::boolean THEN $2::timestamptz ELSE estimated_delivery_at END, '-infinity'::timestamptz) > NOW()) " +
+      'RETURNING id,status,estimated_delivery_at',
+      [status,eta,req.params.itemId,hasEtaField,req.user.id]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        error: 'Buyurtma qismi topilmadi'
-      });
+    if (!result.rows.length) {
+      const check=await db.query('SELECT id FROM order_items WHERE id=$1 AND seller_id=$2',[req.params.itemId,req.user.id]);
+      return res.status(check.rows.length?400:404).json({error:check.rows.length?
+        'Buyurtmani qabul qilish uchun kelajakdagi taxminiy yetkazish sanasi va vaqtini belgilang':
+        'Buyurtma qismi topilmadi'});
     }
-
-    res.json({ ok: true });
+    res.json({ok:true,item:result.rows[0]});
   })
 );
+
 app.use((err, req, res, next) => {
   console.error('[API]', req.method, req.path, err);
   if (res.headersSent) return next(err);
   if (err.code === '23505') {
     return res.status(409).json({ error: 'Bunday ma’lumot boshqa akkauntda allaqachon mavjud' });
   }
-  const status = Number.isInteger(err.status) && err.status >= 400 && err.status < 500
-    ? err.status : 500;
+  const status = err.type === 'entity.too.large' ? 413 :
+    (Number.isInteger(err.status) && err.status >= 400 && err.status < 500 ? err.status : 500);
   res.status(status).json({ error: status === 500 ? 'Server xatosi' : err.message });
 });
 app.listen(Number(process.env.PORT)||4000,()=>console.log('API http://localhost:'+(process.env.PORT||4000)));
