@@ -675,6 +675,55 @@ function AccountPanel({ user, language, onClose, notify, onLinkGoogle }) {
       </article>)}</div>}
   </Modal>;
 }
+function SellerOrderRow({ order, language, busy, onSave }) {
+  const [status,setStatus] = useState(order.status || "Yangi");
+  const [date,setDate] = useState(tashkentDateInput(order.estimated_delivery_at));
+  const [dirty,setDirty] = useState(false);
+  useEffect(() => {
+    if (dirty) return;
+    setStatus(order.status || "Yangi");
+    setDate(tashkentDateInput(order.estimated_delivery_at));
+  }, [order.status,order.estimated_delivery_at,dirty]);
+  const existingDate = deliveryDate(order.estimated_delivery_at,language);
+  const needsDate = status === "Jarayonda";
+  const invalid = needsDate && (!date || Date.parse(date+":00+05:00") <= Date.now());
+  return <div className="nm-seller-order mm-seller-order" key={order.item_id}>
+    <div className="mm-seller-order-info">
+      <strong>#{order.order_id} · {order.product_name}</strong>
+      <p>{order.customer_name} · {order.phone}</p>
+      <small>{order.address}</small>
+      <p>{order.quantity} dona · {money(order.unit_price)}</p>
+      {existingDate && <p className="mm-order-current-eta"><Icon name="truck" size={17}/> {language === "en" ? "Scheduled" : language === "ru" ? "Запланировано" : "Belgilangan muddat"}: {existingDate}</p>}
+    </div>
+    <div className="mm-seller-order-actions">
+      <label>{language === "en" ? "Order status" : language === "ru" ? "Статус" : "Buyurtma holati"}
+        <select value={status} disabled={busy} onChange={e=>{setStatus(e.target.value);setDirty(true);}}>
+          <option value="Yangi">{language === "en" ? "New" : language === "ru" ? "Новый" : "Yangi"}</option>
+          <option value="Jarayonda">{language === "en" ? "Accepted / preparing" : language === "ru" ? "Принят / готовится" : "Qabul qilindi / tayyorlanmoqda"}</option>
+          <option value="Yetkazilgan">{language === "en" ? "Delivered" : language === "ru" ? "Доставлено" : "Yetkazilgan"}</option>
+        </select>
+      </label>
+      <label>{language === "en" ? "Expected delivery (Tashkent time)" : language === "ru" ? "План доставки (Ташкент)" : "Taxminiy yetkazish (Toshkent vaqti)"}
+        <input type="datetime-local" value={date} disabled={busy}
+          onChange={e=>{setDate(e.target.value);setDirty(true);}}/>
+      </label>
+      {invalid && <small className="mm-eta-validation">
+        {language === "en" ? "Enter a future delivery date and time to accept." :
+         language === "ru" ? "Для принятия укажите будущую дату и время." :
+         "Qabul qilish uchun kelajakdagi sana va vaqtni belgilang."}
+      </small>}
+      <button type="button" className="nm-primary mm-order-save" disabled={busy || invalid || !dirty}
+        onClick={async()=>{
+          const valid = !date || !Number.isNaN(Date.parse(date+":00+05:00"));
+          if(!valid) return;
+          const saved=await onSave(order,status,date ? new Date(date+":00+05:00").toISOString() : null);
+          if(saved) setDirty(false);
+        }}>
+        <Icon name="check" size={17}/> {language === "en" ? "Save update" : language === "ru" ? "Сохранить" : "Buyurtmani saqlash"}
+      </button>
+    </div>
+  </div>;
+}
 function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLinkGoogle }) {
   const [tab, setTab] = useState("products");
   const [products, setProducts] = useState([]);
@@ -741,12 +790,15 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
     } catch (error) { notify(error.message, "error"); }
     finally { setBusy(false); }
   }
-  async function statusUpdate(order, status) {
+  async function statusUpdate(order, status, estimated_delivery_at) {
     setBusy(true);
     try {
-      await api("/seller/orders/" + order.item_id, { method: "PATCH", token: user.token, data: { status } });
-      setReload(n => n + 1); notify("Buyurtma holati yangilandi");
-    } catch (error) { notify(error.message, "error"); }
+      await api("/seller/orders/" + order.item_id, {
+        method: "PATCH", token: user.token, data: { status, estimated_delivery_at }
+      });
+      setReload(n => n + 1); notify("✅ Buyurtma holati va yetkazish vaqti saqlandi");
+      return true;
+    } catch (error) { notify(error.message, "error"); return false; }
     finally { setBusy(false); }
   }
   return <Modal title={WORD(language,"seller")} onClose={onClose} wide>
@@ -776,7 +828,7 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
           <small>JPEG, PNG, WebP · 1.5 MB gacha. Surat mahsulotga mos bo‘lishi kerak.</small>
         </label>
         <label>{WORD(language,"image")} (havola, ixtiyoriy)
-          <input name="image_url" type="url" placeholder="https://..." defaultValue={edit?.image_url || ""}/>
+          <input name="image_url" type="text" placeholder="https://... yoki /api/product-images/..." defaultValue={edit?.image_url || ""}/>
         </label>
         {edit && <div className="mm-seller-photo-preview"><ProductPicture product={edit}/><span>Hozirgi mahsulot rasmi</span></div>}
         <button className="nm-primary nm-full" type="submit" disabled={busy}>{busy ? "⏳" : WORD(language,"save")}</button>
@@ -792,13 +844,7 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
         </div>}
       </div> :
       <div className="nm-management-list">{orders.length === 0 ? <p>Hozircha buyurtmalar yo‘q.</p> :
-        orders.map(order => <div className="nm-seller-order" key={order.item_id}>
-          <div><strong>#{order.order_id} · {order.product_name}</strong><p>{order.customer_name} · {order.phone}</p>
-            <small>{order.address}</small><p>{order.quantity} dona · {money(order.unit_price)}</p></div>
-          <label>Holati<select value={order.status || "Yangi"} disabled={busy} onChange={e => statusUpdate(order,e.target.value)}>
-            <option>Yangi</option><option>Jarayonda</option><option>Yetkazilgan</option>
-          </select></label>
-        </div>)}</div>}
+        orders.map(order => <SellerOrderRow key={order.item_id} order={order} language={language} busy={busy} onSave={statusUpdate}/>)}</div>}
   </Modal>;
 }
 export default function AppNext() {
