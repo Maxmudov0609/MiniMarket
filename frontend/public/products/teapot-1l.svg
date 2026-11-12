@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="Choynak 1 L shaklidagi keramik choynak illustratsiyasi"><defs>
+ <radialGradient id="bg" cx=".43" cy=".31" r=".82"><stop stop-color="#fff"/><stop offset=".74" stop-color="#f5f5ff"/><stop offset="1" stop-color="#e9eafa"/></radialGradient>
+ <linearGradient id="ceramic" x1="0" y1="0" x2=".95" y2="1"><stop stop-color="#fffdf8"/><stop offset=".38" stop-color="#fcf6ea"/><stop offset=".72" stop-color="#e8d9bf"/><stop offset="1" stop-color="#c4aa88"/></linearGradient>
+ <linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".22" stop-color="#d9e8f3"/><stop offset=".49" stop-color="#aab9ca"/><stop offset=".72" stop-color="#f1f7fa"/><stop offset="1" stop-color="#667e95"/></linearGradient>
+ <linearGradient id="red" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff3a40"/><stop offset=".5" stop-color="#db1426"/><stop offset="1" stop-color="#a3081a"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#fff5cb"/><stop offset=".4" stop-color="#e8c16b"/><stop offset=".72" stop-color="#be8e36"/><stop offset="1" stop-color="#8c621d"/></linearGradient>
+ <linearGradient id="choc" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8c4d2c"/><stop offset=".5" stop-color="#60311e"/><stop offset="1" stop-color="#37190f"/></linearGradient>
+ <filter id="shadow" x="-45%" y="-45%" width="190%" height="210%"><feDropShadow dx="0" dy="20" stdDeviation="19" flood-color="#424373" flood-opacity=".22"/></filter>
+</defs><rect width="640" height="640" fill="url(#bg)"/><ellipse cx="320" cy="551" rx="205" ry="22" fill="#49426a" opacity=".10"/><circle cx="506" cy="160" r="164" fill="#c9c0f8" opacity=".16"/><circle cx="100" cy="505" r="116" fill="#ddd5ff" opacity=".19"/>
+<g filter="url(#shadow)">
+ <path d="M428 311 Q500 248 540 300 Q556 330 539 359 Q518 391 456 379" fill="none" stroke="#c5b294" stroke-width="33" stroke-linecap="round"/>
+ <path d="M433 310 Q500 264 523 308 Q541 347 456 359" fill="none" stroke="#fff4da" stroke-width="14" stroke-linecap="round"/>
+ <path d="M231 345 Q159 316 112 265 Q101 255 88 260 Q76 266 87 287 Q126 369 207 402" fill="url(#ceramic)" stroke="#c9b495" stroke-width="5"/>
+ <path d="M193 286 C212 257 418 254 451 288 C472 313 475 419 435 463 C394 517 249 515 209 464 C166 414 167 332 193 286Z" fill="url(#ceramic)" stroke="#bba68e" stroke-width="6"/>
+ <path d="M194 302 Q304 267 448 297" fill="none" stroke="#fff" stroke-width="17" opacity=".8"/>
+ <path d="M192 350 Q288 376 453 348" fill="none" stroke="#c2946c" stroke-width="8" opacity=".5"/>
+ <ellipse cx="322" cy="284" rx="126" ry="36" fill="#f1e5cf" stroke="#bfa483" stroke-width="6"/>
+ <path d="M237 282 Q321 263 409 281" fill="none" stroke="#fff8e9" stroke-width="13"/>
+ <path d="M277 249 Q283 219 315 219 Q352 215 358 248Z" fill="url(#ceramic)" stroke="#baa387" stroke-width="5"/>
+ <circle cx="319" cy="219" r="16" fill="url(#gold)" stroke="#ad853e" stroke-width="3"/>
+ <path d="M229 420 C257 435 382 436 423 414" fill="none" stroke="#dba86d" stroke-width="8" stroke-linecap="round"/>
+ <path d="M256 390 Q321 361 389 388 Q321 409 256 390Z" fill="#d0b188" opacity=".55"/>
+ <path d="M286 392 Q321 372 352 392" fill="none" stroke="#a97b4c" stroke-width="5" stroke-linecap="round"/>
+ <rect x="256" y="474" width="128" height="23" rx="11" fill="#ceb498" opacity=".7"/>
+</g><text x="320" y="584" fill="#645679" font-size="22" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700">CHOYNAK · 1 L</text></svg>
