@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-label="Sut 1 L - sut paketi va sut to‘ldirilgan stakan">
+<defs>
+ <radialGradient id="bg" cx=".52" cy=".38" r=".9"><stop stop-color="#ffffff"/><stop offset=".64" stop-color="#f9f9ff"/><stop offset="1" stop-color="#eaeaf8"/></radialGradient>
+ <linearGradient id="paper" x1="0" y1="0" x2="1" y2=".85"><stop stop-color="#fffdf9"/><stop offset=".6" stop-color="#f1e9da"/><stop offset="1" stop-color="#d4c6ac"/></linearGradient>
+ <linearGradient id="white" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".54" stop-color="#f5f8fb"/><stop offset="1" stop-color="#d7e1e9"/></linearGradient>
+ <linearGradient id="honey" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#fff4ab"/><stop offset=".35" stop-color="#f7bb2c"/><stop offset=".8" stop-color="#d7891e"/><stop offset="1" stop-color="#b36a12"/></linearGradient>
+ <linearGradient id="milk" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d7e2ec"/></linearGradient>
+ <linearGradient id="egg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe3b7"/><stop offset=".65" stop-color="#d89d63"/><stop offset="1" stop-color="#ad7148"/></linearGradient>
+ <linearGradient id="butter" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4b1"/><stop offset=".5" stop-color="#ffdb6d"/><stop offset="1" stop-color="#dbaa35"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="170%" height="180%"><feDropShadow dx="0" dy="16" stdDeviation="17" flood-color="#242642" flood-opacity=".21"/></filter>
+ <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="10"/></filter>
+</defs>
+<rect width="640" height="640" fill="url(#bg)"/>
+<circle cx="495" cy="182" r="185" fill="#77acd4" opacity=".085"/><circle cx="110" cy="495" r="145" fill="#77acd4" opacity=".055"/>
+<path d="M42 92 Q85 37 149 50" fill="none" stroke="#77acd4" stroke-opacity=".21" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="320" cy="550" rx="210" ry="28" fill="#3b355d" opacity=".095"/>
+<g filter="url(#shadow)">
+<path d="M172 193 L298 193 L326 230 L326 501 Q325 518 302 518 L169 518 Q156 513 157 496 L157 231Z" fill="url(#white)" stroke="#bad0de" stroke-width="4"/>
+<path d="M171 193 L200 129 L271 129 L300 193Z" fill="#4b99cc" stroke="#287fac" stroke-width="4"/>
+<path d="M200 129 L221 104 L249 104 L271 129Z" fill="#b8def1"/>
+<path d="M169 248 L314 248 L314 295 L169 295Z" fill="#4da4d8"/>
+<path d="M166 427 L317 427 L317 508 L165 508Z" fill="#d8eff8"/>
+<text x="240" y="364" font-family="Arial, sans-serif" font-size="74" font-weight="800" text-anchor="middle" fill="#3387b9" >SUT</text>
+<text x="240" y="400" font-family="Arial, sans-serif" font-size="25" font-weight="800" text-anchor="middle" fill="#6186a8" >1 L</text>
+<path d="M372 313 L482 313 L467 489 Q462 512 438 516 L411 516 Q388 516 386 487Z" fill="#f7faff" stroke="#b5cfdf" stroke-width="5" opacity=".9"/>
+<path d="M379 364 L475 364 L466 486 Q461 502 439 502 L414 502 Q399 500 395 483Z" fill="url(#milk)"/>
+<ellipse cx="427" cy="365" rx="48" ry="11" fill="#fff" stroke="#c1d5e5" stroke-width="3"/>
+<path d="M391 335 L388 468" stroke="#ffffff" stroke-width="7" opacity=".65" stroke-linecap="round"/>
+</g>
+</svg>

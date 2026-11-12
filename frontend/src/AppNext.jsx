@@ -216,6 +216,15 @@ const CATEGORY_PICTURES = {
 };
 // Show bundled images only for verified, matching products. Never point to missing assets.
 const BUNDLED_PRODUCT_IMAGES = [
+  // Product-specific, locally hosted illustrations. Each grocery item has its own visual.
+  [/^un\s*2\s*kg$/i, "/products/flour-2kg.svg"],
+  [/^tuxum\s*10\s*dona$/i, "/products/eggs-10.svg"],
+  [/^tuz\s*1\s*kg$/i, "/products/salt-1kg.svg"],
+  [/^kungaboqar\s*yog[‘'ʼ’]?i\s*1\s*l$/i, "/products/sunflower-oil-1l.svg"],
+  [/^makaron\s*500\s*g$/i, "/products/pasta-500g.svg"],
+  [/^sut\s*1\s*l$/i, "/products/milk-1l.svg"],
+  [/^sariyog[‘'ʼ’]?\s*200\s*g$/i, "/products/butter-200g.svg"],
+  [/^shakar\s*1\s*kg$/i, "/products/sugar-1kg.svg"],
   [/^nivea(?:\s|$)/i, "/nivea.webp"],
   [/^fairy(?:\s|$)/i, "/fairy.jpg"],
   [/^grechka(?:\s|$)/i, "/grechka.jpg"],

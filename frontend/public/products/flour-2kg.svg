@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="640" height="640" role="img" aria-label="Un 2 kg - oq un qopchasi">
+<defs>
+ <radialGradient id="bg" cx=".52" cy=".38" r=".9"><stop stop-color="#ffffff"/><stop offset=".64" stop-color="#f9f9ff"/><stop offset="1" stop-color="#eaeaf8"/></radialGradient>
+ <linearGradient id="paper" x1="0" y1="0" x2="1" y2=".85"><stop stop-color="#fffdf9"/><stop offset=".6" stop-color="#f1e9da"/><stop offset="1" stop-color="#d4c6ac"/></linearGradient>
+ <linearGradient id="white" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".54" stop-color="#f5f8fb"/><stop offset="1" stop-color="#d7e1e9"/></linearGradient>
+ <linearGradient id="honey" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#fff4ab"/><stop offset=".35" stop-color="#f7bb2c"/><stop offset=".8" stop-color="#d7891e"/><stop offset="1" stop-color="#b36a12"/></linearGradient>
+ <linearGradient id="milk" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#d7e2ec"/></linearGradient>
+ <linearGradient id="egg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe3b7"/><stop offset=".65" stop-color="#d89d63"/><stop offset="1" stop-color="#ad7148"/></linearGradient>
+ <linearGradient id="butter" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4b1"/><stop offset=".5" stop-color="#ffdb6d"/><stop offset="1" stop-color="#dbaa35"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="170%" height="180%"><feDropShadow dx="0" dy="16" stdDeviation="17" flood-color="#242642" flood-opacity=".21"/></filter>
+ <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="10"/></filter>
+</defs>
+<rect width="640" height="640" fill="url(#bg)"/>
+<circle cx="495" cy="182" r="185" fill="#b58a63" opacity=".085"/><circle cx="110" cy="495" r="145" fill="#b58a63" opacity=".055"/>
+<path d="M42 92 Q85 37 149 50" fill="none" stroke="#b58a63" stroke-opacity=".21" stroke-width="7" stroke-linecap="round"/>
+<ellipse cx="320" cy="550" rx="210" ry="28" fill="#3b355d" opacity=".095"/>
+<g filter="url(#shadow)">
+<path d="M211 176 Q217 155 240 151 L395 151 Q418 158 425 178 L445 480 Q446 503 427 515 L204 515 Q186 499 189 482Z" fill="url(#paper)" stroke="#cabcaa" stroke-width="4"/>
+<path d="M215 175 L396 175 L418 208 L199 208Z" fill="#c9b99f"/>
+<path d="M205 211 L421 211" stroke="#e5ded2" stroke-width="8"/>
+<rect x="224" y="253" width="181" height="189" rx="23" fill="#fcfbf6" stroke="#ded9d0" stroke-width="3"/>
+<text x="315" y="343" font-family="Arial, sans-serif" font-size="78" font-weight="800" text-anchor="middle" fill="#2b5c86" >UN</text>
+<text x="315" y="382" font-family="Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#947757" >BUG‘DOY UNI</text>
+<path d="M275 292 Q248 267 262 245 M350 292 Q375 269 362 240" fill="none" stroke="#be9f61" stroke-width="5" stroke-linecap="round"/>
+<path d="M263 251 l-10 -4 m10 4 l10 -7 M360 246 l-8 -6 m8 6 l10 -6" stroke="#d4ac64" stroke-width="3.4" stroke-linecap="round"/><path d="M262.4 258 l-10 -4 m10 4 l10 -7 M359.4 253 l-8 -6 m8 6 l10 -6" stroke="#d4ac64" stroke-width="3.4" stroke-linecap="round"/><path d="M261.8 265 l-10 -4 m10 4 l10 -7 M358.8 260 l-8 -6 m8 6 l10 -6" stroke="#d4ac64" stroke-width="3.4" stroke-linecap="round"/><path d="M261.2 272 l-10 -4 m10 4 l10 -7 M358.2 267 l-8 -6 m8 6 l10 -6" stroke="#d4ac64" stroke-width="3.4" stroke-linecap="round"/><path d="M260.6 279 l-10 -4 m10 4 l10 -7 M357.6 274 l-8 -6 m8 6 l10 -6" stroke="#d4ac64" stroke-width="3.4" stroke-linecap="round"/><path d="M260 286 l-10 -4 m10 4 l10 -7 M357 281 l-8 -6 m8 6 l10 -6" stroke="#d4ac64" stroke-width="3.4" stroke-linecap="round"/>
+<text x="315" y="420" font-family="Arial, sans-serif" font-size="28" font-weight="800" text-anchor="middle" fill="#647185" >2 kg</text>
+<ellipse cx="445" cy="504" rx="78" ry="24" fill="#c6cbd2"/><path d="M373 489 Q445 467 515 488 L502 526 Q442 545 391 524Z" fill="#f7f7f1" stroke="#d8d8cf" stroke-width="2"/>
+<ellipse cx="445" cy="491" rx="69" ry="17" fill="#ffffff"/>
+</g>
+</svg>

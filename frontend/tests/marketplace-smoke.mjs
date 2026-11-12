@@ -135,6 +135,48 @@ async function runDesktop() {
   await context.close();
 }
 
+
+async function runGroceryImages() {
+  const groceries=[
+    ['Un 2 kg','flour-2kg.svg'],['Tuxum 10 dona','eggs-10.svg'],
+    ['Tuz 1 kg','salt-1kg.svg'],['Kungaboqar yog‘i 1 L','sunflower-oil-1l.svg'],
+    ['Makaron 500 g','pasta-500g.svg'],['Sut 1 L','milk-1l.svg'],
+    ['Sariyog‘ 200 g','butter-200g.svg'],['Shakar 1 kg','sugar-1kg.svg']
+  ];
+  const context=await browser.newContext({viewport:{width:1440,height:900},reducedMotion:'reduce'});
+  const page=await context.newPage();
+  await useMockData(page);
+  const products=groceries.map(([name],i)=>({
+    id:20000+i,name,description:'Test grocery',price:12000,category:'Oziq-ovqat mahsulotlari',
+    stock:10,image_url:'',is_active:true,seller_name:'MiniMarket',
+    created_at:'2026-11-01T00:00:00Z'
+  }));
+  await page.route('**/api/products',route=>route.fulfill({
+    status:200,contentType:'application/json',body:JSON.stringify(products)
+  }));
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.locator('.mm-product-card').first().waitFor({timeout:15000});
+  assert.equal(await page.locator('.mm-product-card').count(),8,'All eight grocery cards are visible');
+  for (const [name,filename] of groceries) {
+    const card=page.locator('.mm-product-card').filter({hasText:name});
+    const img=card.locator('img[src$="/products/'+filename+'"]');
+    assert.equal(await img.count(),1,'Correct distinct image for '+name);
+    await img.scrollIntoViewIfNeeded();
+    await img.evaluate(async el => {
+      if (!el.complete) await new Promise((resolve,reject)=>{
+        el.addEventListener('load',resolve,{once:true});
+        el.addEventListener('error',()=>reject(new Error('Failed to load '+el.src)),{once:true});
+      });
+    });
+    assert.ok(await img.evaluate(el=>el.naturalWidth>0),'SVG image must load: '+name);
+  }
+  const srcs=await page.locator('.mm-product-card img[src*="/products/"]').evaluateAll(
+    items=>items.map(item=>item.getAttribute('src')));
+  assert.equal(new Set(srcs).size,8,'No grocery item should reuse another grocery image');
+  await page.screenshot({path:'smoke-grocery-images.png',fullPage:true});
+  await context.close();
+}
+
 async function runSeller() {
   const context=await browser.newContext({viewport:{width:1360,height:820},reducedMotion:'reduce'});
   const page=await context.newPage();
@@ -261,6 +303,8 @@ try {
   browser = await chromium.launch({headless:true,args:['--no-sandbox']});
   await runDesktop();
   console.log('PASS desktop: catalog, search, categories, favorites, filters, detail, cart, checkout');
+  await runGroceryImages();
+  console.log('PASS groceries: all eight distinct locally hosted SVG images load');
   await runSeller();
   console.log('PASS seller: ETA confirmation, product photo upload, creation, editing and deletion');
   await runMobile();
