@@ -217,7 +217,8 @@ async function runSeller() {
   await modal.locator('.nm-add-product').waitFor();
   page.on('dialog',confirm=>confirm.accept());
   await modal.locator('.nm-manage-item button[aria-label="O‘chirish"]').first().click();
-  assert.ok(await page.getByText('Mahsulot o‘chirildi').count()>0,'Seller delete button should call backend');
+  await page.getByText('Mahsulot o‘chirildi').waitFor({timeout:12000});
+  assert.ok(await page.getByText('Mahsulot o‘chirildi').isVisible(),'Seller delete button should call backend');
   await modal.locator('.nm-dialog-heading .nm-icon-btn').click();
   assert.equal(await modal.count(),0,'Seller dashboard should close');
   assert.deepEqual(errors,[],'Seller controls must not produce JS runtime errors');
