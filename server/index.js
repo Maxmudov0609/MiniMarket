@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { rateLimit } from 'express-rate-limit';
 import { db } from './db.js';
+import { validProductFilters } from './catalogFilters.js';
 
 if (!process.env.JWT_SECRET) throw new Error('Set JWT_SECRET in server/.env');
 
@@ -25,32 +26,20 @@ app.use(cors({
   ]
 }));
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-app.get('/api/db-check', async (req, res) => {
-  try {
-    const result = await db.query(`
-      SELECT current_database() AS database_name,
-             current_schema() AS schema_name,
-             current_user AS database_user,
-             EXISTS (
-               SELECT 1
-               FROM information_schema.columns
-               WHERE table_schema = 'public'
-                 AND table_name = 'orders'
-                 AND column_name = 'customer_name'
-             ) AS has_customer_name
-    `);
-
-    res.json(result.rows[0]);
-} catch (error) {
-  console.error("DATABASE XATOSI:", error.message);
-  res.status(500).json({ error: "Database tekshiruvda xatolik" });
-}
-});
 
 app.use(express.json({limit:'100kb'}));
 const wrap = fn => (req, res, next) => {
   Promise.resolve().then(() => fn(req, res, next)).catch(next);
 };
+// Public health checks must not expose the PostgreSQL user, database or schema.
+const healthCheck = wrap(async (_req, res) => {
+  await db.query('SELECT 1');
+  res.set('Cache-Control', 'no-store');
+  res.json({ ok: true });
+});
+app.get('/api/health', healthCheck);
+app.get('/api/db-check', healthCheck); // legacy uptime-monitor URL
+
 // Additive, idempotent schema updates; preserve all existing orders and products.
 let deliverySchemaPromise;
 function deliverySchema() {
@@ -330,6 +319,9 @@ app.get('/api/products', wrap(async (req, res) => {
     max = '',
     sort = 'new'
   } = req.query;
+  if (!validProductFilters({ search, category, min, max, sort })) {
+    return res.status(400).json({ error: 'Mahsulot filtrlari noto‘g‘ri' });
+  }
 
   let sql = `
     SELECT p.*, u.name AS seller_name

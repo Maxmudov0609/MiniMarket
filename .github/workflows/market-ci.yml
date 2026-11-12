@@ -37,6 +37,9 @@ jobs:
         run: |
           node --check server/index.js
           node --check server/db.js
+          node --check server/catalogFilters.js
+      - name: Test backend catalog validation
+        run: node --test server/tests/*.test.js
 
   browser-smoke:
     runs-on: ubuntu-latest
