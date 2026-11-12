@@ -1187,11 +1187,12 @@ onClick={() => showCatalog()}
           <button
             key={item.name}
             type="button"
-            className="category-strip-item"
+            className={item.name === "Sport" ? "category-strip-item category-strip-sport" : "category-strip-item"}
             onClick={() => showCatalog(item.name)}
           >
+            {item.name === "Sport" && <span className="category-sport-count">⚡ {dbProducts.filter(p => p.category === "Sport").length} ta mahsulot</span>}
             <span className="category-strip-icon">
-              <img src={item.image} alt={item.name} />
+              <img src={item.image} alt={item.name} loading="lazy" onError={e => { e.currentTarget.src = "/no-image.svg"; }} />
             </span>
             <span>
   {language === "ru"
