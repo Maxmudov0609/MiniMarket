@@ -297,8 +297,7 @@ function ProductPicture({ product, className = "", eager = false }) {
       <span>{broken ? "Rasm yuklanmadi" : "Mahsulot rasmi hali qo‘shilmagan"}</span>
     </div>;
   }
-  const hasSellerPhoto = /^https?:\\/\\//i.test(String(product?.image_url || product?.image || "").trim()) ||
-    /^\\/(?!\\/)[\\w./-]+$/.test(String(product?.image_url || product?.image || "").trim());
+  const hasSellerPhoto = Boolean(String(product?.image_url || product?.image || "").trim());
   return <div className={"nm-product-image " + className}>
     <img loading={eager ? "eager" : "lazy"} decoding="async" src={url}
       alt={hasSellerPhoto ? product.name : product.name + " — namunaviy surat"}
