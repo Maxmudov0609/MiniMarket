@@ -2,7 +2,7 @@
 // same apostrophe or dash characters as those used in the UI. Treat spelling
 // variants as one category without altering user/seller database records.
 export function categoryKey(value) {
-  return String(value ?? "")
+  const normalized = String(value ?? "")
     .normalize("NFKC")
     .toLocaleLowerCase("uz")
     .replace(/[‘’ʼʻˈ′`´]/g, "'")
@@ -10,6 +10,12 @@ export function categoryKey(value) {
     .replace(/\s*-\s*/g, "-")
     .replace(/\s+/g, " ")
     .trim();
+  // One customer-facing home category for both historical seller labels.
+  // Do not modify or delete original database categories or products.
+  if (["uy jihozlari", "uy-rozg'or", "uy ro'zg'or", "uy-rozgor", "uy rozgor"].includes(normalized)) {
+    return "uy-ro'zg'or";
+  }
+  return normalized;
 }
 
 export function isCatalogProduct(product) {
@@ -33,10 +39,8 @@ export function getRelatedProducts(products, selectedCategory, limit = 6) {
     isCatalogProduct(product) && categoryKey(product.category) !== category
   );
   const priorities = category === categoryKey("Uy-ro‘zg‘or")
-    ? ["Uy jihozlari", "Maishiy kimyo", "Elektronika", "Boshqalar"]
-    : category === categoryKey("Uy jihozlari")
-      ? ["Uy-ro‘zg‘or", "Elektronika", "Maishiy kimyo"]
-      : [];
+    ? ["Maishiy kimyo", "Elektronika", "Boshqalar"]
+    : [];
   const rank = product => {
     const index = priorities.findIndex(name => categoryKey(name) === categoryKey(product.category));
     return index < 0 ? 100 : index;
