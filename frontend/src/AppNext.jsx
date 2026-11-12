@@ -216,20 +216,13 @@ const CATEGORY_PICTURES = {
   "Uy jihozlari": "🛋️", "Sport": "⚽", "Boshqalar": "🛍️"
 };
 // Show bundled images only for verified, matching products. Never point to missing assets.
+// Real photographs only. Seller-supplied images always take priority.
+// Commons files are photo examples; sellers must supply an exact product image.
 const BUNDLED_PRODUCT_IMAGES = [
-  // Product-specific, locally hosted illustrations. Each item has its own visual.
-  [/^choynak\s*1\s*l$/i, "/products/teapot-1l.svg"],
-  [/^elektr\s*choynak(?:\s|$)/i, "/products/electric-kettle.svg"],
-  [/^kitkat\s*41\s*g$/i, "/products/kitkat-41g.svg"],
-  [/^pantene\s*shampun\s*400\s*ml$/i, "/products/pantene-shampoo-400ml.svg"],
-  [/^un\s*2\s*kg$/i, "/products/flour-2kg.svg"],
-  [/^tuxum\s*10\s*dona$/i, "/products/eggs-10.svg"],
-  [/^tuz\s*1\s*kg$/i, "/products/salt-1kg.svg"],
-  [/^kungaboqar\s*yog[‘'ʼ’]?i\s*1\s*l$/i, "/products/sunflower-oil-1l.svg"],
-  [/^makaron\s*500\s*g$/i, "/products/pasta-500g.svg"],
-  [/^sut\s*1\s*l$/i, "/products/milk-1l.svg"],
-  [/^sariyog[‘'ʼ’]?\s*200\s*g$/i, "/products/butter-200g.svg"],
-  [/^shakar\s*1\s*kg$/i, "/products/sugar-1kg.svg"],
+  [/^choynak\s*1\s*l$/i, "https://commons.wikimedia.org/wiki/Special:Redirect/file/Porcelain_Teapot.jpg?width=640"],
+  [/^elektr\s*choynak(?:\s|$)/i, "https://commons.wikimedia.org/wiki/Special:Redirect/file/Electric_kettle.jpg?width=640"],
+  [/^kitkat\s*41\s*g$/i, "https://commons.wikimedia.org/wiki/Special:Redirect/file/KitKat.jpg?width=640"],
+  [/^pantene\s*shampun\s*400\s*ml$/i, "https://commons.wikimedia.org/wiki/Special:Redirect/file/Shampoo_und_Pflegesp%C3%BClung_Pantene_V1.jpg?width=640"],
   [/^nivea(?:\s|$)/i, "/nivea.webp"],
   [/^fairy(?:\s|$)/i, "/fairy.jpg"],
   [/^grechka(?:\s|$)/i, "/grechka.jpg"],
