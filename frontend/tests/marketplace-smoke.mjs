@@ -354,6 +354,11 @@ async function runOrderHistoryRetry() {
   await page.locator('.nm-dialog form button[type=submit]').click();
   await page.locator('.nm-dialog').waitFor({state:'detached'});
   await page.locator('.nm-account-trigger').click();
+  await page.waitForTimeout(1100);
+  console.log('ORDER HISTORY DIAGNOSTIC',JSON.stringify({
+    requested, dialog:await page.locator('.nm-dialog').allInnerTexts(),
+    errorCount:await page.locator('.mm-orders-error').count()
+  }));
   await page.getByText('Server vaqtincha band').waitFor();
   await page.locator('.mm-orders-error button').click();
   await page.getByText('Buyurtma #900').waitFor();
