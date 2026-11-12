@@ -2,6 +2,17 @@
 // Product names are matched conservatively, and seller-provided photos always win.
 // These are image hotlinks, not uploaded/owned media; source sites may change or disallow reuse.
 // Before commercial use, obtain permission or replace with seller-owned originals.
+// Real photographs from Wikimedia Commons. These are *sample photos* of the
+// product type / brand, not photos of the seller's actual physical stock.
+// Commons Special:FilePath resolves to the hosted JPEG. Verify packaging with
+// the seller, and replace these with original licensed seller images.
+const commonsPhoto = filename => "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(filename);
+export const SAMPLE_PRODUCT_PHOTOS = [
+  {name:/^choynak\\s*1\\s*l$/i, photo:commonsPhoto("Teapot.jpeg"), source:"Wikimedia Commons", sample:true},
+  {name:/^elektr\\s*choynak(?:\\s|$)/i, photo:commonsPhoto("Electric kettle.jpg"), source:"Wikimedia Commons", sample:true},
+  {name:/^kitkat\\s*41\\s*g$/i, photo:commonsPhoto("KitKat.jpg"), source:"Wikimedia Commons", sample:true},
+  {name:/^pantene\\s*shampun\\s*400\\s*ml$/i, photo:commonsPhoto("Shampoo und Pflegespülung Pantene V1.jpg"), source:"Wikimedia Commons", sample:true}
+];
 export const PRODUCT_PHOTO_MATCHES = [
   {name:/^fanta(?:\s|$)/i, photo:"https://yastatic.net/avatars/get-grocery-goods/2750890/635345e4-3f64-4a5f-aa55-20f41a9ce1cd/500x500-orig", source:"Yandex Lavka"},
   {name:/^fuse\s*tea(?:\s|$)/i, photo:"https://yastatic.net/avatars/get-grocery-goods/2888787/4e835155-82d8-481b-b8f7-04149e44508e/600x600?webp=true", source:"Yandex Lavka",note:"Example peach flavor; seller should verify actual flavor"},
@@ -27,7 +38,7 @@ export const PRODUCT_CATEGORY_PREVIEWS = {
 };
 export function matchedPhoto(product) {
   const name=String(product?.name || "").trim();
-  return PRODUCT_PHOTO_MATCHES.find(item=>item.name.test(name)) || null;
+  return SAMPLE_PRODUCT_PHOTOS.find(item=>item.name.test(name)) || PRODUCT_PHOTO_MATCHES.find(item=>item.name.test(name)) || null;
 }
 export function categoryPreview(product) {
   return PRODUCT_CATEGORY_PREVIEWS[String(product?.category || "")] || null;
