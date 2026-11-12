@@ -412,3 +412,13 @@ body {background:#f7f8fc}
 .nm-app .mm-photo-needed {display:block;margin-top:5px;color:#a45031;font-size:12px;font-weight:600}
 .nm-app .mm-photo-audit-complete {margin:18px 0;color:#3b5870}
 @media(max-width:500px){.nm-app .mm-seller-photo-audit {padding:14px}.nm-app .mm-seller-missing-toggle {width:100%}}
+
+/* The exact seller photo is preferred. Inferred images must never masquerade as verified stock. */
+.nm-app .mm-image-sample-caption{
+  position:absolute;bottom:7px;left:7px;z-index:2;
+  padding:4px 7px;max-width:calc(100% - 14px);
+  border-radius:6px;background:rgba(255,255,255,.92);
+  color:#5f6072;font-size:10px;line-height:1.3;font-weight:650;
+  pointer-events:none;box-shadow:0 1px 6px rgba(30,40,80,.08);
+}
+.nm-app .nm-product-image{position:relative}
