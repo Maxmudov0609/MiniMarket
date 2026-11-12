@@ -8,6 +8,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { rateLimit } from 'express-rate-limit';
 import { db } from './db.js';
 import { validProductFilters } from './catalogFilters.js';
+import { seedSportProducts } from './sportSeed.js';
 
 if (!process.env.JWT_SECRET) throw new Error('Set JWT_SECRET in server/.env');
 
@@ -782,4 +783,6 @@ app.use((err, req, res, next) => {
     (Number.isInteger(err.status) && err.status >= 400 && err.status < 500 ? err.status : 500);
   res.status(status).json({ error: status === 500 ? 'Server xatosi' : err.message });
 });
+// Sport namuna katalogini server ishga tushganda xavfsiz va takrorlamasdan to'ldirish.
+seedSportProducts().catch(error => console.error('[SPORT SEED]', error.message));
 app.listen(Number(process.env.PORT)||4000,()=>console.log('API http://localhost:'+(process.env.PORT||4000)));
