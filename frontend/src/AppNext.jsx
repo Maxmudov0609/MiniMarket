@@ -170,7 +170,7 @@ function readJSON(key, fallback) {
 function persist(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* private browsing */ }
 }
-async function api(path, { method = "GET", data, token, signal } = {}) {
+async function api(path, { method = "GET", data, token, signal, timeoutMs = 25000 } = {}) {
   const controller = new AbortController();
   let abortHandler;
   if (signal) {
@@ -180,7 +180,7 @@ async function api(path, { method = "GET", data, token, signal } = {}) {
       signal.addEventListener("abort", abortHandler, { once: true });
     }
   }
-  const timeout = setTimeout(() => controller.abort(), 25000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch("/api" + path, {
       method,
@@ -652,16 +652,41 @@ function LinkGooglePanel({ user, language, onClose, notify }) {
     </div>
   </Modal>;
 }
+// Brief in-memory order snapshot. Never save authenticated order history to disk.
+let cachedOrderHistory = null;
 function AccountPanel({ user, language, onClose, notify, onLinkGoogle }) {
-  const [orders, setOrders] = useState([]);
-  const [busy, setBusy] = useState(true);
+  const initial = cachedOrderHistory?.token === user.token ? cachedOrderHistory.orders : null;
+  const [orders, setOrders] = useState(() => initial || []);
+  const [busy, setBusy] = useState(() => !initial);
+  const [slow, setSlow] = useState(false);
+  const [error, setError] = useState("");
+  const [refresh, setRefresh] = useState(0);
   useEffect(() => {
-    let alive = true;
-    api("/orders/mine", { token: user.token }).then(data => { if (alive) setOrders(Array.isArray(data) ? data : []); })
-      .catch(error => { if (alive) notify(error.message, "error"); })
-      .finally(() => { if (alive) setBusy(false); });
-    return () => { alive = false; };
-  }, [user.token]);
+    const controller = new AbortController();
+    let active = true;
+    // With cached data the user can read previous orders immediately.
+    const cached = cachedOrderHistory?.token === user.token ? cachedOrderHistory.orders : null;
+    if (!cached) setBusy(true);
+    setSlow(false);
+    setError("");
+    const slowTimer = setTimeout(() => { if (active && !cached) setSlow(true); }, 4000);
+    api("/orders/mine", { token: user.token, signal: controller.signal, timeoutMs: 45000 })
+      .then(data => {
+        if (!active) return;
+        const next = Array.isArray(data) ? data : [];
+        cachedOrderHistory = { token: user.token, orders: next };
+        setOrders(next);
+      })
+      .catch(err => {
+        if (!active || controller.signal.aborted) return;
+        setError(err.message || "Buyurtmalarni yuklab bo‘lmadi");
+      })
+      .finally(() => {
+        clearTimeout(slowTimer);
+        if (active) { setBusy(false); setSlow(false); }
+      });
+    return () => { active = false; controller.abort(); clearTimeout(slowTimer); };
+  }, [user.token, refresh]);
   return <Modal title={WORD(language,"yourOrders")} onClose={onClose} wide>
     <div className="nm-account-head"><div className="nm-avatar">{user.name?.charAt(0)?.toUpperCase() || "M"}</div>
       <div><strong>{user.name}</strong><span>{user.email}</span></div></div>
@@ -669,7 +694,20 @@ function AccountPanel({ user, language, onClose, notify, onLinkGoogle }) {
       <Icon name="shield" size={18}/>
       {language === "en" ? "Connect Google sign-in" : language === "ru" ? "Привязать Google" : "Google orqali kirishni bog‘lash"}
       <Icon name="arrow" size={16}/></button></div>
-    {busy ? <p className="nm-inline-wait">⏳ {WORD(language,"loading")}</p> :
+    {busy ? <div className="mm-orders-wait" role="status">
+      <Icon name="clock" size={25}/>
+      <p>{language === "en" ? "Loading your orders..." : language === "ru" ? "Загружаем ваши заказы..." : "Buyurtmalaringiz yuklanmoqda..."}</p>
+      {slow && <p className="mm-orders-slow">{language === "en" ? "The server is responding slowly. Your orders are safe; this can take longer after inactivity." :
+        language === "ru" ? "Сервер отвечает медленно. Пожалуйста, попробуйте ещё раз, если загрузка не завершится." :
+        "Server sekin javob beryapti. Yuklanish tugamasa, qayta urinib ko‘ring."}</p>}
+    </div> :
+      error && orders.length === 0 ? <div className="mm-orders-error" role="alert">
+        <Icon name="alert" size={28}/>
+        <p>{error}</p>
+        <button type="button" className="nm-primary" onClick={() => setRefresh(n => n + 1)}>
+          {language === "en" ? "Try again" : language === "ru" ? "Повторить" : "Qayta urinish"}
+        </button>
+      </div> :
       orders.length === 0 ? <div className="nm-no-orders"><Icon name="package" size={38}/><p>Hozircha buyurtmalaringiz yo‘q.</p></div> :
       <div className="nm-order-list">{orders.map(order => <article className="nm-order" key={order.id}>
         <div className="nm-order-head"><strong>Buyurtma #{order.id}</strong><span>{order.status || "Yangi"}</span></div>
@@ -1077,8 +1115,9 @@ export default function AppNext() {
     setUser(nextUser); setToken(nextToken); setDialog("");
     notify("✅ Tizimga muvaffaqiyatli kirdingiz");
   }
-  function logout() { setUser(null); setToken(""); setDialog(""); notify("Hisobdan chiqdingiz"); }
+  function logout() { cachedOrderHistory = null; setUser(null); setToken(""); setDialog(""); notify("Hisobdan chiqdingiz"); }
   function orderPlaced(order) {
+    cachedOrderHistory = null;
     setCart([]); setDialog(""); setRefreshKey(x => x + 1);
     notify(WORD(language,"successOrder") + order.id);
   }
