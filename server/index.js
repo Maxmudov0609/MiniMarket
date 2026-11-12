@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { rateLimit } from 'express-rate-limit';
 import { db } from './db.js';
+import { validProductFilters } from './catalogFilters.js';
 
 if (!process.env.JWT_SECRET) throw new Error('Set JWT_SECRET in server/.env');
 
@@ -318,13 +319,7 @@ app.get('/api/products', wrap(async (req, res) => {
     max = '',
     sort = 'new'
   } = req.query;
-  // Enforce bounded, scalar catalog filters to avoid invalid SQL parameters.
-  if ([search, category, min, max, sort].some(v => typeof v !== 'string') ||
-      search.length > 180 || category.length > 180 ||
-      !['new', 'asc', 'desc'].includes(sort) ||
-      [min, max].some(v => v !== '' && (!/^\\d+(?:\\.\\d{1,2})?$/.test(v) ||
-        !Number.isFinite(Number(v)) || Number(v) > 1000000000000)) ||
-      (min !== '' && max !== '' && Number(min) > Number(max))) {
+  if (!validProductFilters({ search, category, min, max, sort })) {
     return res.status(400).json({ error: 'Mahsulot filtrlari noto‘g‘ri' });
   }
 
