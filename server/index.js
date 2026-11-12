@@ -139,7 +139,8 @@ const validProduct = b =>
     (/^https?:\/\//i.test(b.image_url) || /^\/(?!\/)[\w./-]+$/.test(b.image_url))
   ));
 app.post('/api/auth/register', registerLimiter, wrap(async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role } = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? req.body : {};
 
   if (
     typeof name !== 'string' || !name.trim() ||
@@ -182,8 +183,13 @@ app.post('/api/auth/register', registerLimiter, wrap(async (req, res) => {
   });
 }));
 app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
-  const email = String(req.body.email || '').trim().toLowerCase();
-  const password = String(req.body.password || '');
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
+      typeof req.body.email !== 'string' || typeof req.body.password !== 'string' ||
+      req.body.email.length > 320 || req.body.password.length > 2048) {
+    return res.status(400).json({ error: 'Login ma’lumotlari noto‘g‘ri' });
+  }
+  const email = req.body.email.trim().toLowerCase();
+  const password = req.body.password;
 
   const result = await db.query(
     'SELECT * FROM users WHERE email=$1',
@@ -206,7 +212,8 @@ app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
   });
 }));
 app.post('/api/auth/google', loginLimiter, wrap(async (req, res) => {
-  const { credential } = req.body;
+  const { credential } = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
+    ? req.body : {};
 
   if (!credential || typeof credential !== 'string') {
     return res.status(400).json({ error: 'Google token yuborilmadi' });
@@ -374,12 +381,16 @@ console.log(
   res.json(result.rows);
 }));
 app.get('/api/products/:id', wrap(async (req, res) => {
+  const productId = Number(req.params.id);
+  if (!Number.isSafeInteger(productId) || productId < 1) {
+    return res.status(404).json({ error: 'Mahsulot topilmadi' });
+  }
   const result = await db.query(
     `SELECT p.*, u.name AS seller_name
      FROM products p
      JOIN users u ON u.id = p.seller_id
-     WHERE p.id = $1`,
-    [req.params.id]
+     WHERE p.id = $1 AND p.is_active = TRUE`,
+    [productId]
   );
 
   const product = result.rows[0];
