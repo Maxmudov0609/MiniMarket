@@ -132,6 +132,35 @@ const WORDS = {
 };
 const WORD = (lang, key) => WORDS[lang]?.[key] || WORDS.uz[key] || key;
 const money = value => new Intl.NumberFormat("uz-UZ").format(Math.round(Number(value) || 0)) + " so‘m";
+// Order estimates are displayed in Uzbekistan (Asia/Tashkent, UTC+05:00) time.
+const deliveryDate = (iso, language = "uz") => {
+  if (!iso || Number.isNaN(Date.parse(iso))) return null;
+  return new Intl.DateTimeFormat(language === "ru" ? "ru-RU" : language === "en" ? "en-GB" : "uz-UZ", {
+    timeZone:"Asia/Tashkent", day:"2-digit",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"
+  }).format(new Date(iso));
+};
+const tashkentDateInput = iso => iso && !Number.isNaN(Date.parse(iso))
+  ? new Date(Date.parse(iso)+5*3600000).toISOString().slice(0,16) : "";
+const uploadProductPhoto = async (productId, file, token) => {
+  const types = ["image/jpeg","image/png","image/webp"];
+  if (!types.includes(file.type) || file.size > 1500000 || file.size < 24) {
+    throw new Error("JPEG, PNG yoki WebP rasm tanlang (1.5 MB gacha)");
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch("/api/seller/products/"+encodeURIComponent(productId)+"/image", {
+      method:"PUT",headers:{"Content-Type":file.type,Authorization:"Bearer "+token},
+      body:file,signal:controller.signal
+    });
+    const result=await response.json().catch(()=>({}));
+    if (!response.ok) throw new Error(result.error || "Rasmni yuklab bo‘lmadi");
+    return result;
+  } catch(error) {
+    if (error.name === "AbortError") throw new Error("Rasm yuklash vaqti tugadi. Qayta urinib ko‘ring.");
+    throw error;
+  } finally { clearTimeout(timeout); }
+};
 function readJSON(key, fallback) {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
   catch { return fallback; }
@@ -248,11 +277,12 @@ function ProductPicture({ product, className = "", eager = false }) {
   const [broken, setBroken] = useState(false);
   useEffect(() => setBroken(false), [url]);
   if (!url || broken) {
-    return <div className={"nm-art mm-image-fallback " + className} role="img"
-      aria-label={product.name + " uchun rasm hozircha mavjud emas"}>
-      <div className="mm-fallback-graphic"><Icon name="package" size={35} strokeWidth={1.25}/></div>
-      <small>MINIMARKET</small>
-      <span>Rasm mavjud emas</span>
+    const categoryIcon = CATEGORY_PICTURES[product?.category] || "📦";
+    return <div className={"nm-art mm-image-fallback mm-category-image-fallback " + className} role="img"
+      aria-label={product.name + " uchun surat kiritilmagan"}>
+      <div className="mm-category-product-icon" aria-hidden="true">{categoryIcon}</div>
+      <small>{product?.category || "MiniMarket"}</small>
+      <span>Mahsulot rasmi kutilmoqda</span>
     </div>;
   }
   return <div className={"nm-product-image " + className}>
@@ -628,7 +658,20 @@ function AccountPanel({ user, language, onClose, notify, onLinkGoogle }) {
       <div className="nm-order-list">{orders.map(order => <article className="nm-order" key={order.id}>
         <div className="nm-order-head"><strong>Buyurtma #{order.id}</strong><span>{order.status || "Yangi"}</span></div>
         <p>{money(order.total_amount)} · {new Date(order.created_at).toLocaleDateString("uz-UZ")}</p>
-        <div>{order.items?.map(item => <p key={item.id} className="nm-order-item">{item.product_name} × {item.quantity} <span>{item.status || "Yangi"}</span></p>)}</div>
+        <div>{order.items?.map(item => <div key={item.id} className="nm-order-item mm-order-item">
+          <div className="mm-order-item-head"><strong>{item.product_name} × {item.quantity}</strong>
+            <span>{item.status || "Yangi"}</span></div>
+          <div className="mm-order-delivery">
+            <Icon name="truck" size={17}/>
+            {deliveryDate(item.estimated_delivery_at, language)
+              ? <span>{language === "en" ? "Expected delivery" : language === "ru" ? "Ожидаемая доставка" : "Taxminiy yetkazish"}: <strong>{deliveryDate(item.estimated_delivery_at, language)}</strong> (Toshkent vaqti)</span>
+              : <span>{item.status === "Yetkazilgan" ?
+                (language === "en" ? "Delivered" : language === "ru" ? "Доставлено" : "Yetkazilgan") :
+                (language === "en" ? "Delivery time will appear when the seller confirms" :
+                  language === "ru" ? "Время доставки появится после подтверждения продавцом" :
+                  "Sotuvchi buyurtmani qabul qilgach, vaqt shu yerda chiqadi")}</span>}
+          </div>
+        </div>)}</div>
       </article>)}</div>}
   </Modal>;
 }
@@ -659,6 +702,7 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
     event.preventDefault();
     const form = event.currentTarget;
     const f = form.elements;
+    const photo = f.photo?.files?.[0];
     const payload = {
       name: f.name.value.trim(), description: f.description.value.trim(),
       price: Number(f.price.value), category: f.category.value,
@@ -672,9 +716,17 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
     }
     setBusy(true);
     try {
-      await api(edit ? "/products/" + edit.id : "/products", {
+      const result = await api(edit ? "/products/" + edit.id : "/products", {
         method: edit ? "PUT" : "POST", token: user.token, data: payload
       });
+      if(photo) {
+        try { await uploadProductPhoto(edit?.id || result.id, photo, user.token); }
+        catch(error) {
+          setReload(n=>n+1);onProductsChanged();
+          notify("Mahsulot saqlandi, lekin rasm yuklanmadi: " + error.message,"error");
+          return;
+        }
+      }
       setEditing(false); setEdit(null); setReload(n => n + 1); onProductsChanged();
       notify("✅ Mahsulot saqlandi");
     } catch (error) { notify(error.message, "error"); }
@@ -719,7 +771,14 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
         </div>
         {edit && <label>Eski narx (ixtiyoriy)<input name="old_price" type="number" min={1} step={1} defaultValue={edit.old_price || ""}/></label>}
         {!edit && <input type="hidden" name="old_price" value=""/>}
-        <label>{WORD(language,"image")}<input name="image_url" type="url" placeholder="https://..." defaultValue={edit?.image_url || ""}/></label>
+        <label>Mahsulot rasmini kompyuterdan yuklash
+          <input name="photo" type="file" accept="image/jpeg,image/png,image/webp"/>
+          <small>JPEG, PNG, WebP · 1.5 MB gacha. Surat mahsulotga mos bo‘lishi kerak.</small>
+        </label>
+        <label>{WORD(language,"image")} (havola, ixtiyoriy)
+          <input name="image_url" type="url" placeholder="https://..." defaultValue={edit?.image_url || ""}/>
+        </label>
+        {edit && <div className="mm-seller-photo-preview"><ProductPicture product={edit}/><span>Hozirgi mahsulot rasmi</span></div>}
         <button className="nm-primary nm-full" type="submit" disabled={busy}>{busy ? "⏳" : WORD(language,"save")}</button>
       </form> :
       <div className="nm-seller-content">
