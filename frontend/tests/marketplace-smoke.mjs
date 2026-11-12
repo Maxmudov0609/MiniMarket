@@ -152,10 +152,13 @@ async function runDesktop() {
 
 
 
+
 async function runCategoryIntegrity() {
   const baseItems=[
     {id:3101,name:'Kichik stol lampasi',category:'Uy jihozlari',price:55000},
-    {id:3102,name:'Fairy idish yuvish vositasi',category:'Maishiy kimyo',price:24000}
+    {id:3102,name:'Fairy idish yuvish vositasi',category:'Maishiy kimyo',price:24000},
+    {id:3103,name:'Choynak 1 L',category:"Uy-roʻzgʻor",price:65000},
+    {id:3104,name:'Elektr choynak',category:'Uy-ro‘zg‘or',price:230000}
   ].map(p=>({description:'Test',stock:5,image_url:'',is_active:true,seller_name:'MiniMarket',
     created_at:'2026-11-01T00:00:00Z',...p}));
   async function pageFor(items,viewport) {
@@ -174,37 +177,36 @@ async function runCategoryIntegrity() {
     return {context,page,errors};
   }
 
-  // Previously category filtering required exact apostrophe characters.
-  const variant={...baseItems[0],id:3103,name:'Choynak 1 L',category:"Uy-roʻzgʻor"};
-  let instance=await pageFor([...baseItems,variant],{width:1280,height:850});
+  let instance=await pageFor(baseItems,{width:1280,height:850});
   let {context,page,errors}=instance;
-  await page.locator('.mm-category-tile[aria-label="Uy-ro‘zg‘or"]').click();
-  assert.equal(await page.locator('.mm-product-card').count(),1,
-    'Equivalent Uzbek apostrophe variants belong to the same category');
+  assert.equal(await page.locator('.mm-category-tile[aria-label="Uy jihozlari"]').count(),0,
+    'Duplicate home category should not appear in navigation');
+  const tile=page.locator('.mm-category-tile[aria-label="Uy-ro‘zg‘or"]');
+  assert.ok((await tile.innerText()).includes('3 ta mahsulot'),
+    'All historic household category labels must count together');
+  await tile.click();
+  assert.equal(await page.locator('.mm-product-card').count(),3,
+    'Old Uy jihozlari and Uy-ro‘zg‘or must share one browsing category');
+  assert.ok(await page.getByText('Kichik stol lampasi').first().isVisible());
   assert.ok(await page.getByText('Choynak 1 L').first().isVisible());
   assert.equal(await page.locator('[data-testid=empty-category]').count(),0);
-  assert.deepEqual(errors,[],'No runtime errors when category names differ in apostrophes');
+  assert.deepEqual(errors,[],'No category runtime errors');
   await context.close();
 
-  // Empty categories should not pretend to contain unrelated items.
+  // Truly empty categories show honestly labelled alternatives.
   instance=await pageFor(baseItems,{width:390,height:844});
   ({context,page,errors}=instance);
-  await page.locator('.mm-category-tile[aria-label="Uy-ro‘zg‘or"]').click();
+  await page.locator('.mm-category-tile[aria-label="Sport"]').click();
   await page.locator('[data-testid=empty-category]').waitFor();
-  assert.ok(await page.getByText('Bu bo‘limga hali mahsulot qo‘shilmagan').isVisible(),
-    'Empty category must be described honestly');
-  assert.equal(await page.locator('.mm-related-grid .mm-product-card').count(),2,
-    'Related products should show actual items from other categories');
-  assert.equal(await page.locator('.nm-catalog-meta strong').innerText(),'0',
-    'Original empty category count must remain zero');
+  assert.ok(await page.getByText('Bu bo‘limga hali mahsulot qo‘shilmagan').isVisible());
+  assert.equal(await page.locator('.mm-related-grid .mm-product-card').count(),4);
+  assert.equal(await page.locator('.nm-catalog-meta strong').innerText(),'0');
   await page.locator('.mm-related-grid .mm-product-card').first().locator('.mm-card-add').click();
   await page.locator('.nm-mobile-tabs button').filter({hasText:'Savatcha'}).click();
-  assert.ok(await page.locator('.nm-cart-item').isVisible(),'Related product adds to cart on mobile');
-  await page.screenshot({path:'smoke-empty-category-mobile.png',fullPage:true});
-  assert.deepEqual(errors,[],'No mobile runtime errors on empty categories');
+  assert.ok(await page.locator('.nm-cart-item').isVisible(),'Related item can be added on mobile');
+  assert.deepEqual(errors,[]);
   await context.close();
 }
-
 
 async function runRealProductPhotos() {
   const cases=[
