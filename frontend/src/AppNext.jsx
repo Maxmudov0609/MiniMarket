@@ -13,8 +13,7 @@ const CATEGORIES = [
   ["Shirinliklar", "🍫"], ["Maishiy kimyo", "🫧"],
   ["Gigiyena vositalari", "🧴"], ["Bolalar uchun", "🧸"],
   ["Uy-ro‘zg‘or", "🏡"], ["Elektronika", "🎧"],
-  ["Kiyim-kechak", "👟"], ["Uy jihozlari", "🛋️"],
-  ["Sport", "⚽"], ["Boshqalar", "🛍️"]
+  ["Kiyim-kechak", "👟"], ["Sport", "⚽"], ["Boshqalar", "🛍️"]
 ];
 const WORDS = {
   uz: {
@@ -1047,7 +1046,7 @@ export default function AppNext() {
   }
   function goCatalog(nextCategory = "", preserveSearch = false) {
     setFavoritesOnly(false);
-    setCategory(nextCategory);
+    setCategory(categoryKey(nextCategory) === categoryKey("Uy jihozlari") ? "Uy-ro‘zg‘or" : nextCategory);
     if (!preserveSearch) {
       setQuery(""); setMinPrice(""); setMaxPrice(""); setOnlyAvailable(false);
     }
@@ -1226,7 +1225,7 @@ export default function AppNext() {
           <button className="nm-text-link" type="button" onClick={() => goCatalog("")}>{WORD(language,"catalog")} <Icon name="arrow" size={18}/></button>
         </div>
         <div className="nm-categories-grid mm-categories-grid">{CATEGORIES.map(([name],index) => {
-          const iconNames = ["bottle","utensils","gift","spark","droplet","heart","home","laptop","shirt","package","star","bag"];
+          const iconNames = ["bottle","utensils","gift","spark","droplet","heart","home","laptop","shirt","star","bag"];
           const amount = categoryCounts.get(categoryKey(name)) || 0;
           const empty = loadStatus === "ready" && amount === 0;
           return <button key={name}
