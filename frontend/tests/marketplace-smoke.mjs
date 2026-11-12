@@ -329,6 +329,42 @@ async function runSeller() {
   await context.close();
 }
 
+
+async function runOrderHistoryRetry() {
+  const context=await browser.newContext({viewport:{width:1280,height:850},reducedMotion:'reduce'});
+  const page=await context.newPage();
+  page.setDefaultTimeout(15000);
+  await useMockData(page);
+  let requested=0;
+  await page.route('**/api/orders/mine',route=>{
+    requested++;
+    if(requested<=2) return route.fulfill({
+      status:503,contentType:'application/json',body:JSON.stringify({error:'Server vaqtincha band'})
+    });
+    return route.fulfill({
+      status:200,contentType:'application/json',
+      body:JSON.stringify([{id:900,created_at:new Date().toISOString(),total_amount:25000,
+        items:[{id:901,product_name:'Tuxum 10 dona',quantity:1,status:'Yangi'}]}])
+    });
+  });
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.locator('.nm-signin').click();
+  await page.locator('.nm-dialog [name=email]').fill('buyer@example.test');
+  await page.locator('.nm-dialog [name=password]').fill('password123');
+  await page.locator('.nm-dialog form button[type=submit]').click();
+  await page.locator('.nm-dialog').waitFor({state:'detached'});
+  await page.locator('.nm-account-trigger').click();
+  await page.getByText('Server vaqtincha band').waitFor();
+  await page.locator('.mm-orders-error button').click();
+  await page.getByText('Buyurtma #900').waitFor();
+  assert.ok(requested>=3,'Retry must issue a new authenticated request');
+  await page.locator('.nm-dialog-heading .nm-icon-btn').click();
+  await page.locator('.nm-account-trigger').click();
+  assert.ok(await page.getByText('Buyurtma #900').isVisible(),
+    'Recently loaded orders should appear immediately from memory');
+  await context.close();
+}
+
 async function runMobile() {
   const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});
   const page=await context.newPage();
@@ -365,6 +401,8 @@ try {
   console.log('PASS seller: ETA confirmation, product photo upload, creation, editing and deletion');
   await runMobile();
   console.log('PASS mobile: catalog, card, cart, tab navigation');
+  await runOrderHistoryRetry();
+  console.log('PASS orders: failed fetch retry and instant cached reopen');
 } catch (error) {
   console.error('FAIL marketplace browser test:', error);
   exitCode = 1;

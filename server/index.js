@@ -676,29 +676,37 @@ res.status(201).json(result);
 }));
 app.get('/api/orders/mine', auth('buyer'), wrap(async (req, res) => {
   await deliverySchema();
+  const startedAt = performance.now();
+
+  // One orders query and one batched items query; no per-order round trips.
   const ordersResult = await db.query(
     'SELECT * FROM orders WHERE buyer_id=$1 ORDER BY id DESC',
     [req.user.id]
   );
-
-  const orders = [];
-
-  for (const order of ordersResult.rows) {
-    const itemsResult = await db.query(
-      `SELECT id, order_id, product_id, product_name,
-              quantity, unit_price, status, estimated_delivery_at
-       FROM order_items
-       WHERE order_id=$1`,
-      [order.id]
-    );
-
-    orders.push({
-      ...order,
-      items: itemsResult.rows
-    });
+  const orders = ordersResult.rows;
+  if (orders.length === 0) {
+    res.set('Cache-Control', 'private, no-store');
+    return res.json([]);
   }
 
-  res.json(orders);
+  const itemsResult = await db.query(
+    `SELECT id, order_id, product_id, product_name,
+            quantity, unit_price, status, estimated_delivery_at
+     FROM order_items WHERE order_id = ANY($1::bigint[])
+     ORDER BY order_id DESC, id ASC`,
+    [orders.map(order => order.id)]
+  );
+  const byOrder = new Map(orders.map(order => [String(order.id), []]));
+  for (const item of itemsResult.rows) {
+    byOrder.get(String(item.order_id))?.push(item);
+  }
+
+  res.set('Cache-Control', 'private, no-store');
+  res.set('Server-Timing', 'order-history;dur=' + (performance.now() - startedAt).toFixed(1));
+  res.json(orders.map(order => ({
+    ...order,
+    items: byOrder.get(String(order.id)) || []
+  })));
 }));
 app.get('/api/seller/orders', auth('seller'), wrap(async (req, res) => {
   await deliverySchema();
