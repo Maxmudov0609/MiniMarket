@@ -5,6 +5,7 @@ import "./MarketSearch.css";
 import "./MarketplaceRefinements.css";
 import "./MarketV3.css";
 import { matchedPhoto, categoryPreview } from "./productImageSources";
+import { categoryKey, getCategoryCounts, getRelatedProducts, isCatalogProduct } from "./catalogCategories";
 
 const GOOGLE_CLIENT_ID = "957838455109-tsmj5fstgcncsjj19qo29sfkoe9i3kfa.apps.googleusercontent.com";
 const CATEGORIES = [
@@ -976,11 +977,18 @@ export default function AppNext() {
   useEffect(() => { document.body.classList.toggle("nm-lock-scroll", !!dialog); return () => document.body.classList.remove("nm-lock-scroll"); }, [dialog]);
   useEffect(() => setVisibleCount(12), [query, category, sort, minPrice, maxPrice, favoritesOnly, onlyAvailable]);
 
+  const categoryCounts = useMemo(() => getCategoryCounts(products), [products]);
+  const categoryEmpty = !!category && (categoryCounts.get(categoryKey(category)) || 0) === 0;
+  const showRelated = categoryEmpty && !query.trim() && !minPrice && !maxPrice &&
+    !favoritesOnly && !onlyAvailable && loadStatus === "ready";
+  const relatedProducts = useMemo(() => showRelated
+    ? getRelatedProducts(products, category, 6) : [], [products, category, showRelated]);
+
   const searchProducts = useMemo(() => {
-    let rows = products.filter(p => p.is_active !== false && Number(p.price) > 0);
+    let rows = products.filter(isCatalogProduct);
     const q = query.trim().toLocaleLowerCase();
     if (q) rows = rows.filter(p => (p.name + " " + p.category + " " + (p.description || "")).toLocaleLowerCase().includes(q));
-    if (category) rows = rows.filter(p => p.category === category);
+    if (category) rows = rows.filter(p => categoryKey(p.category) === categoryKey(category));
     if (minPrice) rows = rows.filter(p => Number(p.price) >= Number(minPrice));
     if (maxPrice) rows = rows.filter(p => Number(p.price) <= Number(maxPrice));
     if (favoritesOnly) rows = rows.filter(p => favorites.some(id => String(id) === String(p.id)));
@@ -991,10 +999,10 @@ export default function AppNext() {
     return rows;
   }, [products, query, category, minPrice, maxPrice, favoritesOnly, favorites, sort, onlyAvailable]);
   const showcased = useMemo(() => products
-    .filter(p => p.is_active !== false && Number(p.stock) > 0 && Number(p.price) > 0 && productImage(p))
+    .filter(p => isCatalogProduct(p) && Number(p.stock) > 0 && productImage(p))
     .sort((a,b) => Number(b.id)-Number(a.id))
     .slice(0,2), [products]);
-  const catalogCount = products.filter(p => p.is_active !== false && Number(p.price) > 0).length;
+  const catalogCount = products.filter(isCatalogProduct).length;
   const count = cart.reduce((sum,p) => sum + p.quantity, 0);
   const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function goTop() { window.scrollTo({top:0,behavior:reducedMotion() ? "auto":"smooth"}); }
@@ -1183,11 +1191,18 @@ export default function AppNext() {
         </div>
         <div className="nm-categories-grid mm-categories-grid">{CATEGORIES.map(([name],index) => {
           const iconNames = ["bottle","utensils","gift","spark","droplet","heart","home","laptop","shirt","package","star","bag"];
-          return <button key={name} className={"nm-category-tile mm-category-tile mm-cat-" + (index % 6)}
+          const amount = categoryCounts.get(categoryKey(name)) || 0;
+          const empty = loadStatus === "ready" && amount === 0;
+          return <button key={name}
+            className={"nm-category-tile mm-category-tile mm-cat-" + (index % 6) + (empty ? " mm-category-empty" : "")}
             type="button" onClick={() => goCatalog(name)} aria-label={name}>
             <span className="mm-category-number">{String(index+1).padStart(2,"0")}</span>
             <span className="mm-category-media"><Icon name={iconNames[index]} size={39} strokeWidth={1.45}/></span>
-            <span className="mm-category-title">{name}</span><span className="mm-category-arrow"><Icon name="arrow" size={17}/></span>
+            <span className="mm-category-title">{name}</span>
+            <span className="mm-category-availability">{loadStatus === "ready"
+              ? (amount ? amount + " " + WORD(language,"found") :
+                (language === "en" ? "Coming soon" : language === "ru" ? "Скоро" : "Hozircha bo‘sh")) : ""}</span>
+            <span className="mm-category-arrow"><Icon name="arrow" size={17}/></span>
           </button>;
         })}</div>
       </section>
@@ -1236,9 +1251,33 @@ export default function AppNext() {
         </div>}
         {loadStatus === "loading" && !products.length ? <div className="nm-grid">
           {Array.from({ length:8 },(_,i) => <div key={i} className="nm-skeleton"><div/><span/><span/><span/></div>)}
+        </div> : searchProducts.length === 0 && showRelated ? <div className="mm-empty-category" data-testid="empty-category">
+          <div className="mm-empty-category-intro">
+            <span className="mm-empty-category-symbol" aria-hidden="true">🏡</span>
+            <h3>{language === "en" ? "No products in this category yet" :
+              language === "ru" ? "В этой категории пока нет товаров" : "Bu bo‘limga hali mahsulot qo‘shilmagan"}</h3>
+            <p>{language === "en" ? "These are real products from other categories, not household goods." :
+              language === "ru" ? "Ниже настоящие товары из других разделов, а не из этой категории." :
+              "Quyida boshqa bo‘limlarda mavjud haqiqiy mahsulotlarni ko‘rishingiz mumkin."}</p>
+            <button type="button" className="nm-primary" onClick={() => goCatalog("")}>
+              {WORD(language,"catalog")} <Icon name="arrow" size={17}/>
+            </button>
+          </div>
+          {relatedProducts.length > 0 && <>
+            <h4 className="mm-related-heading">{language === "en" ? "You may also like — other categories" :
+              language === "ru" ? "Возможно, вас заинтересует — другие категории" :
+              "Boshqa kategoriyalardagi tavsiyalar"}</h4>
+            <div className="nm-grid mm-related-grid">
+              {relatedProducts.map((product,index) => <ProductCard key={product.id} product={product}
+                eager={index < 2} language={language} onAdd={addToCart}
+                favorite={favorites.some(id => String(id) === String(product.id))}
+                onFavorite={toggleFavorite}
+                onOpen={p => {setSelectedProduct(p);setDialog("product");}}/>)}
+            </div>
+          </>}
         </div> : searchProducts.length === 0 ? <div className="nm-no-results">
           <div>🔎</div><h3>{WORD(language,"noResults")}</h3><p>{WORD(language,"noResultsText")}</p>
-          <button type="button" className="nm-primary" onClick={() => { setCategory("");setQuery("");setMinPrice("");setMaxPrice("");setFavoritesOnly(false); }}>{WORD(language,"clear")}</button>
+          <button type="button" className="nm-primary" onClick={() => { setCategory("");setQuery("");setMinPrice("");setMaxPrice("");setFavoritesOnly(false);setOnlyAvailable(false); }}>{WORD(language,"clear")}</button>
         </div> :
         <>
           <div className="nm-grid">{searchProducts.slice(0,visibleCount).map((product,index) => <ProductCard key={product.id} product={product} eager={index < 4} language={language}
