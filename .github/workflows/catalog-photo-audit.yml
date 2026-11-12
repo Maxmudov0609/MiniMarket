@@ -1,0 +1,32 @@
+name: Live catalog photo inventory (read-only)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  catalog-photo-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Audit published product image references
+        id: audit
+        continue-on-error: true
+        run: node scripts/audit-catalog-photos.mjs https://market-mj.uz/api/products
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-catalog-photo-audit
+          path: catalog-photo-audit.json
+          if-no-files-found: warn
+      - name: Explain incomplete report
+        if: steps.audit.outcome != 'success'
+        run: echo "::warning::Live products API was inaccessible; no product image coverage claims can be made."
