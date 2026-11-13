@@ -634,3 +634,35 @@ body {background:#f7f8fc}
 .nm-app .mm-catalog-failed button{margin-top:6px;padding:12px 22px;border-radius:12px}
 @media(max-width:560px){.nm-app .mm-catalog-loading-note{padding:15px;gap:9px}}
 @media(prefers-reduced-motion:reduce){.nm-app .mm-catalog-loading-note>svg{animation:none}}
+
+/* Sharp catalog photos: no pastel overlay or artificial blur for HD samples. */
+.nm-app .mm-card-image-trigger .nm-product-image.mm-hd-photo {
+  padding: 0 !important;
+  background: #f8f9fc;
+  overflow: hidden;
+}
+.nm-app .mm-card-image-trigger .mm-hd-photo img {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
+  opacity: 1;
+  filter: none;
+  image-rendering: auto;
+  mix-blend-mode: normal;
+}
+.nm-app .mm-product-gallery .mm-hd-photo img,
+.nm-app .mm-product-hero-photo.mm-hd-photo img {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  background: #fff;
+  image-rendering: auto;
+  filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nm-app .mm-card-image-trigger .mm-hd-photo img {transition:none}
+}
