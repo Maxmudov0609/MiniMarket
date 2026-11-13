@@ -253,11 +253,11 @@ const HIGH_RES_SAMPLE_PHOTOS = [
   [/^xiaomi\s*power\s*bank\s*10000\s*m(?:a|ah|a[h])h?$/i,
     "https://commons.wikimedia.org/wiki/Special:FilePath/Powerbank_Xiaomi%2C_1.jpg?width=1200"],
   [/^20\s*w\s*usb\s*[-–]?\s*c\s*adapter$/i,
-    "https://images.unsplash.com/photo-1770417999317-64fb254c9e3a?auto=format&fit=crop&w=1200&q=88"],
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Baseus_CCCP20UE_20W_USB_charger-1.jpg?width=1200"],
   [/^telefon\s*ushlagichi$/i,
-    "https://images.unsplash.com/photo-1698314440355-eaf5ff14899c?auto=format&fit=crop&w=1200&q=88"],
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Mobile_holder.jpg?width=1200"],
   [/^simsiz\s*sichqoncha$/i,
-    "https://images.unsplash.com/photo-1611846199341-e68b0da801eb?auto=format&fit=crop&w=1200&q=88"]
+    "https://commons.wikimedia.org/wiki/Special:FilePath/Wireless_computer_mouse.jpg?width=1200"]
 ];
 const LOCAL_PRODUCT_PREVIEWS = [
   [/^ariel\s*1[.,]?5\s*kg$/i, "/product-previews/ariel-15kg.svg"],
