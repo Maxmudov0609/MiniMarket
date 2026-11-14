@@ -33,8 +33,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cors({
-  origin: [
+const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
@@ -42,9 +41,20 @@ app.use(cors({
     "https://mini-market-git-design-premium-refresh-2026-11-maxmudov0609.vercel.app",
     "https://market-mj.uz",
     "https://www.market-mj.uz"
-  ]
-}));
+];
+app.use(cors({ origin: allowedOrigins, exposedHeaders: ['X-CSRF-Token'] }));
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+app.use('/api', (req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  const origin = req.get('origin');
+  if (origin && !allowedOrigins.includes(origin)) {
+    return res.status(403).json({ error: 'Ruxsat yo‘q' });
+  }
+  if (req.get('sec-fetch-site') === 'cross-site') {
+    return res.status(403).json({ error: 'Ruxsat yo‘q' });
+  }
+  next();
+});
 
 app.use(express.json({limit:'100kb'}));
 const wrap = fn => (req, res, next) => {
