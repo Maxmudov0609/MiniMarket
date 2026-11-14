@@ -495,8 +495,8 @@ function AuthPanel({ language, onClose, onSuccess, notify }) {
     <form className="nm-form" onSubmit={submit}>
       {mode === "register" && <label>{WORD(language, "yourName")}<input name="name" minLength={2} maxLength={100} autoComplete="name" required placeholder="Ismingiz"/></label>}
       <label>{WORD(language, "email")}<input name="email" type="email" autoComplete="email" required placeholder="you@gmail.com"/></label>
-      <label>{WORD(language, "password")}<input name="password" type="password" minLength={8}
-        autoComplete={mode === "register" ? "new-password" : "current-password"} required placeholder="Kamida 8 ta belgi"/></label>
+      <label>{WORD(language, "password")}<input name="password" type="password" minLength={mode === "register" ? 12 : 8}
+        autoComplete={mode === "register" ? "new-password" : "current-password"} required placeholder={mode === "register" ? "Kamida 12 ta belgi" : "Parolingiz"}/></label>
       {mode === "register" && <label>{WORD(language, "account")}
         <select value={role} onChange={event => setRole(event.target.value)}>
           <option value="buyer">{WORD(language, "buyer")}</option>
