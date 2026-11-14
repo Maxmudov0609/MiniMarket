@@ -32,7 +32,7 @@ test('session cookie is HttpOnly, SameSite Strict, and scoped to root', () => {
   assert.equal(calls[0][3].httpOnly,true);
   assert.equal(calls[0][3].sameSite,'strict');
   assert.equal(calls[0][3].path,'/');
-  assert.equal(calls[1][2]['X-CSRF-Token'],csrfFor(jwt,key));
+  assert.equal(calls[1][1]['X-CSRF-Token'],csrfFor(jwt,key));
   endSession(res);
   assert.equal(calls[2][1],SESSION_COOKIE);
 });
