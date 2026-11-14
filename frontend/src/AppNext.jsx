@@ -143,6 +143,7 @@ const deliveryDate = (iso, language = "uz") => {
 };
 const tashkentDateInput = iso => iso && !Number.isNaN(Date.parse(iso))
   ? new Date(Date.parse(iso)+5*3600000).toISOString().slice(0,16) : "";
+let sessionCsrfToken = "";
 const uploadProductPhoto = async (productId, file, token) => {
   const types = ["image/jpeg","image/png","image/webp"];
   if (!types.includes(file.type) || file.size > 1500000 || file.size < 24) {
@@ -152,7 +153,7 @@ const uploadProductPhoto = async (productId, file, token) => {
   const timeout = setTimeout(() => controller.abort(), 30000);
   try {
     const response = await fetch("/api/seller/products/"+encodeURIComponent(productId)+"/image", {
-      method:"PUT",headers:{"Content-Type":file.type,Authorization:"Bearer "+token},
+      method:"PUT",headers:{"Content-Type":file.type,...(token && token !== "session" ? {Authorization:"Bearer "+token} : {}),...(sessionCsrfToken ? {"X-CSRF-Token":sessionCsrfToken} : {})},
       body:file,signal:controller.signal
     });
     const result=await response.json().catch(()=>({}));
@@ -185,10 +186,13 @@ async function api(path, { method = "GET", data, token, signal, timeoutMs = 2500
     const response = await fetch("/api" + path, {
       method,
       headers: { ...(data !== undefined ? { "Content-Type": "application/json" } : {}),
-        ...(token ? { Authorization: "Bearer " + token } : {}) },
+        ...(token && token !== "session" ? { Authorization: "Bearer " + token } : {}),
+        ...(sessionCsrfToken && !["GET", "HEAD", "OPTIONS"].includes(method) ? { "X-CSRF-Token": sessionCsrfToken } : {}) },
       body: data === undefined ? undefined : JSON.stringify(data),
       signal: controller.signal
     });
+    const issuedCsrf = response.headers.get("x-csrf-token");
+    if (issuedCsrf) sessionCsrfToken = issuedCsrf;
     const contentType = response.headers.get("content-type") || "";
     const body = contentType.includes("application/json")
       ? await response.json()
@@ -454,8 +458,8 @@ function AuthPanel({ language, onClose, onSuccess, notify }) {
         callback: async response => {
           try {
             const data = await api("/auth/google", { method: "POST", data: { credential: response.credential } });
-            if (!data.user || !data.token) throw new Error("Google login javobi to‘liq emas");
-            onSuccess(data.user, data.token);
+            if (!data.user) throw new Error("Google login javobi to‘liq emas");
+            onSuccess(data.user, "session");
           } catch (error) { notify(error.message, "error"); }
         }
       });
@@ -482,8 +486,8 @@ function AuthPanel({ language, onClose, onSuccess, notify }) {
     try {
       const result = await api("/auth/" + (mode === "register" ? "register" : "login"),
         { method: "POST", data });
-      if (!result.user || !result.token) throw new Error("Server javobi noto‘g‘ri");
-      onSuccess(result.user, result.token);
+      if (!result.user) throw new Error("Server javobi noto‘g‘ri");
+      onSuccess(result.user, "session");
     } catch (error) { notify(error.message, "error"); }
     finally { setBusy(false); }
   }
@@ -495,8 +499,8 @@ function AuthPanel({ language, onClose, onSuccess, notify }) {
     <form className="nm-form" onSubmit={submit}>
       {mode === "register" && <label>{WORD(language, "yourName")}<input name="name" minLength={2} maxLength={100} autoComplete="name" required placeholder="Ismingiz"/></label>}
       <label>{WORD(language, "email")}<input name="email" type="email" autoComplete="email" required placeholder="you@gmail.com"/></label>
-      <label>{WORD(language, "password")}<input name="password" type="password" minLength={8}
-        autoComplete={mode === "register" ? "new-password" : "current-password"} required placeholder="Kamida 8 ta belgi"/></label>
+      <label>{WORD(language, "password")}<input name="password" type="password" minLength={mode === "register" ? 12 : 8}
+        autoComplete={mode === "register" ? "new-password" : "current-password"} required placeholder={mode === "register" ? "Kamida 12 ta belgi" : "Parolingiz"}/></label>
       {mode === "register" && <label>{WORD(language, "account")}
         <select value={role} onChange={event => setRole(event.target.value)}>
           <option value="buyer">{WORD(language, "buyer")}</option>
@@ -1068,11 +1072,8 @@ export default function AppNext() {
       ? oldCart.map(item => ({ id: item.id, quantity: Number(item.quantity) || 1, name: item.name, price: item.price, category: item.category, image_url: item.image_url, stock: item.stock }))
       : [];
   });
-  const [user, setUser] = useState(() => readJSON("minimarket_user", null));
-  const [token, setToken] = useState(() => {
-    try { return localStorage.getItem("minimarket_token") || ""; }
-    catch { return ""; }
-  });
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState("");
   const [dialog, setDialog] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -1097,16 +1098,19 @@ export default function AppNext() {
   useEffect(() => persist("minimarket_cart", cart), [cart]);
   useEffect(() => persist("minimarket_favorites", favorites), [favorites]);
   useEffect(() => {
+    // Never persist authentication tokens or account data in localStorage.
     try {
-      if (token && user) {
-        localStorage.setItem("minimarket_token",token);
-        persist("minimarket_user",user);
-      } else {
-        localStorage.removeItem("minimarket_token");
-        localStorage.removeItem("minimarket_user");
-      }
+      localStorage.removeItem("minimarket_token");
+      localStorage.removeItem("minimarket_user");
     } catch {}
-  }, [user, token]);
+  }, []);
+  useEffect(() => {
+    let alive = true;
+    api("/auth/session").then(data => {
+      if (alive && data?.user) { setUser(data.user); setToken("session"); }
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
   useEffect(() => {
     if (!token) return undefined;
     let alive = true;
@@ -1258,7 +1262,7 @@ export default function AppNext() {
     setUser(nextUser); setToken(nextToken); setDialog("");
     notify("✅ Tizimga muvaffaqiyatli kirdingiz");
   }
-  function logout() { cachedOrderHistory = null; setUser(null); setToken(""); setDialog(""); notify("Hisobdan chiqdingiz"); }
+  function logout() { api("/auth/logout", {method:"POST"}).catch(() => {}); sessionCsrfToken = ""; cachedOrderHistory = null; setUser(null); setToken(""); setDialog(""); notify("Hisobdan chiqdingiz"); }
   function orderPlaced(order) {
     cachedOrderHistory = null;
     setCart([]); setDialog(""); setRefreshKey(x => x + 1);

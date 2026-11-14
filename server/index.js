@@ -9,14 +9,31 @@ import { rateLimit } from 'express-rate-limit';
 import { db } from './db.js';
 import { validProductFilters } from './catalogFilters.js';
 import { seedSportProducts } from './sportSeed.js';
+import { validRegistration, validGoogleCredential } from './securityValidation.js';
+import { cookieToken, verifyCsrf, issueSession, endSession } from './securitySession.js';
 
-if (!process.env.JWT_SECRET) throw new Error('Set JWT_SECRET in server/.env');
+if (!process.env.JWT_SECRET || Buffer.byteLength(process.env.JWT_SECRET, 'utf8') < 32) {
+  throw new Error('Set a high-entropy JWT_SECRET (at least 32 UTF-8 bytes)');
+}
+if (process.env.NODE_ENV === 'production' && !process.env.GOOGLE_CLIENT_ID) {
+  throw new Error('Set GOOGLE_CLIENT_ID in production');
+}
 
 const app = express();
+// Render sits behind one reverse proxy. Never trust arbitrary client-supplied proxy chains.
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+  });
+  next();
+});
 
-app.use(cors({
-  origin: [
+const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:5174",
     "http://localhost:5175",
@@ -24,9 +41,20 @@ app.use(cors({
     "https://mini-market-git-design-premium-refresh-2026-11-maxmudov0609.vercel.app",
     "https://market-mj.uz",
     "https://www.market-mj.uz"
-  ]
-}));
+];
+app.use(cors({ origin: allowedOrigins, exposedHeaders: ['X-CSRF-Token'] }));
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+app.use('/api', (req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  const origin = req.get('origin');
+  if (origin && !allowedOrigins.includes(origin)) {
+    return res.status(403).json({ error: 'Ruxsat yo‘q' });
+  }
+  if (req.get('sec-fetch-site') === 'cross-site') {
+    return res.status(403).json({ error: 'Ruxsat yo‘q' });
+  }
+  next();
+});
 
 app.use(express.json({limit:'100kb'}));
 const wrap = fn => (req, res, next) => {
@@ -59,6 +87,26 @@ function photoSchema() {
   ).catch(error => { photoSchemaPromise = null; throw error; });
   return photoSchemaPromise;
 }
+const writeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 90,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  message: { error: "Juda ko'p so'rov yuborildi. Birozdan keyin urinib ko'ring." },
+  skip: req => ['GET', 'HEAD', 'OPTIONS'].includes(req.method) ||
+    req.path.startsWith('/api/auth/')
+});
+app.use('/api', writeLimiter);
+app.use('/api', (req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  if (['/api/auth/login', '/api/auth/register', '/api/auth/google'].includes(req.path)) return next();
+  const cookie = cookieToken(req);
+  if (cookie && !verifyCsrf(req.get('x-csrf-token'), cookie, process.env.JWT_SECRET)) {
+    return res.status(403).json({ error: 'Xavfsizlik tekshiruvi bajarilmadi. Sahifani yangilang.' });
+  }
+  next();
+});
+
 const photoLimiter = rateLimit({windowMs:60*60*1000,limit:35,standardHeaders:'draft-8',legacyHeaders:false,
   message:{error:'Rasm yuklash limiti tugadi. Keyinroq urinib ko‘ring.'}});
 function validImageBytes(data, type) {
@@ -84,14 +132,19 @@ const registerLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: "Ro'yxatdan o'tish uchun juda ko'p urinish. Keyinroq qayta urinib ko'ring." }
 });
-const tokenFor=u=>jwt.sign({id:u.id,role:u.role},process.env.JWT_SECRET,{expiresIn:'7d'});
+const tokenFor=u=>jwt.sign({id:u.id,role:u.role},process.env.JWT_SECRET,{
+  expiresIn:'2h', algorithm:'HS256', issuer:'minimarket-api', audience:'minimarket-web'
+});
 const auth = (role) => wrap(async (req, res, next) => {
-  const token = (req.headers.authorization || '').replace(/^Bearer\s+/, '');
+  const headerToken = (req.headers.authorization || '').replace(/^Bearer\s+/, '');
+  const token = cookieToken(req) || headerToken;
 
   let payload;
 
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET);
+    payload = jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ['HS256'], issuer: 'minimarket-api', audience: 'minimarket-web'
+    });
   } catch {
     return res.status(401).json({ error: 'Tizimga kiring' });
   }
@@ -143,13 +196,7 @@ app.post('/api/auth/register', registerLimiter, wrap(async (req, res) => {
   const { name, email, password, role } = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
     ? req.body : {};
 
-  if (
-    typeof name !== 'string' || !name.trim() ||
-    typeof email !== 'string' ||
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-    typeof password !== 'string' || password.length < 8 ||
-    !['buyer', 'seller'].includes(role)
-  ) {
+  if (!validRegistration({ name, email, password, role })) {
     return res.status(400).json({ error: 'Maʼlumotlar noto‘g‘ri' });
   }
 
@@ -171,17 +218,15 @@ app.post('/api/auth/register', registerLimiter, wrap(async (req, res) => {
     [
       name.trim(),
       normalized,
-      bcrypt.hashSync(password, 10),
+      await bcrypt.hash(password, 12),
       role
     ]
   );
 
   const user = result.rows[0];
 
-  res.status(201).json({
-    user,
-    token: tokenFor(user)
-  });
+  issueSession(res, tokenFor(user), process.env.JWT_SECRET);
+  res.status(201).json({ user });
 }));
 app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
@@ -199,7 +244,7 @@ app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
 
   const u = result.rows[0];
 
-  if (!u || !u.password_hash || !bcrypt.compareSync(password, u.password_hash)) {
+  if (!u || !u.password_hash || !(await bcrypt.compare(password, u.password_hash))) {
     return res.status(401).json({
       error: 'Email yoki parol xato'
     });
@@ -207,16 +252,14 @@ app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
 
   const { password_hash, google_id, ...user } = u;
 
-  res.json({
-    user,
-    token: tokenFor(user)
-  });
+  issueSession(res, tokenFor(user), process.env.JWT_SECRET);
+  res.json({ user });
 }));
 app.post('/api/auth/google', loginLimiter, wrap(async (req, res) => {
   const { credential } = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
     ? req.body : {};
 
-  if (!credential || typeof credential !== 'string') {
+  if (!validGoogleCredential(credential)) {
     return res.status(400).json({ error: 'Google token yuborilmadi' });
   }
 
@@ -273,16 +316,14 @@ app.post('/api/auth/google', loginLimiter, wrap(async (req, res) => {
 
   const { password_hash, google_id, ...safeUser } = user;
 
-  res.json({
-    user: safeUser,
-    token: tokenFor(safeUser)
-  });
+  issueSession(res, tokenFor(safeUser), process.env.JWT_SECRET);
+  res.json({ user: safeUser });
 }));
 // A Google identity can be linked only from an already authenticated account.
 // Matching a verified email is not sufficient to bypass password authentication.
 app.post('/api/auth/google/link', loginLimiter, auth(), wrap(async (req, res) => {
   const credential = req.body?.credential;
-  if (typeof credential !== 'string' || !credential) {
+  if (!validGoogleCredential(credential)) {
     return res.status(400).json({ error: 'Google tasdiqlash tokeni yuborilmadi' });
   }
 
@@ -317,7 +358,19 @@ app.post('/api/auth/google/link', loginLimiter, auth(), wrap(async (req, res) =>
   }
   res.json({ linked: true, user: result.rows[0] });
 }));
-app.get('/api/auth/me',auth(),(req,res)=>res.json(req.user));
+app.get('/api/auth/session', auth(), (req, res) => {
+  const token = cookieToken(req) || (req.headers.authorization || '').replace(/^Bearer\s+/, '');
+  issueSession(res, token, process.env.JWT_SECRET);
+  res.json({ user: req.user });
+});
+app.post('/api/auth/logout', (_req, res) => {
+  endSession(res);
+  res.json({ ok: true });
+});
+app.get('/api/auth/me',auth(),(req,res)=>{
+  res.set('Cache-Control', 'private, no-store');
+  res.json(req.user);
+});
 app.get('/api/categories',(req,res)=>res.json(categories));
 app.get('/api/products', wrap(async (req, res) => {
   const {
