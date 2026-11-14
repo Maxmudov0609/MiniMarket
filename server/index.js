@@ -225,10 +225,8 @@ app.post('/api/auth/register', registerLimiter, wrap(async (req, res) => {
 
   const user = result.rows[0];
 
-  res.status(201).json({
-    user,
-    token: tokenFor(user)
-  });
+  issueSession(res, tokenFor(user), process.env.JWT_SECRET);
+  res.status(201).json({ user });
 }));
 app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
   if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) ||
@@ -254,10 +252,8 @@ app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
 
   const { password_hash, google_id, ...user } = u;
 
-  res.json({
-    user,
-    token: tokenFor(user)
-  });
+  issueSession(res, tokenFor(user), process.env.JWT_SECRET);
+  res.json({ user });
 }));
 app.post('/api/auth/google', loginLimiter, wrap(async (req, res) => {
   const { credential } = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
@@ -320,10 +316,8 @@ app.post('/api/auth/google', loginLimiter, wrap(async (req, res) => {
 
   const { password_hash, google_id, ...safeUser } = user;
 
-  res.json({
-    user: safeUser,
-    token: tokenFor(safeUser)
-  });
+  issueSession(res, tokenFor(safeUser), process.env.JWT_SECRET);
+  res.json({ user: safeUser });
 }));
 // A Google identity can be linked only from an already authenticated account.
 // Matching a verified email is not sufficient to bypass password authentication.
@@ -364,7 +358,19 @@ app.post('/api/auth/google/link', loginLimiter, auth(), wrap(async (req, res) =>
   }
   res.json({ linked: true, user: result.rows[0] });
 }));
-app.get('/api/auth/me',auth(),(req,res)=>res.json(req.user));
+app.get('/api/auth/session', auth(), (req, res) => {
+  const token = cookieToken(req) || (req.headers.authorization || '').replace(/^Bearer\s+/, '');
+  issueSession(res, token, process.env.JWT_SECRET);
+  res.json({ user: req.user });
+});
+app.post('/api/auth/logout', (_req, res) => {
+  endSession(res);
+  res.json({ ok: true });
+});
+app.get('/api/auth/me',auth(),(req,res)=>{
+  res.set('Cache-Control', 'private, no-store');
+  res.json(req.user);
+});
 app.get('/api/categories',(req,res)=>res.json(categories));
 app.get('/api/products', wrap(async (req, res) => {
   const {
