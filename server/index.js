@@ -10,6 +10,7 @@ import { db } from './db.js';
 import { validProductFilters } from './catalogFilters.js';
 import { seedSportProducts } from './sportSeed.js';
 import { validRegistration, validGoogleCredential } from './securityValidation.js';
+import { cookieToken, verifyCsrf, issueSession, endSession } from './securitySession.js';
 
 if (!process.env.JWT_SECRET || Buffer.byteLength(process.env.JWT_SECRET, 'utf8') < 32) {
   throw new Error('Set a high-entropy JWT_SECRET (at least 32 UTF-8 bytes)');
