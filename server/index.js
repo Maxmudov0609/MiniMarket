@@ -97,6 +97,15 @@ const writeLimiter = rateLimit({
     req.path.startsWith('/api/auth/')
 });
 app.use('/api', writeLimiter);
+app.use('/api', (req, res, next) => {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+  if (['/api/auth/login', '/api/auth/register', '/api/auth/google'].includes(req.path)) return next();
+  const cookie = cookieToken(req);
+  if (cookie && !verifyCsrf(req.get('x-csrf-token'), cookie, process.env.JWT_SECRET)) {
+    return res.status(403).json({ error: 'Xavfsizlik tekshiruvi bajarilmadi. Sahifani yangilang.' });
+  }
+  next();
+});
 
 const photoLimiter = rateLimit({windowMs:60*60*1000,limit:35,standardHeaders:'draft-8',legacyHeaders:false,
   message:{error:'Rasm yuklash limiti tugadi. Keyinroq urinib ko‘ring.'}});
@@ -127,7 +136,8 @@ const tokenFor=u=>jwt.sign({id:u.id,role:u.role},process.env.JWT_SECRET,{
   expiresIn:'2h', algorithm:'HS256', issuer:'minimarket-api', audience:'minimarket-web'
 });
 const auth = (role) => wrap(async (req, res, next) => {
-  const token = (req.headers.authorization || '').replace(/^Bearer\s+/, '');
+  const headerToken = (req.headers.authorization || '').replace(/^Bearer\s+/, '');
+  const token = cookieToken(req) || headerToken;
 
   let payload;
 
