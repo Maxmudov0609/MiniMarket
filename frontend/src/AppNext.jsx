@@ -472,7 +472,7 @@ function AuthPanel({ language, onClose, onSuccess, notify }) {
     const form = event.currentTarget;
     const data = {
       email: form.elements.email.value.trim().toLowerCase(),
-      password: form.elements.password.value
+      password: form.elements.password?.value
     };
     if (mode === "register") {
       data.name = form.elements.name.value.trim();
@@ -480,6 +480,14 @@ function AuthPanel({ language, onClose, onSuccess, notify }) {
     }
     setBusy(true);
     try {
+      if (mode === "recover" || mode === "confirm") {
+        if (mode === "confirm") data.code = form.elements.code.value.trim();
+        await api(mode === "recover" ? "/auth/recovery" : "/auth/recovery/confirm", {method:"POST", data});
+        notify(mode === "recover" ? "Hisob mavjud bo‘lsa, emailingizga kod yuboriladi" : "Parol yangilandi. Yangi parol bilan kiring.");
+        form.elements.password && (form.elements.password.value = "");
+        setMode(mode === "recover" ? "confirm" : "login");
+        return;
+      }
       const result = await api("/auth/" + (mode === "register" ? "register" : "login"),
         { method: "POST", data });
       if (!result.user || !result.token) throw new Error("Server javobi noto‘g‘ri");
@@ -487,7 +495,7 @@ function AuthPanel({ language, onClose, onSuccess, notify }) {
     } catch (error) { notify(error.message, "error"); }
     finally { setBusy(false); }
   }
-  return <Modal title={mode === "login" ? WORD(language, "loginTitle") : WORD(language, "createAccount")} onClose={onClose}>
+  return <Modal title={["recover","confirm"].includes(mode) ? "Parolni tiklash" : mode === "login" ? WORD(language, "loginTitle") : WORD(language, "createAccount")} onClose={onClose}>
     <div className="nm-auth-switch">
       <button className={mode === "login" ? "active" : ""} onClick={() => setMode("login")} type="button">{WORD(language, "signin")}</button>
       <button className={mode === "register" ? "active" : ""} onClick={() => setMode("register")} type="button">{WORD(language, "signup")}</button>
@@ -495,18 +503,20 @@ function AuthPanel({ language, onClose, onSuccess, notify }) {
     <form className="nm-form" onSubmit={submit}>
       {mode === "register" && <label>{WORD(language, "yourName")}<input name="name" minLength={2} maxLength={100} autoComplete="name" required placeholder="Ismingiz"/></label>}
       <label>{WORD(language, "email")}<input name="email" type="email" autoComplete="email" required placeholder="you@gmail.com"/></label>
-      <label>{WORD(language, "password")}<input name="password" type="password" minLength={8}
-        autoComplete={mode === "register" ? "new-password" : "current-password"} required placeholder="Kamida 8 ta belgi"/></label>
+      {mode === "confirm" && <label>Emailga kelgan kod<input name="code" required autoComplete="one-time-code"/></label>}
+      {mode !== "recover" && <label>{mode === "confirm" ? "Yangi parol" : WORD(language, "password")}<input name="password" type="password" minLength={8}
+        autoComplete={mode !== "login" ? "new-password" : "current-password"} required placeholder="Kamida 8 ta belgi"/></label>}
       {mode === "register" && <label>{WORD(language, "account")}
         <select value={role} onChange={event => setRole(event.target.value)}>
           <option value="buyer">{WORD(language, "buyer")}</option>
           <option value="seller">{WORD(language, "sellerRole")}</option>
         </select></label>}
       <button className="nm-primary nm-full" type="submit" disabled={busy}>
-        {busy ? "⏳" : WORD(language, mode === "register" ? "signup" : "signin")} <Icon name="arrow" size={18}/>
+        {busy ? "⏳" : mode === "recover" ? "Kod yuborish" : mode === "confirm" ? "Parolni yangilash" : WORD(language, mode === "register" ? "signup" : "signin")} <Icon name="arrow" size={18}/>
       </button>
     </form>
     {mode === "login" && <>
+      <button type="button" className="nm-link-btn" onClick={() => setMode("recover")}>Parolni unutdingizmi?</button>
       <div className="nm-or"><span>yoki</span></div>
       <div className="nm-google" ref={googleSlot}/>
       <p className="nm-form-note">{language === "en" ? "Existing email account? Sign in with your password first, then connect Google from your account." : language === "ru" ? "Если этот адрес уже зарегистрирован, войдите по паролю и подключите Google в кабинете." : "Bu email avval ro‘yxatdan o‘tgan bo‘lsa, avval parol bilan kiring va kabinetingizda Google akkauntni bog‘lang."}</p>
@@ -940,11 +950,12 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
     finally { setBusy(false); }
   }
   async function remove(product) {
-    if (!window.confirm("“" + product.name + "” mahsulotini o‘chirishni tasdiqlaysizmi?")) return;
+    const restore = product.is_active === false;
+    if (!window.confirm("“" + product.name + (restore ? "” mahsulotini qayta tiklaysizmi?" : "” mahsulotini katalogdan olib tashlaysizmi?"))) return;
     setBusy(true);
     try {
-      await api("/products/" + product.id, { method: "DELETE", token: user.token });
-      setReload(n => n + 1); onProductsChanged(); notify("Mahsulot o‘chirildi");
+      await api("/products/" + product.id + (restore ? "/restore" : ""), { method: restore ? "PATCH" : "DELETE", token: user.token });
+      setReload(n => n + 1); onProductsChanged(); notify(restore ? "Mahsulot tiklandi" : "Mahsulot katalogdan olib tashlandi");
     } catch (error) { notify(error.message, "error"); }
     finally { setBusy(false); }
   }
@@ -959,12 +970,12 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
     } catch (error) { notify(error.message, "error"); return false; }
     finally { setBusy(false); }
   }
-  return <Modal title={WORD(language,"seller")} onClose={onClose} wide>
+  return <Modal title={user.role === "admin" ? "Admin kabineti" : WORD(language,"seller")} onClose={onClose} wide>
     <div className="mm-seller-connect"><button type="button" onClick={onLinkGoogle}>
       <Icon name="shield" size={16}/> {language === "en" ? "Connect Google" :
         language === "ru" ? "Привязать Google" : "Google akkauntni bog‘lash"}</button></div>
     <div className="nm-seller-tabs">
-      <button type="button" className={tab === "products" ? "active" : ""} onClick={() => { setTab("products"); setEditing(false); }}>{WORD(language,"myProducts")} ({products.length})</button>
+      <button type="button" className={tab === "products" ? "active" : ""} onClick={() => { setTab("products"); setEditing(false); }}>{user.role === "admin" ? "Barcha mahsulotlar" : WORD(language,"myProducts")} ({products.length})</button>
       <button type="button" className={tab === "orders" ? "active" : ""} onClick={() => { setTab("orders"); setEditing(false); }}>{WORD(language,"orders")} ({orders.length})</button>
     </div>
     {loading ? <p className="nm-inline-wait">⏳ Yuklanmoqda...</p> : tab === "products" ?
@@ -1022,7 +1033,7 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
               "Bu ro‘yxatda rasm havolasi biriktirilmagan mahsulot yo‘q."}
           </p> : <div className="nm-management-list">
           {visibleSellerProducts.map(p => <div className="nm-manage-item" key={p.id}><ProductPicture product={p}/>
-            <div><strong>{p.name}</strong><span>{money(p.price)} · {p.stock} dona · {p.is_active === false ? "Faol emas" : "Faol"}</span>
+            <div><strong>{p.name}</strong>{user.role === "admin" && <span>{p.seller_name}</span>}<span>{money(p.price)} · {p.stock} dona · {p.is_active === false ? "Faol emas" : "Faol"}</span>
               {p.is_active !== false && ["missing", "invalid"].includes(photoReferenceStatus(p)) && <small className="mm-photo-needed">
                 {language === "en" ? "Actual photo required" : language === "ru" ? "Нужно фото товара" : "Asl mahsulot rasmi kerak"}
               </small>}
@@ -1031,8 +1042,8 @@ function SellerPanel({ user, language, onClose, notify, onProductsChanged, onLin
                   language === "ru" ? "Внешнее фото: проверьте права и упаковку" :
                   "Tashqi surat: ruxsat va qadoqni tekshiring"}
               </small>}</div>
-            <button className="nm-icon-btn" type="button" onClick={() => { setEdit(p); setEditing(true); }} aria-label="Tahrirlash"><Icon name="pencil"/></button>
-            <button className="nm-icon-btn danger" type="button" disabled={busy} onClick={() => remove(p)} aria-label="O‘chirish"><Icon name="trash"/></button>
+            {String(p.seller_id) === String(user.id) && <button className="nm-icon-btn" type="button" onClick={() => { setEdit(p); setEditing(true); }} aria-label="Tahrirlash"><Icon name="pencil"/></button>}
+            {p.is_active !== false ? <button className="nm-icon-btn danger" type="button" disabled={busy} onClick={() => remove(p)} aria-label="O‘chirish"><Icon name="trash"/></button> : user.role === "admin" && <button type="button" disabled={busy} onClick={() => remove(p)}>Qayta tiklash</button>}
           </div>)}
         </div>}
       </div> :

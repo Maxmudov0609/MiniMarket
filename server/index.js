@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
-import { createHash } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -212,6 +212,49 @@ app.post('/api/auth/login', loginLimiter, wrap(async (req, res) => {
     token: tokenFor(user)
   });
 }));
+// A successful password change invalidates every code derived from the old hash.
+function recoveryCode(user, issued) {
+  const signature = createHmac('sha256', process.env.JWT_SECRET)
+    .update(JSON.stringify(['password-reset', user.id, user.email, user.password_hash, issued]))
+    .digest('base64url').slice(0, 22);
+  return issued + '.' + signature;
+}
+app.post('/api/auth/recovery', loginLimiter, wrap(async (req, res) => {
+  if (!process.env.RESEND_API_KEY || !process.env.RECOVERY_FROM)
+    return res.status(503).json({ error: 'Tiklash xatlarini yuborish hali sozlanmagan' });
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const {rows} = await db.query('SELECT id,email,password_hash FROM users WHERE email=$1', [email]);
+  if (rows.length) {
+    const code = recoveryCode(rows[0], Date.now());
+    const sent = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {Authorization: 'Bearer ' + process.env.RESEND_API_KEY, 'Content-Type': 'application/json'},
+      body: JSON.stringify({from: process.env.RECOVERY_FROM, to: rows[0].email,
+        subject: 'MiniMarket parolini tiklash', text: 'Tasdiqlash kodi (15 daqiqa): ' + code}),
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!sent.ok) return res.status(503).json({error: 'Tiklash xatini yuborib bo‘lmadi'});
+  }
+  res.json({ok:true});
+}));
+app.post('/api/auth/recovery/confirm', loginLimiter, wrap(async (req, res) => {
+  const {code, password} = req.body || {};
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  if (typeof password !== 'string' || password.length < 8 || Buffer.byteLength(password) > 72)
+    return res.status(400).json({error: 'Yangi parol kamida 8 belgi va ko‘pi bilan 72 bayt bo‘lsin'});
+  const invalid = () => res.status(400).json({error: 'Kod noto‘g‘ri yoki muddati tugagan'});
+  if (typeof code !== 'string' || !/^\d{13}\.[A-Za-z0-9_-]{22}$/.test(code)) return invalid();
+  const issued = Number(code.split('.')[0]);
+  const age = Date.now() - issued;
+  if (age < 0 || age > 900000) return invalid();
+  const {rows} = await db.query('SELECT id,email,password_hash FROM users WHERE email=$1', [email]);
+  const user = rows[0];
+  if (!user || !timingSafeEqual(Buffer.from(code), Buffer.from(recoveryCode(user, issued)))) return invalid();
+  const updated = await db.query('UPDATE users SET password_hash=$1 WHERE id=$2 AND email=$3 AND password_hash IS NOT DISTINCT FROM $4',
+    [await bcrypt.hash(password, 10), user.id, email, user.password_hash]);
+  if (!updated.rowCount) return invalid();
+  res.json({ok:true});
+}));
 app.post('/api/auth/google', loginLimiter, wrap(async (req, res) => {
   const { credential } = req.body && typeof req.body === 'object' && !Array.isArray(req.body)
     ? req.body : {};
@@ -406,8 +449,9 @@ app.get('/api/products/:id', wrap(async (req, res) => {
 }));
 app.get('/api/seller/products', auth('seller'), wrap(async (req, res) => {
   const result = await db.query(
-    'SELECT * FROM products WHERE seller_id=$1 ORDER BY id DESC',
-    [req.user.id]
+    `SELECT p.*, u.name AS seller_name FROM products p LEFT JOIN users u ON u.id=p.seller_id
+     WHERE p.seller_id=$1 OR $2::boolean ORDER BY p.id DESC`,
+    [req.user.id, req.user.role === 'admin']
   );
 
   res.json(result.rows);
@@ -534,6 +578,12 @@ app.delete('/api/products/:id', auth('seller'), wrap(async (req, res) => {
     ok: true,
     message: "Mahsulot muvaffaqiyatli o'chirildi"
   });
+}));
+
+app.patch('/api/products/:id/restore', auth('admin'), wrap(async (req, res) => {
+  const result = await db.query('UPDATE products SET is_active=true WHERE id=$1 RETURNING id', [req.params.id]);
+  if (!result.rowCount) return res.status(404).json({error:'Mahsulot topilmadi'});
+  res.json({ok:true});
 }));
 
 // Product photos live on the same origin. No fragile hotlinks or extra credentials.
