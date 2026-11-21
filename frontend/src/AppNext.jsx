@@ -321,11 +321,17 @@ function Icon({ name, size = 21, strokeWidth = 1.9 }) {
 function ProductPicture({ product, className = "", eager = false }) {
   const primaryUrl = productImage(product);
   const previewUrl = localProductPreview(product);
-  const [failedUrl, setFailedUrl] = useState("");
-  useEffect(() => setFailedUrl(""), [primaryUrl, previewUrl]);
-  // Failed seller hotlinks fall back to local previews, not an unrelated picture.
-  const url = failedUrl === primaryUrl ? (previewUrl && previewUrl !== primaryUrl ? previewUrl : null)
-    : (failedUrl === previewUrl ? null : primaryUrl);
+  return <ProductPictureSources key={JSON.stringify([primaryUrl, previewUrl])}
+    {...{ product, className, eager, primaryUrl, previewUrl }} />;
+}
+
+function ProductPictureSources({ product, className, eager, primaryUrl, previewUrl }) {
+  const [failedUrls, setFailedUrls] = useState([]);
+  const candidates = [primaryUrl, previewUrl];
+  const url = candidates.find(candidate => candidate && !failedUrls.includes(candidate));
+  const optimized = url === "/hydrolife.png" || url === "/plastilin.png"
+    ? url.replace(".png", ".webp") : null;
+  const src = optimized && !failedUrls.includes(optimized) ? optimized : url;
   if (!url) {
     // Original product-type illustration, clearly labelled as not a seller photo.
     return <div className={"nm-art mm-image-fallback mm-illustrated-fallback " + className}>
@@ -335,9 +341,9 @@ function ProductPicture({ product, className = "", eager = false }) {
   const hasSellerPhoto = Boolean(String(product?.image_url || product?.image || "").trim());
   const isHighResSample = !hasSellerPhoto && HIGH_RES_SAMPLE_PHOTOS.some(([pattern]) => pattern.test(String(product.name || "").trim()));
   return <div className={"nm-product-image " + (isHighResSample ? "mm-hd-photo " : "") + className}>
-    <img loading={eager ? "eager" : "lazy"} decoding="async" src={url}
+    <img loading={eager ? "eager" : "lazy"} decoding="async" src={src}
       alt={hasSellerPhoto ? product.name : product.name + " — namunaviy surat"}
-      onError={() => setFailedUrl(url)} referrerPolicy="no-referrer" draggable="false" />
+      onError={() => setFailedUrls(previous => previous.includes(src) ? previous : [...previous, src])} referrerPolicy="no-referrer" draggable="false" />
     {(url === previewUrl || !hasSellerPhoto) && <span className="mm-image-sample-caption">
       {url === previewUrl ? "Namuna vizual" : "Namuna rasm"}
     </span>}
